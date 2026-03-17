@@ -1,0 +1,38 @@
+.border-custom-primary {
+  border: 1px solid #572671; /* morado */
+}
+
+.border-custom-warning {
+  border: 1px solid #aa0365; /* morado */
+}
+
+.border-custom-success {
+  border: 1px solid #91aba5; /* morado */
+}
+
+.btn-primary-custom {
+  background-color: #572671; /* morado */
+  border-color: #572671; /* morado */
+}
+
+.btn-secondary-custom {
+  background-color: #aa0365; /* morado */
+  border-color: #aa0365; /* morado */
+}
+
+.btn-success-custom {
+  background-color: #91aba5; /* morado */
+  border-color: #91aba5; /* morado */
+}
+
+.text-primary-custom {
+  color: #572671; /* morado */
+}
+
+.text-warning-custom {
+  color: #aa0365; /* morado */
+}
+
+.text-success-custom {
+  color: #91aba5; /* morado */
+}

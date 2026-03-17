@@ -1,0 +1,383 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario Vehicular | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --brand-500: #AA0365;
+      --bg-soft: #fff7ee;
+      --line: #ead7c0;
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #fef1de, var(--bg-soft));
+      color: #1f2937;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--brand-900), var(--brand-700));
+      box-shadow: 0 10px 22px rgba(11, 31, 55, 0.22);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    }
+
+    .kpi {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      padding: 0.9rem;
+    }
+
+    .kpi-label {
+      color: #64748b;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.2rem;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .badge-soft {
+      border-radius: 999px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .status-decomisado { color: #7f024c; background: #fce3f0; border-color: #f3b8d9; }
+    .status-custodia { color: #572671; background: #f3e9f8; border-color: #dec2f0; }
+    .status-liberado { color: #4f6e67; background: #ecf4f3; border-color: #c9dad5; }
+    .status-abandonado { color: #845f2d; background: #fff4de; border-color: #f0debe; }
+
+    .clickable-head {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #451e5a;
+      border-color: #451e5a;
+    }
+
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-danger {
+      background-color: var(--accent-1);
+      border-color: var(--accent-1);
+    }
+
+    .btn-danger:hover,
+    .btn-danger:focus {
+      background-color: #7f024c;
+      border-color: #7f024c;
+    }
+
+    .text-primary {
+      color: var(--primary) !important;
+    }
+
+    .text-warning {
+      color: var(--accent-1) !important;
+    }
+
+    .text-success {
+      color: #4f6e67 !important;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold">Corralon Vehicular</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <section class="surface p-4 p-lg-5 mb-4">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+        <div>
+          <h1 class="h4 mb-1">Inventario vehicular</h1>
+          <p class="text-secondary mb-0">Busqueda dinamica, filtros operativos y salida rapida a liberacion.</p>
+        </div>
+        {% if can_registrar %}
+        <a href="{% url 'registrar_vehiculo' %}" class="btn btn-primary btn-sm">Nuevo ingreso</a>
+        {% endif %}
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <div class="kpi">
+            <div class="kpi-label">Total</div>
+            <p class="kpi-value" id="kpiTotal">0</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="kpi">
+            <div class="kpi-label">En custodia</div>
+            <p class="kpi-value text-primary" id="kpiCustodia">0</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="kpi">
+            <div class="kpi-label">Decomisado</div>
+            <p class="kpi-value text-warning" id="kpiDecomisado">0</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="kpi">
+            <div class="kpi-label">Liberados</div>
+            <p class="kpi-value text-success" id="kpiLiberado">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="qInput" class="form-label">Buscar</label>
+          <input id="qInput" type="text" class="form-control" placeholder="Folio, placa, VIN, marca">
+        </div>
+        <div class="col-md-3">
+          <label for="tipoSelect" class="form-label">Tipo de servicio</label>
+          <select id="tipoSelect" class="form-select">
+            <option value="">Todos</option>
+            <option>Particular</option>
+            <option>Publico</option>
+            <option>Carga</option>
+            <option>Motocicleta</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="estatusSelect" class="form-label">Estatus legal</label>
+          <select id="estatusSelect" class="form-select">
+            <option value="">Todos</option>
+            <option>En custodia</option>
+            <option>Decomisado</option>
+            <option>Liberado</option>
+            <option>Abandonado</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="ordenSelect" class="form-label">Ordenar por</label>
+          <select id="ordenSelect" class="form-select">
+            <option value="fecha_desc">Fecha ingreso (reciente)</option>
+            <option value="fecha_asc">Fecha ingreso (antigua)</option>
+            <option value="anio_desc">Anio (mayor)</option>
+            <option value="anio_asc">Anio (menor)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface p-3 p-lg-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 mb-0">Vehiculos registrados</h2>
+        <small class="text-secondary">Mostrando <span id="rowsCount">0</span> resultados</small>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="clickable-head" data-sort="folio">Folio</th>
+              <th>Vehiculo</th>
+              <th class="clickable-head" data-sort="anio">Anio</th>
+              <th>Placas</th>
+              <th>VIN</th>
+              <th>Tipo</th>
+              <th>Estatus</th>
+              <th class="clickable-head" data-sort="fecha">Fecha ingreso</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventarioBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  {{ vehiculos_data|json_script:"vehiculos-data" }}
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    (function () {
+      const data = JSON.parse(document.getElementById("vehiculos-data").textContent);
+
+      const qInput = document.getElementById("qInput");
+      const tipoSelect = document.getElementById("tipoSelect");
+      const estatusSelect = document.getElementById("estatusSelect");
+      const ordenSelect = document.getElementById("ordenSelect");
+      const body = document.getElementById("inventarioBody");
+      const rowsCount = document.getElementById("rowsCount");
+      const kpiTotal = document.getElementById("kpiTotal");
+      const kpiCustodia = document.getElementById("kpiCustodia");
+      const kpiDecomisado = document.getElementById("kpiDecomisado");
+      const kpiLiberado = document.getElementById("kpiLiberado");
+      const heads = document.querySelectorAll("[data-sort]");
+
+      let manualSort = null;
+
+      function fmtDate(iso) {
+        if (!iso) return "-";
+        const [y, m, d] = iso.split("-");
+        return d + "/" + m + "/" + y;
+      }
+
+      function statusClass(value) {
+        if (value === "En custodia") return "status-custodia";
+        if (value === "Decomisado") return "status-decomisado";
+        if (value === "Liberado") return "status-liberado";
+        return "status-abandonado";
+      }
+
+      function applyFilters() {
+        const q = qInput.value.trim().toLowerCase();
+        const tipo = tipoSelect.value;
+        const estatus = estatusSelect.value;
+
+        let rows = data.filter((v) => {
+          const hayTexto = [v.folio, v.placas, v.vin, v.marca, v.modelo].join(" ").toLowerCase().includes(q);
+          const hayTipo = !tipo || v.tipo === tipo;
+          const hayEstatus = !estatus || v.estatus === estatus;
+          return hayTexto && hayTipo && hayEstatus;
+        });
+
+        const sortValue = manualSort || ordenSelect.value;
+        rows = rows.sort((a, b) => {
+          if (sortValue === "fecha_asc") return a.fecha.localeCompare(b.fecha);
+          if (sortValue === "fecha_desc") return b.fecha.localeCompare(a.fecha);
+          if (sortValue === "anio_asc") return a.anio - b.anio;
+          if (sortValue === "anio_desc") return b.anio - a.anio;
+          if (sortValue === "folio_asc") return a.folio.localeCompare(b.folio);
+          if (sortValue === "folio_desc") return b.folio.localeCompare(a.folio);
+          return 0;
+        });
+
+        renderRows(rows);
+        renderKpis(rows);
+      }
+
+      function renderRows(rows) {
+        body.innerHTML = rows.map((v) => {
+          const liberado = v.estatus === "Liberado";
+          return `
+            <tr>
+              <td class="fw-semibold">${v.folio}</td>
+              <td>${v.marca} ${v.modelo}</td>
+              <td>${v.anio}</td>
+              <td>${v.placas}</td>
+              <td class="text-muted">${v.vin}</td>
+              <td>${v.tipo}</td>
+              <td><span class="badge-soft ${statusClass(v.estatus)}">${v.estatus}</span></td>
+              <td>${fmtDate(v.fecha)}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-view="${v.folio}">Ver</button>
+                ${liberado
+                  ? '<button class="btn btn-sm btn-secondary" disabled>Liberado</button>'
+                  : `{% if can_liberar %}<a class="btn btn-sm btn-danger" href="{% url 'liberar_vehiculo' %}?folio=${encodeURIComponent(v.folio)}">Liberar</a>{% else %}<button class="btn btn-sm btn-secondary" disabled>Sin permiso</button>{% endif %}`}
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        rowsCount.textContent = String(rows.length);
+      }
+
+      function renderKpis(rows) {
+        kpiTotal.textContent = rows.length;
+        kpiCustodia.textContent = rows.filter((x) => x.estatus === "En custodia").length;
+        kpiDecomisado.textContent = rows.filter((x) => x.estatus === "Decomisado").length;
+        kpiLiberado.textContent = rows.filter((x) => x.estatus === "Liberado").length;
+      }
+
+      qInput.addEventListener("input", applyFilters);
+      tipoSelect.addEventListener("change", applyFilters);
+      estatusSelect.addEventListener("change", applyFilters);
+      ordenSelect.addEventListener("change", function () {
+        manualSort = null;
+        applyFilters();
+      });
+
+      heads.forEach((head) => {
+        head.addEventListener("click", function () {
+          const key = head.dataset.sort;
+          if (key === "fecha") {
+            manualSort = manualSort === "fecha_desc" ? "fecha_asc" : "fecha_desc";
+          } else if (key === "anio") {
+            manualSort = manualSort === "anio_desc" ? "anio_asc" : "anio_desc";
+          } else {
+            manualSort = manualSort === "folio_desc" ? "folio_asc" : "folio_desc";
+          }
+          applyFilters();
+        });
+      });
+
+      body.addEventListener("click", function (event) {
+        const target = event.target;
+        if (target.matches("[data-view]")) {
+          const folio = target.getAttribute("data-view");
+          const found = data.find((x) => x.folio === folio);
+          if (found) {
+            window.alert(
+              "Folio: " + found.folio + "\n" +
+              "Vehiculo: " + found.marca + " " + found.modelo + " (" + found.anio + ")\n" +
+              "Placas: " + found.placas + "\n" +
+              "VIN: " + found.vin + "\n" +
+              "Deposito: " + (found.deposito || "-") + "\n" +
+              "Motivo ingreso: " + (found.motivo || "-") + "\n" +
+              "Grua motivo: " + (found.grua_motivo || "-") + "\n" +
+              "Grua direccion: " + (found.grua_direccion || "-") + "\n" +
+              "Estatus: " + found.estatus
+            );
+          }
+        }
+      });
+
+      applyFilters();
+    })();
+  </script>
+</body>
+</html>

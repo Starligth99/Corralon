@@ -1,0 +1,533 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Corralon Vehicular</title>
+
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --bg-soft: #fff7ee;
+      --card-border: #ecdcc7;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --brand-1: var(--primary);
+      --brand-2: var(--accent-2);
+      --ok: var(--accent-2);
+      --warn: var(--accent-1);
+      --danger: var(--accent-1);
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #fef1de 0%, var(--bg-soft) 45%, #fffaf3 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, #3d1b50 0%, var(--primary) 100%);
+      box-shadow: 0 8px 20px rgba(87, 38, 113, 0.34);
+    }
+
+    .dashboard-shell {
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card,
+    .panel-card {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      background: #fff;
+    }
+
+    .kpi-label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.45rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.45rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      min-height: 280px;
+    }
+
+    .table thead th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .badge-soft {
+      border-radius: 999px;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-pending {
+      background: #fce3f0;
+      color: #7f024c;
+    }
+
+    .badge-active {
+      background: #f3e9f8;
+      color: #572671;
+    }
+
+    .badge-done {
+      background: #ecf4f3;
+      color: #4f6e67;
+    }
+
+    .text-primary-custom {
+      color: var(--primary);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #451e5a;
+      border-color: #451e5a;
+    }
+
+    .link-primary,
+    .text-primary {
+      color: var(--primary) !important;
+    }
+
+    @media (max-width: 767px) {
+      .kpi-value {
+        font-size: 1.65rem;
+      }
+
+      .chart-wrap {
+        min-height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand fw-bold">Sistema de Depositos Vehiculares</span>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white-50 small">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
+        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar sesion</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-shell">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <section class="mb-4">
+      <div class="panel-card p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div>
+            <h1 class="h4 mb-1">Panel de control operativo</h1>
+            <p class="mb-0 text-secondary">Vision en tiempo real del inventario, flujo y estado de liberaciones.</p>
+          </div>
+          <div class="text-end">
+            <div class="small text-secondary">Ultima actualizacion</div>
+            <div id="lastUpdate" class="fw-semibold">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Vehiculos ingresados</p>
+          <p class="kpi-value text-primary-custom" id="vehiculos">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
+        </article>
+      </div>
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Pendientes</p>
+          <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
+        </article>
+      </div>
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Liberados</p>
+          <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
+        </article>
+      </div>
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Tasa de liberacion</p>
+          <p class="kpi-value" id="tasaLiberacion" style="color: var(--brand-1)">0%</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+      <div class="col-lg-4">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Estado actual del inventario</h2>
+          <div class="chart-wrap">
+            <canvas id="estadoChart"></canvas>
+          </div>
+        </article>
+      </div>
+      <div class="col-lg-8">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Ingresos mensuales (ultimos 6 meses)</h2>
+          <div class="chart-wrap">
+            <canvas id="ingresosChart"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+      <div class="col-lg-6">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Distribucion por tipo de vehiculo</h2>
+          <div class="chart-wrap">
+            <canvas id="tipoChart"></canvas>
+          </div>
+        </article>
+      </div>
+      <div class="col-lg-6">
+        <article class="panel-card p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Actividad reciente</h2>
+            <a href="{% url 'vehiculos' %}" class="small link-primary">Ver inventario completo</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Folio</th>
+                  <th>Vehiculo</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="actividadBody">
+                {% for v in actividad %}
+                <tr>
+                  <td>{{ v.folio }}</td>
+                  <td>{{ v.marca }} {{ v.modelo }}</td>
+                  <td>
+                    {% if v.estatus_legal == 'Liberado' %}
+                    <span class="badge-soft badge-done">{{ v.estatus_legal }}</span>
+                    {% elif v.estatus_legal == 'En custodia' %}
+                    <span class="badge-soft badge-active">{{ v.estatus_legal }}</span>
+                    {% else %}
+                    <span class="badge-soft badge-pending">{{ v.estatus_legal }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ v.fecha_ingreso|date:'d/m/Y' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-secondary py-3">Sin actividad registrada.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="row g-3">
+      <div class="col-md-4">
+        {% if can_registrar %}
+        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'registrar_vehiculo' %}">
+          <h3 class="h6 text-dark">Registrar ingreso</h3>
+          <p class="mb-0 text-secondary small">Alta de unidades con inspeccion y documentos.</p>
+        </a>
+        {% else %}
+        <div class="panel-card p-3 h-100">
+          <h3 class="h6 text-dark">Registrar ingreso</h3>
+          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-4">
+        {% if can_inventario %}
+        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'vehiculos' %}">
+          <h3 class="h6 text-dark">Inventario vehicular</h3>
+          <p class="mb-0 text-secondary small">Consulta y filtros del parque vehicular retenido.</p>
+        </a>
+        {% else %}
+        <div class="panel-card p-3 h-100">
+          <h3 class="h6 text-dark">Inventario vehicular</h3>
+          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-4">
+        {% if can_liberar %}
+        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'liberar_vehiculo' %}">
+          <h3 class="h6 text-dark">Liberacion / Baja</h3>
+          <p class="mb-0 text-secondary small">Cierre operativo con validacion normativa.</p>
+        </a>
+        {% else %}
+        <div class="panel-card p-3 h-100">
+          <h3 class="h6 text-dark">Liberacion / Baja</h3>
+          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-4">
+        {% if can_depositos %}
+        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'depositos' %}">
+          <h3 class="h6 text-dark">Gestion de depositos</h3>
+          <p class="mb-0 text-secondary small">Alta y control de depositos disponibles.</p>
+        </a>
+        {% else %}
+        <div class="panel-card p-3 h-100">
+          <h3 class="h6 text-dark">Gestion de depositos</h3>
+          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center py-3 text-secondary small">
+    Sistema de Gestion de Corralon Vehicular | Cumplimiento Normativo Estatal
+  </footer>
+
+  {{ resumen_data|json_script:"resumen-data" }}
+  {{ detalle_data|json_script:"detalle-data" }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    const summaryFromServer = JSON.parse(document.getElementById("resumen-data").textContent);
+    const detailFromServer = JSON.parse(document.getElementById("detalle-data").textContent);
+
+    const chartColors = {
+      primary: "#572671",
+      secondary: "#91ABA5",
+      warning: "#AA0365",
+      success: "#91ABA5",
+      neutral: "#8a7898"
+    };
+
+    function safeNumber(value, defaultValue = 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : defaultValue;
+    }
+
+    function animateValue(element, finalValue, suffix = "") {
+      const duration = 700;
+      const start = 0;
+      const startTime = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const current = Math.round(start + (finalValue - start) * progress);
+        element.textContent = current + suffix;
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function formatNow() {
+      return new Date().toLocaleString("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function buildDoughnut(data) {
+      const ctx = document.getElementById("estadoChart").getContext("2d");
+      const enProceso = Math.max(data.total - data.pendientes - data.liberados, 0);
+
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Pendientes", "En proceso", "Liberados"],
+          datasets: [{
+            data: [data.pendientes, enProceso, data.liberados],
+            backgroundColor: [chartColors.warning, chartColors.primary, chartColors.success],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          }
+        }
+      });
+    }
+
+    function buildLineChart(labels, values) {
+      const ctx = document.getElementById("ingresosChart").getContext("2d");
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Ingresos",
+            data: values,
+            borderColor: chartColors.primary,
+            backgroundColor: "rgba(87, 38, 113, 0.12)",
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildBarChart(labels, values) {
+      const ctx = document.getElementById("tipoChart").getContext("2d");
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Vehiculos",
+            data: values,
+            backgroundColor: [
+              "#572671",
+              "#AA0365",
+              "#91ABA5",
+              "#7f5a97",
+              "#c8bcae"
+            ],
+            borderRadius: 8,
+            maxBarThickness: 38
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadData() {
+      const total = safeNumber(summaryFromServer && summaryFromServer.total, 0);
+      const pendientes = safeNumber(summaryFromServer && summaryFromServer.pendientes, 0);
+      const liberados = safeNumber(summaryFromServer && summaryFromServer.liberados, 0);
+      const tasaLiberacion = total > 0 ? Math.round((liberados / total) * 100) : 0;
+
+      animateValue(document.getElementById("vehiculos"), total);
+      animateValue(document.getElementById("pendientes"), pendientes);
+      animateValue(document.getElementById("liberados"), liberados);
+      animateValue(document.getElementById("tasaLiberacion"), tasaLiberacion, "%");
+
+      document.getElementById("lastUpdate").textContent = formatNow();
+
+      const monthlyLabels = (detailFromServer && Array.isArray(detailFromServer.monthlyLabels) && detailFromServer.monthlyLabels.length)
+        ? detailFromServer.monthlyLabels
+        : [];
+      const monthlyIngress = (detailFromServer && Array.isArray(detailFromServer.monthlyIngress) && detailFromServer.monthlyIngress.length)
+        ? detailFromServer.monthlyIngress
+        : [];
+      const typeLabels = (detailFromServer && Array.isArray(detailFromServer.typeLabels) && detailFromServer.typeLabels.length)
+        ? detailFromServer.typeLabels
+        : [];
+      const typeValues = (detailFromServer && Array.isArray(detailFromServer.typeValues) && detailFromServer.typeValues.length)
+        ? detailFromServer.typeValues
+        : [];
+
+      buildDoughnut({ total, pendientes, liberados });
+      buildLineChart(monthlyLabels, monthlyIngress);
+      buildBarChart(typeLabels, typeValues);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

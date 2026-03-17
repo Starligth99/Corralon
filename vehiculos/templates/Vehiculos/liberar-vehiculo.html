@@ -1,0 +1,395 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Liberacion Vehicular | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --line: #ead7c0;
+      --bg-soft: #fff7ee;
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #fef1de, var(--bg-soft));
+      color: #1f2937;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--brand-900), var(--brand-700));
+      box-shadow: 0 10px 22px rgba(11, 31, 55, 0.22);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    }
+
+    .status-chip {
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid #dec2f0;
+      background: #f3e9f8;
+      color: #572671;
+      padding: 0.32rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #AA0365;
+    }
+
+    .check-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.75rem;
+      background: #f8fbff;
+    }
+
+    .summary-row {
+      border-bottom: 1px dashed var(--line);
+      padding: 0.5rem 0;
+    }
+
+    .summary-row:last-child {
+      border-bottom: 0;
+    }
+
+    .summary-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      margin-bottom: 0.1rem;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      min-height: 1.2rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #451e5a;
+      border-color: #451e5a;
+    }
+
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-danger {
+      background-color: var(--accent-1);
+      border-color: var(--accent-1);
+    }
+
+    .btn-danger:hover,
+    .btn-danger:focus {
+      background-color: #7f024c;
+      border-color: #7f024c;
+    }
+
+    .alert-warning {
+      background-color: #fff4de;
+      border-color: #f0debe;
+      color: #845f2d;
+    }
+
+    @media (max-width: 991px) {
+      .sticky-top {
+        position: static !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand fw-bold">Liberacion de Vehiculos</span>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="surface p-4 p-lg-5">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+              <h1 class="h4 mb-1">Proceso de liberacion</h1>
+              <p class="text-secondary mb-0">Valida expediente, cumplimiento ambiental y autorizacion final.</p>
+            </div>
+            <span class="status-chip"><span class="status-dot"></span><span id="semaforoText">Validacion pendiente</span></span>
+          </div>
+
+          <div class="alert alert-warning py-2">
+            La liberacion requiere soporte legal, evidencia documental y confirmacion operativa.
+          </div>
+
+          <form id="liberarForm" method="post" action="{% url 'liberar_vehiculo' %}" novalidate>
+            {% csrf_token %}
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label">Folio</label>
+                <div class="input-group">
+                  <input type="text" id="folio" name="folio" class="form-control" placeholder="FOL-260220-101" value="{{ vehiculo_prefill.folio|default:'' }}" required>
+                  <button id="btnBuscar" type="button" class="btn btn-outline-primary">Buscar</button>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Placas</label>
+                <input type="text" id="placas" name="placas" class="form-control text-uppercase" value="{{ vehiculo_prefill.placas|default:'' }}" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">VIN</label>
+                <input type="text" id="vin" name="vin" class="form-control text-uppercase" value="{{ vehiculo_prefill.vin|default:'' }}" required>
+              </div>
+            </div>
+
+            <div class="surface p-3 mb-4" style="background:#f8fbff;">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Numero de oficio / acta</label>
+                  <input type="text" name="oficio" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Fecha del oficio</label>
+                  <input type="date" name="fecha_oficio" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Documento oficial (PDF)</label>
+                  <input id="documentoPdf" type="file" name="documento_pdf" class="form-control" accept="application/pdf" required>
+                  <small id="pdfName" class="text-secondary"></small>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Autoriza liberacion</label>
+                  <input type="text" name="autoriza" class="form-control" placeholder="Nombre y cargo" required>
+                </div>
+              </div>
+            </div>
+
+            <h2 class="h6 mb-2">Checklist de cumplimiento</h2>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="check-card">
+                  <div class="form-check">
+                    <input class="form-check-input control-check" type="checkbox" id="aceite" name="aceite_drenado" required>
+                    <label class="form-check-label" for="aceite">Aceite de motor drenado</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="check-card">
+                  <div class="form-check">
+                    <input class="form-check-input control-check" type="checkbox" id="combustible" name="combustible_drenado" required>
+                    <label class="form-check-label" for="combustible">Combustible gestionado</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="check-card">
+                  <div class="form-check">
+                    <input class="form-check-input control-check" type="checkbox" id="anticongelante" name="anticongelante_drenado" required>
+                    <label class="form-check-label" for="anticongelante">Anticongelante retirado</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="check-card">
+                  <div class="form-check">
+                    <input class="form-check-input control-check" type="checkbox" id="sinObjetos" name="sin_objetos_pendientes" required>
+                    <label class="form-check-label" for="sinObjetos">Sin objetos personales pendientes</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Observaciones finales</label>
+              <textarea id="obs" name="observaciones" class="form-control" rows="3" maxlength="320" placeholder="Notas de inspeccion y trazabilidad"></textarea>
+              <div class="d-flex justify-content-end">
+                <small class="text-secondary"><span id="obsCount">0</span>/320</small>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-end gap-2">
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+              <button id="btnConfirmar" type="submit" class="btn btn-danger" disabled>Confirmar liberacion</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        <aside class="surface p-4 sticky-top" style="top: 1rem;">
+          <h2 class="h6 mb-3">Resumen de expediente</h2>
+          <div class="summary-row">
+            <div class="summary-label">Folio</div>
+            <div id="sumFolio" class="summary-value">-</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Vehiculo</div>
+            <div id="sumVehiculo" class="summary-value">
+              {% if vehiculo_prefill %}{{ vehiculo_prefill.marca }} {{ vehiculo_prefill.modelo }} {{ vehiculo_prefill.anio }}{% else %}-{% endif %}
+            </div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Placas</div>
+            <div id="sumPlacas" class="summary-value">-</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">VIN</div>
+            <div id="sumVin" class="summary-value">-</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Checklist</div>
+            <div id="sumChecklist" class="summary-value">0/4 completado</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Documento</div>
+            <div id="sumDoc" class="summary-value">Sin archivo</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  {{ vehiculos_lookup_data|json_script:"vehiculos-lookup-data" }}
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    (function () {
+      const mockDB = JSON.parse(document.getElementById("vehiculos-lookup-data").textContent);
+
+      const form = document.getElementById("liberarForm");
+      const folio = document.getElementById("folio");
+      const placas = document.getElementById("placas");
+      const vin = document.getElementById("vin");
+      const btnBuscar = document.getElementById("btnBuscar");
+      const btnConfirmar = document.getElementById("btnConfirmar");
+      const obs = document.getElementById("obs");
+      const obsCount = document.getElementById("obsCount");
+      const documentoPdf = document.getElementById("documentoPdf");
+      const pdfName = document.getElementById("pdfName");
+      const checks = Array.from(document.querySelectorAll(".control-check"));
+      const semaforoText = document.getElementById("semaforoText");
+
+      const sumFolio = document.getElementById("sumFolio");
+      const sumVehiculo = document.getElementById("sumVehiculo");
+      const sumPlacas = document.getElementById("sumPlacas");
+      const sumVin = document.getElementById("sumVin");
+      const sumChecklist = document.getElementById("sumChecklist");
+      const sumDoc = document.getElementById("sumDoc");
+
+      function normalize(input) {
+        input.value = input.value.toUpperCase().replace(/\s+/g, "");
+      }
+
+      function updateSummary() {
+        sumFolio.textContent = folio.value || "-";
+        sumPlacas.textContent = placas.value || "-";
+        sumVin.textContent = vin.value || "-";
+        const count = checks.filter((c) => c.checked).length;
+        sumChecklist.textContent = count + "/4 completado";
+        if (documentoPdf.files[0]) {
+          sumDoc.textContent = documentoPdf.files[0].name;
+          pdfName.textContent = "Archivo: " + documentoPdf.files[0].name;
+        } else {
+          sumDoc.textContent = "Sin archivo";
+          pdfName.textContent = "";
+        }
+        evaluateSemaforo();
+      }
+
+      function evaluateSemaforo() {
+        const checksReady = checks.every((c) => c.checked);
+        const baseReady = folio.value && placas.value && vin.value;
+        const pdfReady = Boolean(documentoPdf.files[0]);
+        const canSubmit = checksReady && baseReady && pdfReady;
+
+        if (canSubmit) {
+          semaforoText.textContent = "Listo para liberar";
+        } else if (checks.filter((c) => c.checked).length >= 2) {
+          semaforoText.textContent = "Validacion en progreso";
+        } else {
+          semaforoText.textContent = "Validacion pendiente";
+        }
+
+        btnConfirmar.disabled = !canSubmit;
+      }
+
+      btnBuscar.addEventListener("click", function () {
+        const found = mockDB.find((x) => x.folio === folio.value || x.placas === placas.value || x.vin === vin.value);
+        if (!found) {
+          window.alert("No se encontro coincidencia en inventario de prueba.");
+          return;
+        }
+        folio.value = found.folio;
+        placas.value = found.placas;
+        vin.value = found.vin;
+        sumVehiculo.textContent = found.vehiculo;
+        updateSummary();
+      });
+
+      [folio, placas, vin].forEach((input) => {
+        input.addEventListener("input", function () {
+          normalize(input);
+          updateSummary();
+        });
+      });
+
+      checks.forEach((check) => check.addEventListener("change", updateSummary));
+      documentoPdf.addEventListener("change", updateSummary);
+
+      obs.addEventListener("input", function () {
+        obsCount.textContent = obs.value.length;
+      });
+
+      form.addEventListener("submit", function (event) {
+        if (!form.checkValidity() || btnConfirmar.disabled) {
+          event.preventDefault();
+          event.stopPropagation();
+          form.reportValidity();
+          return;
+        }
+      });
+
+      updateSummary();
+    })();
+  </script>
+</body>
+</html>

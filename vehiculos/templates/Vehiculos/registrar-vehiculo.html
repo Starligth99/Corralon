@@ -1,0 +1,559 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrar Vehiculo | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --brand-500: #AA0365;
+      --bg-soft: #fff7ee;
+      --line: #ead7c0;
+      --ok: #91ABA5;
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #fef1de, var(--bg-soft));
+      color: #1f2937;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--brand-900), var(--brand-700));
+      box-shadow: 0 10px 22px rgba(11, 31, 55, 0.22);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    }
+
+    .wizard-step {
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+
+    .wizard-step.active {
+      background: #f3e9f8;
+      border-color: #dec2f0;
+      color: var(--primary);
+    }
+
+    .wizard-step.done {
+      background: #ecf4f3;
+      border-color: #c9dad5;
+      color: #4f6e67;
+    }
+
+    .step-panel {
+      display: none;
+    }
+
+    .step-panel.active {
+      display: block;
+      animation: fadeIn 220ms ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .summary-item {
+      border-bottom: 1px dashed var(--line);
+      padding: 0.45rem 0;
+    }
+
+    .summary-item:last-child {
+      border-bottom: 0;
+    }
+
+    .summary-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 0.15rem;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #1e293b;
+      min-height: 1.2rem;
+    }
+
+    .file-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #c8d7ea;
+      background: #f3f8ff;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      color: #23446b;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #451e5a;
+      border-color: #451e5a;
+    }
+
+    .btn-success {
+      background-color: var(--accent-2);
+      border-color: var(--accent-2);
+      color: #1f2937;
+    }
+
+    .btn-success:hover,
+    .btn-success:focus {
+      background-color: #7f9792;
+      border-color: #7f9792;
+      color: #1f2937;
+    }
+
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .progress-bar {
+      background-color: var(--accent-1) !important;
+    }
+
+    @media (max-width: 991px) {
+      .sticky-top {
+        position: static !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold">Corralon Vehicular</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="surface p-4 p-lg-5">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+              <h1 class="h4 mb-1">Registro de ingreso vehicular</h1>
+              <p class="text-secondary mb-0">Carga guiada para capturar expediente operativo y legal.</p>
+            </div>
+            <button type="button" id="btnResetWizard" class="btn btn-outline-secondary btn-sm">Limpiar formulario</button>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mb-3" id="wizardSteps">
+            <span class="wizard-step active" data-step-indicator="0">1. Proceso</span>
+            <span class="wizard-step" data-step-indicator="1">2. Vehiculo</span>
+            <span class="wizard-step" data-step-indicator="2">3. Legal y cierre</span>
+          </div>
+
+          <div class="progress mb-4" role="progressbar" aria-label="Progreso de captura" aria-valuemin="0" aria-valuemax="100">
+            <div id="wizardProgress" class="progress-bar bg-success" style="width: 33%">33%</div>
+          </div>
+
+          <form id="registroForm" method="post" action="{% url 'registrar_vehiculo' %}" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <section class="step-panel active" data-step-panel="0">
+              <h2 class="h6 mb-3">Datos del proceso</h2>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Fecha de ingreso</label>
+                  <input type="date" class="form-control" name="fecha_ingreso" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Folio</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="folio" name="folio" placeholder="FOL-000123" required>
+                    <button class="btn btn-outline-primary" id="btnGenerarFolio" type="button">Generar</button>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Turno</label>
+                  <select class="form-select" name="turno" required>
+                    <option value="">Selecciona</option>
+                    <option>Matutino</option>
+                    <option>Vespertino</option>
+                    <option>Nocturno</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Autoridad que remite</label>
+                  <input type="text" class="form-control" name="autoridad" required>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label">Deposito</label>
+                    {% if can_depositos %}
+                    <a class="small text-decoration-none" href="{% url 'depositos' %}">Administrar depositos</a>
+                    {% endif %}
+                  </div>
+                  <select class="form-select" name="deposito" required>
+                    <option value="">Selecciona</option>
+                    {% for deposito in depositos %}
+                    <option value="{{ deposito }}">{{ deposito }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if not depositos %}
+                  <div class="form-text text-warning">No hay depositos registrados.</div>
+                  {% endif %}
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Motivo de ingreso</label>
+                  <textarea class="form-control" id="motivo" name="motivo" rows="3" maxlength="280" required></textarea>
+                  <div class="d-flex justify-content-end mt-1">
+                    <small class="text-secondary"><span id="motivoCount">0</span>/280</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Motivo de grua</label>
+                  <textarea class="form-control" name="grua_motivo" rows="2" maxlength="240" required></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Direccion donde se encargo la grua</label>
+                  <input type="text" class="form-control" name="grua_direccion" maxlength="180" required>
+                </div>
+              </div>
+            </section>
+
+            <section class="step-panel" data-step-panel="1">
+              <h2 class="h6 mb-3">Identificacion del vehiculo</h2>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Marca</label>
+                  <input type="text" class="form-control" name="marca" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Modelo</label>
+                  <input type="text" class="form-control" name="modelo" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Año</label>
+                  <input type="number" class="form-control" name="anio" min="1950" max="2035" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Color</label>
+                  <input type="text" class="form-control" name="color" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Placas</label>
+                  <input type="text" class="form-control text-uppercase" id="placas" name="placas" placeholder="ABC123D" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Tipo de servicio</label>
+                  <select class="form-select" name="tipo_servicio" required>
+                    <option value="">Selecciona</option>
+                    <option>Particular</option>
+                    <option>Publico</option>
+                    <option>Carga</option>
+                    <option>Motocicleta</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">VIN / NIV</label>
+                  <input type="text" class="form-control text-uppercase" id="vin" name="vin" minlength="17" maxlength="17" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Numero de motor</label>
+                  <input type="text" class="form-control text-uppercase" name="numero_motor" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tipo de combustible</label>
+                  <select class="form-select" name="combustible" required>
+                    <option value="">Selecciona</option>
+                    <option>Gasolina</option>
+                    <option>Diesel</option>
+                    <option>Hibrido</option>
+                    <option>Electrico</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Kilometraje</label>
+                  <input type="number" class="form-control" name="kilometraje" min="0" step="1" required>
+                </div>
+              </div>
+            </section>
+
+            <section class="step-panel" data-step-panel="2">
+              <h2 class="h6 mb-3">Estatus legal y evidencia</h2>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Estatus legal</label>
+                  <select class="form-select" name="estatus_legal" required>
+                    <option value="">Selecciona</option>
+                    <option>En custodia</option>
+                    <option>Decomisado</option>
+                    <option>Siniestrado</option>
+                    <option>Abandonado</option>
+                    <option>Liberado</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Numero de oficio</label>
+                  <input type="text" class="form-control" name="oficio" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Fecha de oficio</label>
+                  <input type="date" class="form-control" name="fecha_oficio" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Titular registrado</label>
+                  <input type="text" class="form-control" name="titular" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Documento principal (PDF)</label>
+                  <input type="file" class="form-control" id="documentoPdf" name="documento_pdf" accept="application/pdf" required>
+                  <div class="mt-2">
+                    <span id="pdfPill" class="file-pill d-none"></span>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Observaciones</label>
+                  <textarea class="form-control" name="observaciones" rows="3" placeholder="Condicion fisica, objetos, notas relevantes"></textarea>
+                </div>
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmacion" required>
+                    <label class="form-check-label" for="confirmacion">
+                      Confirmo que la informacion capturada corresponde al expediente.
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="d-flex flex-wrap justify-content-between gap-2 mt-4">
+              <button type="button" id="btnPrev" class="btn btn-outline-secondary" disabled>Anterior</button>
+              <div class="d-flex gap-2">
+                <button type="button" id="btnNext" class="btn btn-primary">Siguiente</button>
+                <button type="submit" id="btnSubmit" class="btn btn-success d-none">Registrar vehiculo</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        <aside class="surface p-4 sticky-top" style="top: 1rem;">
+          <h2 class="h6 mb-3">Resumen en vivo</h2>
+          <div class="summary-item">
+            <div class="summary-label">Folio</div>
+            <div id="sumFolio" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Fecha</div>
+            <div id="sumFecha" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Vehiculo</div>
+            <div id="sumVehiculo" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Placas</div>
+            <div id="sumPlacas" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">VIN</div>
+            <div id="sumVin" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Estatus legal</div>
+            <div id="sumEstatus" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Documento</div>
+            <div id="sumDoc" class="summary-value">Sin archivo</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    (function () {
+      const form = document.getElementById("registroForm");
+      const panels = Array.from(document.querySelectorAll("[data-step-panel]"));
+      const indicators = Array.from(document.querySelectorAll("[data-step-indicator]"));
+      const progress = document.getElementById("wizardProgress");
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const btnSubmit = document.getElementById("btnSubmit");
+      const btnReset = document.getElementById("btnResetWizard");
+      const btnFolio = document.getElementById("btnGenerarFolio");
+      const motivo = document.getElementById("motivo");
+      const motivoCount = document.getElementById("motivoCount");
+      const pdfInput = document.getElementById("documentoPdf");
+      const pdfPill = document.getElementById("pdfPill");
+      const folioInput = document.getElementById("folio");
+      const placasInput = document.getElementById("placas");
+      const vinInput = document.getElementById("vin");
+
+      let currentStep = 0;
+
+      const summaryTargets = {
+        sumFolio: () => form.elements.folio.value || "-",
+        sumFecha: () => form.elements.fecha_ingreso.value || "-",
+        sumVehiculo: () => {
+          const marca = form.elements.marca.value || "";
+          const modelo = form.elements.modelo.value || "";
+          const anio = form.elements.anio.value || "";
+          const val = [marca, modelo, anio].filter(Boolean).join(" ");
+          return val || "-";
+        },
+        sumPlacas: () => form.elements.placas.value || "-",
+        sumVin: () => form.elements.vin.value || "-",
+        sumEstatus: () => form.elements.estatus_legal.value || "-",
+        sumDoc: () => (pdfInput.files[0] ? pdfInput.files[0].name : "Sin archivo"),
+      };
+
+      function updateSummary() {
+        Object.keys(summaryTargets).forEach((id) => {
+          const el = document.getElementById(id);
+          el.textContent = summaryTargets[id]();
+        });
+      }
+
+      function updateMotivoCount() {
+        motivoCount.textContent = motivo.value.length;
+      }
+
+      function setStep(index) {
+        currentStep = index;
+        panels.forEach((panel, i) => panel.classList.toggle("active", i === currentStep));
+        indicators.forEach((item, i) => {
+          item.classList.toggle("active", i === currentStep);
+          item.classList.toggle("done", i < currentStep);
+        });
+
+        const pct = Math.round(((currentStep + 1) / panels.length) * 100);
+        progress.style.width = pct + "%";
+        progress.textContent = pct + "%";
+
+        btnPrev.disabled = currentStep === 0;
+        const isLast = currentStep === panels.length - 1;
+        btnNext.classList.toggle("d-none", isLast);
+        btnSubmit.classList.toggle("d-none", !isLast);
+      }
+
+      function validateStep(index) {
+        const activePanel = panels[index];
+        const requiredFields = Array.from(activePanel.querySelectorAll("[required]"));
+        for (const field of requiredFields) {
+          if (!field.checkValidity()) {
+            field.reportValidity();
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function normalizeUppercase(input) {
+        input.value = input.value.toUpperCase().replace(/\s+/g, "");
+      }
+
+      btnNext.addEventListener("click", function () {
+        if (!validateStep(currentStep)) return;
+        setStep(Math.min(currentStep + 1, panels.length - 1));
+      });
+
+      btnPrev.addEventListener("click", function () {
+        setStep(Math.max(currentStep - 1, 0));
+      });
+
+      btnReset.addEventListener("click", function () {
+        form.reset();
+        pdfPill.classList.add("d-none");
+        pdfPill.textContent = "";
+        updateMotivoCount();
+        updateSummary();
+        setStep(0);
+      });
+
+      btnFolio.addEventListener("click", function () {
+        const now = new Date();
+        const y = now.getFullYear().toString().slice(-2);
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        const serial = Math.floor(100 + Math.random() * 900);
+        folioInput.value = "FOL-" + y + m + d + "-" + serial;
+        updateSummary();
+      });
+
+      pdfInput.addEventListener("change", function () {
+        if (!pdfInput.files[0]) {
+          pdfPill.classList.add("d-none");
+          pdfPill.textContent = "";
+        } else {
+          pdfPill.classList.remove("d-none");
+          pdfPill.textContent = "PDF: " + pdfInput.files[0].name;
+        }
+        updateSummary();
+      });
+
+      motivo.addEventListener("input", updateMotivoCount);
+      placasInput.addEventListener("input", function () {
+        normalizeUppercase(placasInput);
+        updateSummary();
+      });
+      vinInput.addEventListener("input", function () {
+        normalizeUppercase(vinInput);
+        updateSummary();
+      });
+
+      form.addEventListener("input", updateSummary);
+      form.addEventListener("submit", function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+          form.reportValidity();
+          return;
+        }
+      });
+
+      updateMotivoCount();
+      updateSummary();
+      setStep(0);
+    })();
+  </script>
+</body>
+</html>
