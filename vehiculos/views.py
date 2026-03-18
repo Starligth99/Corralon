@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib import messages
+from django.contrib.auth import authenticate
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
@@ -35,6 +36,18 @@ def _get_role(request):
     return role if role in ROLE_LABELS else ROLE_CONSULTA
 
 
+def _get_role_for_user(user):
+    if user.is_superuser:
+        return ROLE_ADMIN
+    if user.groups.filter(name=ROLE_ADMIN).exists():
+        return ROLE_ADMIN
+    if user.groups.filter(name=ROLE_OPERADOR).exists():
+        return ROLE_OPERADOR
+    if user.groups.filter(name=ROLE_CONSULTA).exists():
+        return ROLE_CONSULTA
+    return ROLE_CONSULTA
+
+
 def _has_permission(request, permission):
     return permission in ROLE_PERMISSIONS.get(_get_role(request), set())
 
@@ -50,15 +63,16 @@ def login_view(request):
     if request.method == 'POST':
         usuario = (request.POST.get('usuario') or '').strip()
         password = request.POST.get('password') or ''
-        rol = (request.POST.get('rol') or ROLE_CONSULTA).strip().lower()
-        if rol not in ROLE_LABELS:
-            rol = ROLE_CONSULTA
 
         if usuario and password:
-            request.session['usuario'] = usuario
-            request.session['rol'] = rol
-            return redirect('dashboard')
-        error = 'Ingresa usuario y contrasena para continuar.'
+            user = authenticate(request, username=usuario, password=password)
+            if user:
+                request.session['usuario'] = user.get_username()
+                request.session['rol'] = _get_role_for_user(user)
+                return redirect('dashboard')
+            error = 'Credenciales invalidas. Verifica tu usuario y contrasena.'
+        else:
+            error = 'Ingresa usuario y contrasena para continuar.'
 
     return render(request, 'Vehiculos/login.html', {'error': error})
 

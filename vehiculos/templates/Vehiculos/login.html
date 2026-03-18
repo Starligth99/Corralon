@@ -8,6 +8,7 @@
     <title>Acceso | Corralon SMyT</title>
     <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
 
     <style>
         :root {
@@ -16,8 +17,14 @@
             --accent-1: #AA0365;
             --accent-2: #91ABA5;
             --surface: #ffffff;
+            --text-main: #2e3238;
             --text-muted: #7a7f87;
             --line: #e8e4ee;
+            --bg: #f4f5f8;
+            --bg-soft: #f8f1fb;
+            --shadow: 0 24px 60px rgba(87, 38, 113, 0.2);
+            --font-sans: "Sora", "Segoe UI", sans-serif;
+            --font-display: "Space Grotesk", "Sora", sans-serif;
         }
 
         body {
@@ -25,11 +32,13 @@
             margin: 0;
             display: grid;
             place-items: center;
-            font-family: "Segoe UI", "Inter", sans-serif;
+            font-family: var(--font-sans);
+            color: var(--text-main);
             background:
-                radial-gradient(circle at top right, rgba(170, 3, 101, 0.08), transparent 38%),
-                radial-gradient(circle at bottom left, rgba(87, 38, 113, 0.08), transparent 34%),
-                #f4f5f8;
+                radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 42%),
+                radial-gradient(circle at 88% 0%, rgba(87, 38, 113, 0.22), transparent 36%),
+                radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.16), transparent 45%),
+                var(--bg);
         }
 
         .login-page {
@@ -38,32 +47,47 @@
         }
 
         .login-card {
-            background: var(--surface);
+            background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
             border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 2rem;
-            box-shadow: 0 18px 45px rgba(40, 14, 53, 0.12);
+            border-radius: 22px;
+            padding: 2.3rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            animation: floatIn 520ms ease;
+        }
+
+        .login-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(120deg, var(--accent-1), var(--accent-2), var(--primary));
         }
 
         .brand-logo {
-            width: 96px;
+            width: 120px;
             display: block;
             margin: 0 auto 0.75rem;
+            filter: drop-shadow(0 10px 18px rgba(87, 38, 113, 0.22));
         }
 
         .login-title {
-            color: #2e3238;
+            color: var(--text-main);
             margin-bottom: 0.25rem;
-            font-size: 1.55rem;
+            font-size: 1.65rem;
             text-align: center;
             font-weight: 700;
             letter-spacing: 0.01em;
+            font-family: var(--font-display);
         }
 
         .login-subtitle {
             color: var(--text-muted);
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             margin-bottom: 1.5rem;
         }
 
@@ -81,13 +105,13 @@
             border-radius: 10px;
             border: 1px solid #d8dde7;
             font-size: 0.92rem;
-            background-color: #f9fafc;
+            background-color: #fbfbfd;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(87, 38, 113, 0.15);
+            box-shadow: 0 0 0 0.2rem rgba(87, 38, 113, 0.18);
             background-color: #fff;
         }
 
@@ -103,12 +127,13 @@
             border: 0;
             font-weight: 600;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
+            box-shadow: 0 12px 26px rgba(87, 38, 113, 0.3);
         }
 
         .btn-primary:hover,
         .btn-primary:focus {
             transform: translateY(-1px);
-            box-shadow: 0 10px 24px rgba(87, 38, 113, 0.25);
+            box-shadow: 0 16px 30px rgba(87, 38, 113, 0.36);
             background: linear-gradient(135deg, #5d2c80, #4d2264);
         }
 
@@ -129,8 +154,13 @@
             margin-top: 1.25rem;
             padding-top: 0.9rem;
             text-align: center;
-            color: #9499a2;
+            color: #8a95a3;
             font-size: 0.75rem;
+        }
+
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -139,7 +169,7 @@
     <main class="login-page">
         <section class="login-card">
             <div class="text-center mb-3">
-                <img class="brand-logo" src="{% static 'Img/CORRALON.png' %}" alt="Logo SMyT">
+                <img class="brand-logo" src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo PolicÃ­a Federal">
             </div>
 
             <h1 class="login-title">Sistema de Control Vehicular</h1>
@@ -165,11 +195,13 @@
 
                 <div class="mb-3">
                     <label for="rol" class="field-label">Rol</label>
-                    <select class="form-select" id="rol" name="rol" required>
+                    <select class="form-select" id="rol" name="rol" disabled>
+                        <option>Asignado automaticamente</option>
                         <option value="administrador">Administrador</option>
                         <option value="operador">Operador</option>
                         <option value="consulta">Consulta</option>
                     </select>
+                    <div class="form-text text-secondary">El rol se determina segun tu usuario.</div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-4">

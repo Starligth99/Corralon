@@ -9,6 +9,7 @@
 
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
 
   <style>
     :root {
@@ -20,22 +21,37 @@
       --card-border: #ecdcc7;
       --text-main: #1f2937;
       --text-muted: #6b7280;
-      --brand-1: var(--primary);
-      --brand-2: var(--accent-2);
-      --ok: var(--accent-2);
-      --warn: var(--accent-1);
-      --danger: var(--accent-1);
+      --brand-1: #572671;
+      --brand-2: #91ABA5;
+      --ok: #91ABA5;
+      --warn: #AA0365;
+      --danger: #AA0365;
+      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at top right, #fef1de 0%, var(--bg-soft) 45%, #fffaf3 100%);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.18), transparent 38%),
+        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        var(--bg-soft);
       color: var(--text-main);
       min-height: 100vh;
+      font-family: var(--font-sans);
     }
 
     .topbar {
-      background: linear-gradient(90deg, #3d1b50 0%, var(--primary) 100%);
-      box-shadow: 0 8px 20px rgba(87, 38, 113, 0.34);
+      background: linear-gradient(110deg, #3d1b50 0%, #572671 55%, #7f5a97 100%);
+      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.32);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
     }
 
     .dashboard-shell {
@@ -46,9 +62,10 @@
     .kpi-card,
     .panel-card {
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-      background: #fff;
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      animation: riseIn 520ms ease;
     }
 
     .kpi-label {
@@ -64,6 +81,7 @@
       font-weight: 700;
       line-height: 1;
       margin: 0;
+      font-family: var(--font-display);
     }
 
     .kpi-sub {
@@ -120,19 +138,101 @@
     }
 
     .btn-primary {
-      background-color: var(--primary);
-      border-color: var(--primary);
+      background: linear-gradient(135deg, #66308b, var(--primary));
+      border: none;
+      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background-color: #451e5a;
-      border-color: #451e5a;
+      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      border-color: transparent;
+      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
     }
 
     .link-primary,
     .text-primary {
       color: var(--primary) !important;
+    }
+
+    .action-nav {
+      border: 1px solid rgba(87, 38, 113, 0.18);
+      border-radius: 16px;
+      padding: 0.35rem 0.6rem;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 18px 40px rgba(87, 38, 113, 0.12);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .action-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--primary);
+      margin: 0 0.4rem 0 0.4rem;
+      white-space: nowrap;
+    }
+
+    .action-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      flex: 1 1 auto;
+    }
+
+    .action-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .action-link:hover {
+      background: rgba(87, 38, 113, 0.12);
+      border-color: rgba(87, 38, 113, 0.25);
+      transform: translateY(-1px);
+      color: var(--primary);
+    }
+
+    .action-link.disabled {
+      color: #9aa2ad;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .action-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #66308b, #4d2264);
+      box-shadow: 0 8px 16px rgba(87, 38, 113, 0.2);
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 991px) {
+      .action-nav {
+        border-radius: 18px;
+      }
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
     }
 
     @media (max-width: 767px) {
@@ -144,12 +244,20 @@
         min-height: 240px;
       }
     }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark topbar py-3">
     <div class="container-fluid px-4">
-      <span class="navbar-brand fw-bold">Sistema de Depositos Vehiculares</span>
+      <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Sistema de Depositos Vehiculares</span>
+      </span>
       <div class="d-flex align-items-center gap-3">
         <span class="text-white-50 small">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
         <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar sesion</a>
@@ -283,59 +391,56 @@
       </div>
     </section>
 
-    <section class="row g-3">
-      <div class="col-md-4">
-        {% if can_registrar %}
-        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'registrar_vehiculo' %}">
-          <h3 class="h6 text-dark">Registrar ingreso</h3>
-          <p class="mb-0 text-secondary small">Alta de unidades con inspeccion y documentos.</p>
-        </a>
-        {% else %}
-        <div class="panel-card p-3 h-100">
-          <h3 class="h6 text-dark">Registrar ingreso</h3>
-          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
+    <section>
+      <nav class="action-nav">
+        <span class="action-title">Accesos rapidos</span>
+        <div class="action-links">
+          {% if can_registrar %}
+          <a class="action-link" href="{% url 'registrar_vehiculo' %}">
+            <span class="action-badge">R</span>
+            Registrar ingreso
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">R</span>
+            Registrar ingreso
+          </span>
+          {% endif %}
+          {% if can_inventario %}
+          <a class="action-link" href="{% url 'vehiculos' %}">
+            <span class="action-badge">I</span>
+            Inventario vehicular
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">I</span>
+            Inventario vehicular
+          </span>
+          {% endif %}
+          {% if can_liberar %}
+          <a class="action-link" href="{% url 'liberar_vehiculo' %}">
+            <span class="action-badge">L</span>
+            Liberacion / Baja
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">L</span>
+            Liberacion / Baja
+          </span>
+          {% endif %}
+          {% if can_depositos %}
+          <a class="action-link" href="{% url 'depositos' %}">
+            <span class="action-badge">D</span>
+            Gestion de depositos
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">D</span>
+            Gestion de depositos
+          </span>
+          {% endif %}
         </div>
-        {% endif %}
-      </div>
-      <div class="col-md-4">
-        {% if can_inventario %}
-        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'vehiculos' %}">
-          <h3 class="h6 text-dark">Inventario vehicular</h3>
-          <p class="mb-0 text-secondary small">Consulta y filtros del parque vehicular retenido.</p>
-        </a>
-        {% else %}
-        <div class="panel-card p-3 h-100">
-          <h3 class="h6 text-dark">Inventario vehicular</h3>
-          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
-        </div>
-        {% endif %}
-      </div>
-      <div class="col-md-4">
-        {% if can_liberar %}
-        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'liberar_vehiculo' %}">
-          <h3 class="h6 text-dark">Liberacion / Baja</h3>
-          <p class="mb-0 text-secondary small">Cierre operativo con validacion normativa.</p>
-        </a>
-        {% else %}
-        <div class="panel-card p-3 h-100">
-          <h3 class="h6 text-dark">Liberacion / Baja</h3>
-          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
-        </div>
-        {% endif %}
-      </div>
-      <div class="col-md-4">
-        {% if can_depositos %}
-        <a class="panel-card p-3 d-block text-decoration-none h-100" href="{% url 'depositos' %}">
-          <h3 class="h6 text-dark">Gestion de depositos</h3>
-          <p class="mb-0 text-secondary small">Alta y control de depositos disponibles.</p>
-        </a>
-        {% else %}
-        <div class="panel-card p-3 h-100">
-          <h3 class="h6 text-dark">Gestion de depositos</h3>
-          <p class="mb-0 text-secondary small">No disponible para tu rol actual.</p>
-        </div>
-        {% endif %}
-      </div>
+      </nav>
     </section>
   </main>
 

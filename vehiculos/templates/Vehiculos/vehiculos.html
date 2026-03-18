@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inventario Vehicular | Corralon</title>
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
       --primary: #572671;
@@ -17,30 +18,48 @@
       --brand-500: #AA0365;
       --bg-soft: #fff7ee;
       --line: #ead7c0;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at top right, #fef1de, var(--bg-soft));
-      color: #1f2937;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        var(--bg-soft);
+      color: var(--text-main);
       min-height: 100vh;
+      font-family: var(--font-sans);
     }
 
     .topbar {
-      background: linear-gradient(90deg, var(--brand-900), var(--brand-700));
-      box-shadow: 0 10px 22px rgba(11, 31, 55, 0.22);
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
+      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
     }
 
     .surface {
       border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      box-shadow: var(--shadow-soft);
+      animation: riseIn 520ms ease;
     }
 
     .kpi {
-      border-radius: 14px;
+      border-radius: 16px;
       border: 1px solid var(--line);
-      background: #f8fbff;
+      background: linear-gradient(180deg, #ffffff 0%, #f5effb 100%);
       padding: 0.9rem;
     }
 
@@ -57,6 +76,7 @@
       font-weight: 700;
       margin: 0;
       line-height: 1.1;
+      font-family: var(--font-display);
     }
 
     .badge-soft {
@@ -78,14 +98,16 @@
     }
 
     .btn-primary {
-      background-color: var(--primary);
-      border-color: var(--primary);
+      background: linear-gradient(135deg, #66308b, var(--primary));
+      border: none;
+      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background-color: #451e5a;
-      border-color: #451e5a;
+      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      border-color: transparent;
+      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
     }
 
     .btn-outline-primary {
@@ -120,12 +142,25 @@
     .text-success {
       color: #4f6e67 !important;
     }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
-      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold">Corralon Vehicular</a>
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Corralon Vehicular</span>
+      </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
     </div>
   </nav>
