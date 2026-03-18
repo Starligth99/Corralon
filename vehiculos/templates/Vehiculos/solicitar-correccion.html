@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solicitar correccion | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --bg-soft: #fff7ee;
+      --line: #ead7c0;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
+      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Corralon Vehicular</span>
+      </a>
+      <a href="{% url 'vehiculos' %}" class="btn btn-outline-light btn-sm">Volver al inventario</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+          <h1 class="h4 mb-1">Solicitud de correccion</h1>
+          <p class="text-secondary mb-0">Envia al administrador el dato correcto para que sea actualizado.</p>
+        </div>
+      </div>
+
+      {% if vehiculo %}
+      <div class="alert alert-secondary py-2 mb-4">
+        <strong>Vehiculo:</strong> {{ vehiculo.folio }} — {{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.anio }})
+      </div>
+      {% else %}
+      <div class="alert alert-warning py-2 mb-4">
+        Ingresa el folio del vehiculo que necesitas corregir.
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'solicitar_correccion' %}">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Folio</label>
+            <input type="text" class="form-control" name="folio" value="{{ vehiculo.folio|default:'' }}" placeholder="FOL-000123" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Campo a corregir</label>
+            <select class="form-select" name="campo" required>
+              <option value="">Selecciona</option>
+              {% for key, label in campos.items %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Valor correcto</label>
+            <input type="text" class="form-control" name="valor_nuevo" placeholder="Dato correcto" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Motivo / evidencia</label>
+            <textarea class="form-control" name="motivo" rows="3" placeholder="Describe por que el dato debe corregirse" required></textarea>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+</body>
+</html>

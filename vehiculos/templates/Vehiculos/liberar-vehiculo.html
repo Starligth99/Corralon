@@ -325,6 +325,7 @@
 
   {{ vehiculos_lookup_data|json_script:"vehiculos-lookup-data" }}
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     (function () {
       const mockDB = JSON.parse(document.getElementById("vehiculos-lookup-data").textContent);

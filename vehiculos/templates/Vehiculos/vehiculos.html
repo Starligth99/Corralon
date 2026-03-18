@@ -148,6 +148,33 @@
       letter-spacing: 0.01em;
     }
 
+    .detail-panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem 1.25rem;
+    }
+
+    .detail-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 0.15rem;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
     @keyframes riseIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -237,6 +264,15 @@
           </select>
         </div>
         <div class="col-md-3">
+          <label for="depositoSelect" class="form-label">Deposito</label>
+          <select id="depositoSelect" class="form-select">
+            <option value="">Todos</option>
+            {% for deposito in depositos %}
+            <option value="{{ deposito }}" {% if deposito == deposito_actual %}selected{% endif %}>{{ deposito }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
           <label for="ordenSelect" class="form-label">Ordenar por</label>
           <select id="ordenSelect" class="form-select">
             <option value="fecha_desc">Fecha ingreso (reciente)</option>
@@ -244,6 +280,55 @@
             <option value="anio_desc">Anio (mayor)</option>
             <option value="anio_asc">Anio (menor)</option>
           </select>
+        </div>
+      </div>
+    </section>
+
+    <section id="detallePanel" class="detail-panel p-3 p-lg-4 mb-3 d-none">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 mb-0">Detalle del vehiculo</h2>
+        <button id="btnCerrarDetalle" class="btn btn-sm btn-outline-secondary" type="button">Cerrar</button>
+      </div>
+      <div class="detail-grid">
+        <div>
+          <div class="detail-label">Folio</div>
+          <div class="detail-value" id="detFolio">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Vehiculo</div>
+          <div class="detail-value" id="detVehiculo">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Anio</div>
+          <div class="detail-value" id="detAnio">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Placas</div>
+          <div class="detail-value" id="detPlacas">-</div>
+        </div>
+        <div>
+          <div class="detail-label">VIN</div>
+          <div class="detail-value" id="detVin">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Deposito</div>
+          <div class="detail-value" id="detDeposito">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Motivo ingreso</div>
+          <div class="detail-value" id="detMotivo">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Grua motivo</div>
+          <div class="detail-value" id="detGruaMotivo">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Grua direccion</div>
+          <div class="detail-value" id="detGruaDireccion">-</div>
+        </div>
+        <div>
+          <div class="detail-label">Estatus</div>
+          <div class="detail-value" id="detEstatus">-</div>
         </div>
       </div>
     </section>
@@ -277,6 +362,7 @@
 
   {{ vehiculos_data|json_script:"vehiculos-data" }}
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     (function () {
       const data = JSON.parse(document.getElementById("vehiculos-data").textContent);
@@ -284,6 +370,7 @@
       const qInput = document.getElementById("qInput");
       const tipoSelect = document.getElementById("tipoSelect");
       const estatusSelect = document.getElementById("estatusSelect");
+      const depositoSelect = document.getElementById("depositoSelect");
       const ordenSelect = document.getElementById("ordenSelect");
       const body = document.getElementById("inventarioBody");
       const rowsCount = document.getElementById("rowsCount");
@@ -292,6 +379,18 @@
       const kpiDecomisado = document.getElementById("kpiDecomisado");
       const kpiLiberado = document.getElementById("kpiLiberado");
       const heads = document.querySelectorAll("[data-sort]");
+      const detallePanel = document.getElementById("detallePanel");
+      const btnCerrarDetalle = document.getElementById("btnCerrarDetalle");
+      const detFolio = document.getElementById("detFolio");
+      const detVehiculo = document.getElementById("detVehiculo");
+      const detAnio = document.getElementById("detAnio");
+      const detPlacas = document.getElementById("detPlacas");
+      const detVin = document.getElementById("detVin");
+      const detDeposito = document.getElementById("detDeposito");
+      const detMotivo = document.getElementById("detMotivo");
+      const detGruaMotivo = document.getElementById("detGruaMotivo");
+      const detGruaDireccion = document.getElementById("detGruaDireccion");
+      const detEstatus = document.getElementById("detEstatus");
 
       let manualSort = null;
 
@@ -312,12 +411,14 @@
         const q = qInput.value.trim().toLowerCase();
         const tipo = tipoSelect.value;
         const estatus = estatusSelect.value;
+        const deposito = depositoSelect.value;
 
         let rows = data.filter((v) => {
           const hayTexto = [v.folio, v.placas, v.vin, v.marca, v.modelo].join(" ").toLowerCase().includes(q);
           const hayTipo = !tipo || v.tipo === tipo;
           const hayEstatus = !estatus || v.estatus === estatus;
-          return hayTexto && hayTipo && hayEstatus;
+          const hayDeposito = !deposito || (v.deposito || "") === deposito;
+          return hayTexto && hayTipo && hayEstatus && hayDeposito;
         });
 
         const sortValue = manualSort || ordenSelect.value;
@@ -350,6 +451,9 @@
               <td>${fmtDate(v.fecha)}</td>
               <td>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-view="${v.folio}">Ver</button>
+                {% if can_solicitar_correccion %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'solicitar_correccion' %}?folio=${encodeURIComponent(v.folio)}">Solicitar</a>
+                {% endif %}
                 ${liberado
                   ? '<button class="btn btn-sm btn-secondary" disabled>Liberado</button>'
                   : `{% if can_liberar %}<a class="btn btn-sm btn-danger" href="{% url 'liberar_vehiculo' %}?folio=${encodeURIComponent(v.folio)}">Liberar</a>{% else %}<button class="btn btn-sm btn-secondary" disabled>Sin permiso</button>{% endif %}`}
@@ -371,6 +475,7 @@
       qInput.addEventListener("input", applyFilters);
       tipoSelect.addEventListener("change", applyFilters);
       estatusSelect.addEventListener("change", applyFilters);
+      depositoSelect.addEventListener("change", applyFilters);
       ordenSelect.addEventListener("change", function () {
         manualSort = null;
         applyFilters();
@@ -396,19 +501,24 @@
           const folio = target.getAttribute("data-view");
           const found = data.find((x) => x.folio === folio);
           if (found) {
-            window.alert(
-              "Folio: " + found.folio + "\n" +
-              "Vehiculo: " + found.marca + " " + found.modelo + " (" + found.anio + ")\n" +
-              "Placas: " + found.placas + "\n" +
-              "VIN: " + found.vin + "\n" +
-              "Deposito: " + (found.deposito || "-") + "\n" +
-              "Motivo ingreso: " + (found.motivo || "-") + "\n" +
-              "Grua motivo: " + (found.grua_motivo || "-") + "\n" +
-              "Grua direccion: " + (found.grua_direccion || "-") + "\n" +
-              "Estatus: " + found.estatus
-            );
+            detFolio.textContent = found.folio || "-";
+            detVehiculo.textContent = (found.marca || "") + " " + (found.modelo || "");
+            detAnio.textContent = found.anio || "-";
+            detPlacas.textContent = found.placas || "-";
+            detVin.textContent = found.vin || "-";
+            detDeposito.textContent = found.deposito || "-";
+            detMotivo.textContent = found.motivo || "-";
+            detGruaMotivo.textContent = found.grua_motivo || "-";
+            detGruaDireccion.textContent = found.grua_direccion || "-";
+            detEstatus.textContent = found.estatus || "-";
+            detallePanel.classList.remove("d-none");
+            detallePanel.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }
+      });
+
+      btnCerrarDetalle.addEventListener("click", function () {
+        detallePanel.classList.add("d-none");
       });
 
       applyFilters();

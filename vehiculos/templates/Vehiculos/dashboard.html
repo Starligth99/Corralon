@@ -439,6 +439,12 @@
             Gestion de depositos
           </span>
           {% endif %}
+          {% if can_correcciones %}
+          <a class="action-link" href="{% url 'solicitudes_correccion' %}">
+            <span class="action-badge">C</span>
+            Correcciones
+          </a>
+          {% endif %}
         </div>
       </nav>
     </section>
@@ -452,6 +458,7 @@
   {{ detalle_data|json_script:"detalle-data" }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     const summaryFromServer = JSON.parse(document.getElementById("resumen-data").textContent);
     const detailFromServer = JSON.parse(document.getElementById("detalle-data").textContent);

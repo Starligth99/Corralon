@@ -175,7 +175,7 @@
             <h1 class="login-title">Sistema de Control Vehicular</h1>
             <p class="login-subtitle">Gobierno del Estado de Tlaxcala</p>
 
-            <form action="{% url 'login' %}" method="post">
+            <form action="{% url 'login' %}" method="post" autocomplete="off">
                 {% csrf_token %}
                 {% if error %}
                 <div class="alert alert-danger py-2" role="alert">
@@ -185,23 +185,12 @@
 
                 <div class="mb-3">
                     <label for="usuario" class="field-label">Correo Institucional</label>
-                    <input type="text" class="form-control" id="usuario" name="usuario" placeholder="usuario@smyt.gob.mx" required>
+                    <input type="text" class="form-control" id="usuario" name="usuario" placeholder="usuario@smyt.gob.mx" required autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="email">
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="field-label">Contrasena</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contrasena" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="rol" class="field-label">Rol</label>
-                    <select class="form-select" id="rol" name="rol" disabled>
-                        <option>Asignado automaticamente</option>
-                        <option value="administrador">Administrador</option>
-                        <option value="operador">Operador</option>
-                        <option value="consulta">Consulta</option>
-                    </select>
-                    <div class="form-text text-secondary">El rol se determina segun tu usuario.</div>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contrasena" required autocomplete="new-password">
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -209,7 +198,6 @@
                         <input type="checkbox" name="connected" class="form-check-input" id="connected">
                         <label for="connected" class="form-check-label">Recordarme</label>
                     </div>
-                    <a href="#">Olvide mi contrasena</a>
                 </div>
 
                 <div class="d-grid">
@@ -222,5 +210,6 @@
     </main>
 
     <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/no-autocomplete.js' %}"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -80,3 +81,43 @@ class Vehiculo(models.Model):
         self.estatus_legal = self.ESTATUS_LIBERADO
         self.liberado = True
         self.fecha_liberacion = timezone.now()
+
+
+class SolicitudCorreccion(models.Model):
+    ESTATUS_PENDIENTE = "Pendiente"
+    ESTATUS_APROBADA = "Aprobada"
+    ESTATUS_RECHAZADA = "Rechazada"
+
+    ESTATUS_CHOICES = [
+        (ESTATUS_PENDIENTE, "Pendiente"),
+        (ESTATUS_APROBADA, "Aprobada"),
+        (ESTATUS_RECHAZADA, "Rechazada"),
+    ]
+
+    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name="correcciones")
+    solicitante = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_solicitadas",
+    )
+    campo = models.CharField(max_length=60)
+    valor_nuevo = models.TextField()
+    motivo = models.TextField()
+    estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default=ESTATUS_PENDIENTE)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    resuelto_en = models.DateTimeField(null=True, blank=True)
+    resuelto_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_resueltas",
+    )
+
+    class Meta:
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return f"{self.vehiculo.folio} - {self.campo} ({self.estatus})"

@@ -133,9 +133,15 @@
           {% if depositos %}
           <div class="list-group">
             {% for deposito in depositos %}
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-              <span class="fw-semibold">{{ deposito.nombre }}</span>
-              <small class="text-secondary">{{ deposito.creado_en|date:'d/m/Y' }}</small>
+            <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <span class="fw-semibold">{{ deposito.nombre }}</span>
+                <small class="text-secondary d-block">{{ deposito.total }} vehiculos</small>
+              </div>
+              <div class="text-end">
+                <small class="text-secondary d-block">{{ deposito.creado_en|date:'d/m/Y' }}</small>
+                <a class="small text-decoration-none" href="{% url 'vehiculos' %}?deposito={{ deposito.nombre|urlencode }}">Ver vehiculos</a>
+              </div>
             </div>
             {% endfor %}
           </div>
@@ -148,5 +154,6 @@
   </main>
 
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
 </body>
 </html>

@@ -1,13 +1,14 @@
 from datetime import date
 
 from django.contrib import messages
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
-from .models import Deposito, Vehiculo
+from .models import Deposito, SolicitudCorreccion, Vehiculo
 
 
 ROLE_ADMIN = "administrador"
@@ -21,9 +22,49 @@ ROLE_LABELS = {
 }
 
 ROLE_PERMISSIONS = {
-    ROLE_ADMIN: {"ver_dashboard", "ver_inventario", "registrar", "liberar", "gestionar_depositos"},
-    ROLE_OPERADOR: {"ver_dashboard", "ver_inventario", "registrar", "liberar"},
+    ROLE_ADMIN: {
+        "ver_dashboard",
+        "ver_inventario",
+        "registrar",
+        "liberar",
+        "gestionar_depositos",
+        "gestionar_correcciones",
+        "solicitar_correccion",
+    },
+    ROLE_OPERADOR: {
+        "ver_dashboard",
+        "ver_inventario",
+        "registrar",
+        "liberar",
+        "solicitar_correccion",
+    },
     ROLE_CONSULTA: {"ver_dashboard", "ver_inventario"},
+}
+
+CORRECCION_FIELDS = {
+    "folio": "Folio",
+    "fecha_ingreso": "Fecha de ingreso",
+    "turno": "Turno",
+    "autoridad": "Autoridad que remite",
+    "deposito": "Deposito",
+    "motivo": "Motivo de ingreso",
+    "grua_motivo": "Motivo de grua",
+    "grua_direccion": "Direccion de grua",
+    "marca": "Marca",
+    "modelo": "Modelo",
+    "anio": "Anio",
+    "color": "Color",
+    "placas": "Placas",
+    "vin": "VIN",
+    "numero_motor": "Numero de motor",
+    "tipo_servicio": "Tipo de servicio",
+    "combustible": "Combustible",
+    "kilometraje": "Kilometraje",
+    "estatus_legal": "Estatus legal",
+    "oficio": "Numero de oficio",
+    "fecha_oficio": "Fecha de oficio",
+    "titular": "Titular",
+    "observaciones": "Observaciones",
 }
 
 
@@ -48,6 +89,30 @@ def _get_role_for_user(user):
     return ROLE_CONSULTA
 
 
+def _get_current_user(request):
+    username = request.session.get("usuario")
+    if not username:
+        return None
+    User = get_user_model()
+    return User.objects.filter(username=username).first()
+
+
+def _coerce_field_value(field_name, raw_value):
+    field = Vehiculo._meta.get_field(field_name)
+    if raw_value is None:
+        return None
+    value = raw_value.strip()
+
+    if field.get_internal_type() in ("IntegerField", "PositiveIntegerField", "BigIntegerField", "SmallIntegerField"):
+        return int(value)
+    if field.get_internal_type() == "DateField":
+        parsed = parse_date(value)
+        if not parsed:
+            raise ValueError("Fecha invalida. Usa formato YYYY-MM-DD.")
+        return parsed
+    return value
+
+
 def _has_permission(request, permission):
     return permission in ROLE_PERMISSIONS.get(_get_role(request), set())
 
@@ -67,6 +132,7 @@ def login_view(request):
         if usuario and password:
             user = authenticate(request, username=usuario, password=password)
             if user:
+                auth_login(request, user)
                 request.session['usuario'] = user.get_username()
                 request.session['rol'] = _get_role_for_user(user)
                 return redirect('dashboard')
@@ -130,6 +196,7 @@ def dashboard(request):
         'can_inventario': _has_permission(request, "ver_inventario"),
         'can_liberar': _has_permission(request, "liberar"),
         'can_depositos': _has_permission(request, "gestionar_depositos"),
+        'can_correcciones': _has_permission(request, "gestionar_correcciones"),
     }
     return render(request, 'Vehiculos/dashboard.html', context)
 
@@ -153,12 +220,24 @@ def depositos_view(request):
         messages.success(request, f'Deposito "{nombre}" agregado correctamente.')
         return redirect('depositos')
 
-    depositos = Deposito.objects.order_by('nombre')
+    depositos = list(Deposito.objects.order_by('nombre'))
+    conteos = {
+        item['deposito']: item['total']
+        for item in Vehiculo.objects.values('deposito').annotate(total=Count('id'))
+    }
+    depositos_data = [
+        {
+            'nombre': deposito.nombre,
+            'creado_en': deposito.creado_en,
+            'total': conteos.get(deposito.nombre, 0),
+        }
+        for deposito in depositos
+    ]
     return render(
         request,
         'Vehiculos/depositos.html',
         {
-            'depositos': depositos,
+            'depositos': depositos_data,
             'can_depositos': True,
         },
     )
@@ -257,6 +336,9 @@ def vehiculos_list(request):
     if not _has_permission(request, "ver_inventario"):
         return redirect('login')
 
+    depositos = list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True))
+    deposito_query = (request.GET.get('deposito') or '').strip()
+
     data = [
         {
             'folio': v.folio,
@@ -282,6 +364,9 @@ def vehiculos_list(request):
             'vehiculos_data': data,
             'can_registrar': _has_permission(request, "registrar"),
             'can_liberar': _has_permission(request, "liberar"),
+            'can_solicitar_correccion': _has_permission(request, "solicitar_correccion"),
+            'depositos': depositos,
+            'deposito_actual': deposito_query,
         },
     )
 
@@ -357,5 +442,139 @@ def liberar_vehiculo(request):
 
 
 def logout_view(request):
+    auth_logout(request)
     request.session.flush()
     return redirect('login')
+
+
+def solicitar_correccion(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "solicitar_correccion"):
+        return _reject_unauthorized(request)
+
+    folio_query = (request.GET.get('folio') or '').strip().upper()
+    vehiculo = Vehiculo.objects.filter(folio=folio_query).first() if folio_query else None
+
+    if request.method == 'POST':
+        folio = (request.POST.get('folio') or '').strip().upper()
+        campo = (request.POST.get('campo') or '').strip()
+        valor_nuevo = (request.POST.get('valor_nuevo') or '').strip()
+        motivo = (request.POST.get('motivo') or '').strip()
+
+        vehiculo = Vehiculo.objects.filter(folio=folio).first()
+        if not vehiculo:
+            messages.error(request, 'No se encontro el vehiculo solicitado.')
+            return redirect('solicitar_correccion')
+
+        if campo not in CORRECCION_FIELDS:
+            messages.error(request, 'Selecciona un campo valido para corregir.')
+            return redirect('solicitar_correccion')
+
+        if not valor_nuevo:
+            messages.error(request, 'Ingresa el valor correcto.')
+            return redirect('solicitar_correccion')
+
+        field = Vehiculo._meta.get_field(campo)
+        if field.choices:
+            valid_choices = [choice[0] for choice in field.choices]
+            if valor_nuevo not in valid_choices:
+                messages.error(request, 'El valor no es valido para el campo seleccionado.')
+                return redirect('solicitar_correccion')
+
+        try:
+            _coerce_field_value(campo, valor_nuevo)
+        except Exception:
+            messages.error(request, 'El valor no tiene el formato correcto para ese campo.')
+            return redirect('solicitar_correccion')
+
+        SolicitudCorreccion.objects.create(
+            vehiculo=vehiculo,
+            solicitante=_get_current_user(request),
+            campo=campo,
+            valor_nuevo=valor_nuevo,
+            motivo=motivo,
+        )
+
+        messages.success(request, 'Solicitud enviada al administrador.')
+        return redirect('vehiculos')
+
+    return render(
+        request,
+        'Vehiculos/solicitar-correccion.html',
+        {
+            'vehiculo': vehiculo,
+            'campos': CORRECCION_FIELDS,
+        },
+    )
+
+
+def solicitudes_correccion(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_correcciones"):
+        return _reject_unauthorized(request)
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        solicitud_id = request.POST.get('solicitud_id')
+        solicitud = SolicitudCorreccion.objects.select_related('vehiculo').filter(id=solicitud_id).first()
+
+        if not solicitud:
+            messages.error(request, 'No se encontro la solicitud.')
+            return redirect('solicitudes_correccion')
+
+        if solicitud.estatus != SolicitudCorreccion.ESTATUS_PENDIENTE:
+            messages.error(request, 'La solicitud ya fue atendida.')
+            return redirect('solicitudes_correccion')
+
+        if action == 'rechazar':
+            solicitud.estatus = SolicitudCorreccion.ESTATUS_RECHAZADA
+            solicitud.resuelto_en = timezone.now()
+            solicitud.resuelto_por = _get_current_user(request)
+            solicitud.save(update_fields=['estatus', 'resuelto_en', 'resuelto_por'])
+            messages.info(request, 'Solicitud rechazada.')
+            return redirect('solicitudes_correccion')
+
+        if action == 'aprobar':
+            try:
+                nuevo_valor = _coerce_field_value(solicitud.campo, solicitud.valor_nuevo)
+            except Exception:
+                messages.error(request, 'No se pudo aplicar el cambio por formato invalido.')
+                return redirect('solicitudes_correccion')
+
+            vehiculo = solicitud.vehiculo
+            if solicitud.campo == 'estatus_legal':
+                if nuevo_valor == Vehiculo.ESTATUS_LIBERADO:
+                    vehiculo.marcar_liberado()
+                else:
+                    vehiculo.estatus_legal = nuevo_valor
+                    vehiculo.liberado = False
+                    vehiculo.fecha_liberacion = None
+            else:
+                setattr(vehiculo, solicitud.campo, nuevo_valor)
+            vehiculo.save()
+
+            solicitud.estatus = SolicitudCorreccion.ESTATUS_APROBADA
+            solicitud.resuelto_en = timezone.now()
+            solicitud.resuelto_por = _get_current_user(request)
+            solicitud.save(update_fields=['estatus', 'resuelto_en', 'resuelto_por'])
+
+            messages.success(request, 'Solicitud aplicada correctamente.')
+            return redirect('solicitudes_correccion')
+
+        messages.error(request, 'Accion invalida.')
+        return redirect('solicitudes_correccion')
+
+    solicitudes = list(
+        SolicitudCorreccion.objects.select_related('vehiculo', 'solicitante').order_by('-creado_en')
+    )
+    for solicitud in solicitudes:
+        solicitud.campo_label = CORRECCION_FIELDS.get(solicitud.campo, solicitud.campo)
+    return render(
+        request,
+        'Vehiculos/solicitudes-correccion.html',
+        {
+            'solicitudes': solicitudes,
+        },
+    )

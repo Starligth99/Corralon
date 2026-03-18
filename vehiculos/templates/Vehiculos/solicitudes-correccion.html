@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solicitudes de correccion | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --bg-soft: #fff7ee;
+      --line: #ead7c0;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
+      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .badge-status {
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-pendiente { background: #f3e9f8; color: #572671; }
+    .status-aprobada { background: #ecf4f3; color: #4f6e67; }
+    .status-rechazada { background: #fce3f0; color: #7f024c; }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Corralon Vehicular</span>
+      </a>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+          <h1 class="h4 mb-1">Solicitudes de correccion</h1>
+          <p class="text-secondary mb-0">Aprueba o rechaza las solicitudes enviadas por operadores.</p>
+        </div>
+        <span class="badge bg-light text-secondary">{{ solicitudes|length }}</span>
+      </div>
+
+      {% if solicitudes %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Folio</th>
+              <th>Campo</th>
+              <th>Valor correcto</th>
+              <th>Motivo</th>
+              <th>Solicitante</th>
+              <th>Estatus</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for solicitud in solicitudes %}
+            <tr>
+              <td class="fw-semibold">{{ solicitud.vehiculo.folio }}</td>
+              <td>{{ solicitud.campo_label }}</td>
+              <td>{{ solicitud.valor_nuevo }}</td>
+              <td class="text-secondary">{{ solicitud.motivo }}</td>
+              <td>{{ solicitud.solicitante.username|default:"-" }}</td>
+              <td>
+                {% if solicitud.estatus == "Pendiente" %}
+                <span class="badge-status status-pendiente">Pendiente</span>
+                {% elif solicitud.estatus == "Aprobada" %}
+                <span class="badge-status status-aprobada">Aprobada</span>
+                {% else %}
+                <span class="badge-status status-rechazada">Rechazada</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if solicitud.estatus == "Pendiente" %}
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="solicitud_id" value="{{ solicitud.id }}">
+                  <button class="btn btn-sm btn-success" type="submit" name="action" value="aprobar">Aplicar</button>
+                </form>
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="solicitud_id" value="{{ solicitud.id }}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit" name="action" value="rechazar">Rechazar</button>
+                </form>
+                {% else %}
+                <span class="text-secondary small">Atendida</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-secondary">No hay solicitudes pendientes.</div>
+      {% endif %}
+    </section>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+</body>
+</html>
