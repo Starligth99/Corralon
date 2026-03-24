@@ -237,10 +237,8 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Folio</label>
-                  <div class="input-group">
-                    <input type="text" class="form-control" id="folio" name="folio" placeholder="FOL-000123" required>
-                    <button class="btn btn-outline-primary" id="btnGenerarFolio" type="button">Generar</button>
-                  </div>
+                  <input type="text" class="form-control" id="folio" name="folio" value="{{ folio_sugerido }}" maxlength="30" readonly aria-readonly="true" required>
+                  <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Turno</label>
@@ -253,7 +251,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Autoridad que remite</label>
-                  <input type="text" class="form-control" name="autoridad" required>
+                  <input type="text" class="form-control" name="autoridad" maxlength="120" required>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-between align-items-center">
@@ -295,11 +293,11 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Marca</label>
-                  <input type="text" class="form-control" name="marca" required>
+                  <input type="text" class="form-control" name="marca" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Modelo</label>
-                  <input type="text" class="form-control" name="modelo" required>
+                  <input type="text" class="form-control" name="modelo" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Año</label>
@@ -307,11 +305,11 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Color</label>
-                  <input type="text" class="form-control" name="color" required>
+                  <input type="text" class="form-control" name="color" maxlength="40" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Placas</label>
-                  <input type="text" class="form-control text-uppercase" id="placas" name="placas" placeholder="ABC123D" required>
+                  <input type="text" class="form-control text-uppercase" id="placas" name="placas" placeholder="ABC123D" maxlength="15" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Tipo de servicio</label>
@@ -329,7 +327,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Numero de motor</label>
-                  <input type="text" class="form-control text-uppercase" name="numero_motor" required>
+                  <input type="text" class="form-control text-uppercase" name="numero_motor" maxlength="40" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Tipo de combustible</label>
@@ -364,7 +362,7 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Numero de oficio</label>
-                  <input type="text" class="form-control" name="oficio" required>
+                  <input type="text" class="form-control" name="oficio" maxlength="80" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Fecha de oficio</label>
@@ -372,7 +370,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Titular registrado</label>
-                  <input type="text" class="form-control" name="titular" required>
+                  <input type="text" class="form-control" name="titular" maxlength="120" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Documento principal (PDF)</label>
@@ -383,7 +381,7 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label">Observaciones</label>
-                  <textarea class="form-control" name="observaciones" rows="3" placeholder="Condicion fisica, objetos, notas relevantes"></textarea>
+                  <textarea class="form-control" name="observaciones" rows="3" maxlength="280" placeholder="Condicion fisica, objetos, notas relevantes"></textarea>
                 </div>
                 <div class="col-12">
                   <div class="form-check">
@@ -455,12 +453,10 @@
       const btnNext = document.getElementById("btnNext");
       const btnSubmit = document.getElementById("btnSubmit");
       const btnReset = document.getElementById("btnResetWizard");
-      const btnFolio = document.getElementById("btnGenerarFolio");
       const motivo = document.getElementById("motivo");
       const motivoCount = document.getElementById("motivoCount");
       const pdfInput = document.getElementById("documentoPdf");
       const pdfPill = document.getElementById("pdfPill");
-      const folioInput = document.getElementById("folio");
       const placasInput = document.getElementById("placas");
       const vinInput = document.getElementById("vin");
 
@@ -543,16 +539,6 @@
         updateMotivoCount();
         updateSummary();
         setStep(0);
-      });
-
-      btnFolio.addEventListener("click", function () {
-        const now = new Date();
-        const y = now.getFullYear().toString().slice(-2);
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        const serial = Math.floor(100 + Math.random() * 900);
-        folioInput.value = "FOL-" + y + m + d + "-" + serial;
-        updateSummary();
       });
 
       pdfInput.addEventListener("change", function () {

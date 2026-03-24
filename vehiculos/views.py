@@ -1,4 +1,5 @@
 from datetime import date
+import random
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
@@ -111,6 +112,26 @@ def _coerce_field_value(field_name, raw_value):
             raise ValueError("Fecha invalida. Usa formato YYYY-MM-DD.")
         return parsed
     return value
+
+
+def _generate_folio():
+    today = timezone.localdate()
+    prefix = today.strftime("FOL-%y%m%d-")
+    for _ in range(25):
+        serial = random.randint(100, 999)
+        folio = f"{prefix}{serial}"
+        if not Vehiculo.objects.filter(folio=folio).exists():
+            return folio
+    return f"{prefix}{random.randint(1000, 9999)}"
+
+
+def _get_folio_sugerido(request):
+    folio = request.session.get("folio_sugerido")
+    if folio and not Vehiculo.objects.filter(folio=folio).exists():
+        return folio
+    folio = _generate_folio()
+    request.session["folio_sugerido"] = folio
+    return folio
 
 
 def _has_permission(request, permission):
@@ -253,6 +274,7 @@ def registrar_vehiculo(request):
         return {
             'depositos': list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True)),
             'can_depositos': _has_permission(request, "gestionar_depositos"),
+            'folio_sugerido': _get_folio_sugerido(request),
         }
 
     if request.method == 'POST':
@@ -261,7 +283,6 @@ def registrar_vehiculo(request):
 
         required = [
             'fecha_ingreso',
-            'folio',
             'autoridad',
             'deposito',
             'marca',
@@ -280,10 +301,41 @@ def registrar_vehiculo(request):
             messages.error(request, 'Completa todos los campos obligatorios.')
             return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
 
-        folio = post.get('folio', '').strip().upper()
-        if Vehiculo.objects.filter(folio=folio).exists():
-            messages.error(request, f'El folio {folio} ya existe.')
+        field_limits = {
+            'turno': 20,
+            'autoridad': 120,
+            'deposito': 120,
+            'motivo': 280,
+            'grua_motivo': 240,
+            'grua_direccion': 180,
+            'marca': 60,
+            'modelo': 60,
+            'color': 40,
+            'placas': 15,
+            'vin': 17,
+            'numero_motor': 40,
+            'tipo_servicio': 30,
+            'combustible': 20,
+            'oficio': 80,
+            'titular': 120,
+            'observaciones': 280,
+        }
+        for field, max_len in field_limits.items():
+            value = (post.get(field) or '').strip()
+            if value and len(value) > max_len:
+                label = CORRECCION_FIELDS.get(field, field)
+                messages.error(request, f'El campo {label} excede {max_len} caracteres.')
+                return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        vin_value = (post.get('vin') or '').strip()
+        if vin_value and len(vin_value) != 17:
+            messages.error(request, 'El VIN debe tener exactamente 17 caracteres.')
             return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        folio = request.session.get("folio_sugerido") or _generate_folio()
+        folio = folio.strip().upper()
+        if Vehiculo.objects.filter(folio=folio).exists():
+            folio = _generate_folio().strip().upper()
 
         try:
             anio = int(post.get('anio', '0'))
@@ -324,6 +376,7 @@ def registrar_vehiculo(request):
             vehiculo.fecha_liberacion = timezone.now()
             vehiculo.save(update_fields=['fecha_liberacion'])
 
+        request.session.pop("folio_sugerido", None)
         messages.success(request, f'Vehiculo {vehiculo.folio} registrado correctamente.')
         return redirect('vehiculos')
 
