@@ -43,7 +43,7 @@ SECRET_KEY = 'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['corralon-final.onrender.com']
 
 
 # Application definition
