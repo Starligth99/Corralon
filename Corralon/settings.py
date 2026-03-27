@@ -53,7 +53,7 @@ def _env_list(key):
 SECRET_KEY = 'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_bool("DEBUG", default=False)
+DEBUG = _env_bool("DEBUG", default=True)
 
 _allowed_hosts = _env_list("ALLOWED_HOSTS")
 _render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
