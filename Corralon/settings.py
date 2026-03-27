@@ -34,6 +34,17 @@ def _load_env():
 
 _load_env()
 
+def _env_bool(key, default=False):
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _env_list(key):
+    raw = os.getenv(key, "")
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -42,9 +53,21 @@ _load_env()
 SECRET_KEY = 'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = ['*']
+_allowed_hosts = _env_list("ALLOWED_HOSTS")
+_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _render_host:
+    _allowed_hosts.append(_render_host)
+if not _allowed_hosts:
+    _allowed_hosts = ["corralon-final.onrender.com"]
+ALLOWED_HOSTS = _allowed_hosts
+
+CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS")
+if not CSRF_TRUSTED_ORIGINS and ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host != "*"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition

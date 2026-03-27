@@ -10,3 +10,6 @@ python manage.py collectstatic --no-input
 
 #Aplicar las migraciones de base de datos pendientes
 python manage.py migrate
+
+#Crear/actualizar usuarios base (admin/operador/consulta) desde variables de entorno
+python manage.py seed_roles
