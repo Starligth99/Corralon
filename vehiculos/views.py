@@ -56,7 +56,7 @@ CORRECCION_FIELDS = {
     "grua_direccion": "Direccion de grua",
     "marca": "Marca",
     "modelo": "Modelo",
-    "anio": "Anio",
+    "anio": "Año",
     "color": "Color",
     "placas": "Placas",
     "vin": "VIN",
