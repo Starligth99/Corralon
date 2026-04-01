@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 import random
 
 from django.contrib import messages
@@ -182,9 +182,9 @@ def login_view(request):
                 request.session['usuario'] = user.get_username()
                 request.session['rol'] = _get_role_for_user(user)
                 return redirect('dashboard')
-            error = 'Credenciales invalidas. Verifica tu usuario y contrasena.'
+            error = 'Credenciales invalidas. Verifica tu usuario y contraseña.'
         else:
-            error = 'Ingresa usuario y contrasena para continuar.'
+            error = 'Ingresa usuario y contraseña para continuar.'
 
     return render(request, 'Vehiculos/login.html', {'error': error})
 
@@ -310,7 +310,7 @@ def usuarios_view(request):
             role = (request.POST.get('role') or '').strip()
 
             if not email or not password or role not in ROLE_LABELS:
-                messages.error(request, 'Completa correo, contrasena y rol para crear la cuenta.')
+                messages.error(request, 'Completa correo, contraseña y rol para crear la cuenta.')
                 return redirect('usuarios')
 
             if not _email_allowed(email):
