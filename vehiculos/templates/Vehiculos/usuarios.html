@@ -1,0 +1,200 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuarios | Corralon</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #572671;
+      --secondary: #FEE6C4;
+      --accent-1: #AA0365;
+      --accent-2: #91ABA5;
+      --brand-900: #3d1b50;
+      --brand-700: #572671;
+      --line: #ead7c0;
+      --bg-soft: #fff7ee;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
+      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      box-shadow: var(--shadow-soft);
+      animation: riseIn 520ms ease;
+    }
+
+    .badge-soft {
+      border-radius: 999px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #572671;
+      background: #f3e9f8;
+      border: 1px solid #dec2f0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #66308b, var(--primary));
+      border: none;
+      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      border-color: transparent;
+      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
+    }
+
+    .btn-danger {
+      background-color: var(--accent-1);
+      border-color: var(--accent-1);
+    }
+
+    .btn-danger:hover,
+    .btn-danger:focus {
+      background-color: #7f024c;
+      border-color: #7f024c;
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/Escudo_PolicÃ­a_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Gestion de usuarios</span>
+      </span>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <section class="surface p-4 p-lg-5">
+          <h1 class="h5 mb-2">Agregar cuenta</h1>
+          <p class="text-secondary mb-4">Solo se permiten correos @smyt.gob.mx.</p>
+          <form method="post" action="{% url 'usuarios' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="mb-3">
+              <label class="form-label">Correo institucional</label>
+              <input type="email" class="form-control" name="email" placeholder="usuario@smyt.gob.mx" required autocomplete="off">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contrasena temporal</label>
+              <input type="password" class="form-control" name="password" placeholder="Crea una contrasena" required autocomplete="new-password">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <select class="form-select" name="role" required>
+                {% for value, label in role_options %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear cuenta</button>
+          </form>
+        </section>
+      </div>
+      <div class="col-lg-7">
+        <section class="surface p-4 p-lg-5">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Cuentas activas</h2>
+            <span class="badge-soft">{{ usuarios|length }}</span>
+          </div>
+          {% if usuarios %}
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Correo</th>
+                  <th>Rol</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                  <td class="fw-semibold">{{ usuario.email }}</td>
+                  <td>{{ usuario.role_label }}</td>
+                  <td>
+                    {% if usuario.is_self %}
+                    <span class="text-secondary small">Sesion actual</span>
+                    {% else %}
+                    <form method="post" action="{% url 'usuarios' %}" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                      <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar la cuenta {{ usuario.email }}?');">Eliminar</button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-secondary">No hay cuentas registradas aun.</div>
+          {% endif %}
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+</body>
+</html>

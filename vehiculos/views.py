@@ -3,6 +3,7 @@ import random
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
+from django.contrib.auth.models import Group
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
@@ -15,6 +16,7 @@ from .models import Deposito, SolicitudCorreccion, Vehiculo
 ROLE_ADMIN = "administrador"
 ROLE_OPERADOR = "operador"
 ROLE_CONSULTA = "consulta"
+ALLOWED_EMAIL_DOMAIN = "@smyt.gob.mx"
 
 ROLE_LABELS = {
     ROLE_ADMIN: "Administrador",
@@ -30,6 +32,7 @@ ROLE_PERMISSIONS = {
         "liberar",
         "gestionar_depositos",
         "gestionar_correcciones",
+        "gestionar_usuarios",
         "solicitar_correccion",
     },
     ROLE_OPERADOR: {
@@ -96,6 +99,28 @@ def _get_current_user(request):
         return None
     User = get_user_model()
     return User.objects.filter(username=username).first()
+
+
+def _normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def _email_allowed(email):
+    normalized = _normalize_email(email)
+    if not normalized.endswith(ALLOWED_EMAIL_DOMAIN):
+        return False
+    if normalized.count("@") != 1:
+        return False
+    local_part = normalized.split("@", 1)[0]
+    return bool(local_part)
+
+
+def _get_role_groups():
+    groups = {}
+    for role in ROLE_LABELS:
+        group, _ = Group.objects.get_or_create(name=role)
+        groups[role] = group
+    return groups
 
 
 def _coerce_field_value(field_name, raw_value):
@@ -218,6 +243,7 @@ def dashboard(request):
         'can_liberar': _has_permission(request, "liberar"),
         'can_depositos': _has_permission(request, "gestionar_depositos"),
         'can_correcciones': _has_permission(request, "gestionar_correcciones"),
+        'can_usuarios': _has_permission(request, "gestionar_usuarios"),
     }
     return render(request, 'Vehiculos/dashboard.html', context)
 
@@ -260,6 +286,100 @@ def depositos_view(request):
         {
             'depositos': depositos_data,
             'can_depositos': True,
+        },
+    )
+
+
+def usuarios_view(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_usuarios"):
+        return _reject_unauthorized(request)
+
+    User = get_user_model()
+    role_groups = _get_role_groups()
+    role_names = list(ROLE_LABELS.keys())
+    current_user = _get_current_user(request)
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+
+        if action == 'create':
+            email = _normalize_email(request.POST.get('email'))
+            password = request.POST.get('password') or ''
+            role = (request.POST.get('role') or '').strip()
+
+            if not email or not password or role not in ROLE_LABELS:
+                messages.error(request, 'Completa correo, contrasena y rol para crear la cuenta.')
+                return redirect('usuarios')
+
+            if not _email_allowed(email):
+                messages.error(request, 'Solo se permiten correos con dominio @smyt.gob.mx.')
+                return redirect('usuarios')
+
+            if User.objects.filter(username=email).exists():
+                messages.error(request, 'Ya existe una cuenta registrada con ese correo.')
+                return redirect('usuarios')
+
+            user = User.objects.create_user(username=email, email=email, password=password)
+            role_group = role_groups[role]
+            user.groups.remove(*Group.objects.filter(name__in=role_names))
+            user.groups.add(role_group)
+            if role == ROLE_ADMIN:
+                user.is_staff = True
+                user.is_superuser = True
+            else:
+                user.is_staff = False
+                user.is_superuser = False
+            user.save()
+            messages.success(request, f'Cuenta {email} creada correctamente.')
+            return redirect('usuarios')
+
+        if action == 'delete':
+            user_id = request.POST.get('user_id')
+            target = User.objects.filter(id=user_id).first()
+            if not target:
+                messages.error(request, 'No se encontro la cuenta solicitada.')
+                return redirect('usuarios')
+
+            if current_user and target.id == current_user.id:
+                messages.error(request, 'No puedes eliminar tu propia cuenta.')
+                return redirect('usuarios')
+
+            target_email = _normalize_email(target.email or target.username)
+            if not _email_allowed(target_email):
+                messages.error(request, 'Solo puedes eliminar cuentas con dominio @smyt.gob.mx.')
+                return redirect('usuarios')
+
+            target.delete()
+            messages.success(request, f'Cuenta {target_email} eliminada correctamente.')
+            return redirect('usuarios')
+
+        messages.error(request, 'Accion invalida.')
+        return redirect('usuarios')
+
+    usuarios = []
+    for user in User.objects.order_by('username'):
+        display_email = (user.email or user.username or '').strip()
+        if not _email_allowed(display_email):
+            continue
+        role = _get_role_for_user(user)
+        usuarios.append(
+            {
+                'id': user.id,
+                'email': display_email,
+                'role': role,
+                'role_label': ROLE_LABELS.get(role, role),
+                'is_self': current_user and user.id == current_user.id,
+            }
+        )
+
+    return render(
+        request,
+        'Vehiculos/usuarios.html',
+        {
+            'usuarios': usuarios,
+            'role_options': [(key, ROLE_LABELS[key]) for key in ROLE_LABELS],
         },
     )
 

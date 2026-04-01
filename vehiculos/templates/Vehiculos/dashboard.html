@@ -445,6 +445,12 @@
             Correcciones
           </a>
           {% endif %}
+          {% if can_usuarios %}
+          <a class="action-link" href="{% url 'usuarios' %}">
+            <span class="action-badge">U</span>
+            Gestion de usuarios
+          </a>
+          {% endif %}
         </div>
       </nav>
     </section>
