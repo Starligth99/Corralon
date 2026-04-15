@@ -62,6 +62,11 @@ if _render_host:
 if not _allowed_hosts:
     _allowed_hosts = ["corralon-final.onrender.com"]
 ALLOWED_HOSTS = _allowed_hosts
+if DEBUG:
+    # Allow local development hosts when DEBUG is enabled
+    for _h in ("127.0.0.1", "localhost", "0.0.0.0"):
+        if _h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_h)
 
 CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS and ALLOWED_HOSTS:

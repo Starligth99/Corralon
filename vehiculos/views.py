@@ -418,7 +418,11 @@ def registrar_vehiculo(request):
         ]
         missing = [field for field in required if not (post.get(field) or '').strip()]
         if missing:
-            messages.error(request, 'Completa todos los campos obligatorios.')
+            missing_labels = [CORRECCION_FIELDS.get(field, field) for field in missing]
+            messages.error(
+                request,
+                f'Completa los campos obligatorios: {", ".join(missing_labels)}.',
+            )
             return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
 
         field_limits = {

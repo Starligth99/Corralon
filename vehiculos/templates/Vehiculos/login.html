@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -12,17 +12,17 @@
 
     <style>
         :root {
-            --primary: #572671;
-            --secondary: #FEE6C4;
-            --accent-1: #AA0365;
-            --accent-2: #91ABA5;
+            --primary: #c62828;
+            --secondary: #ffe0b2;
+            --accent-1: #ef6c00;
+            --accent-2: #fbc02d;
             --surface: #ffffff;
             --text-main: #2e3238;
             --text-muted: #7a7f87;
-            --line: #e8e4ee;
-            --bg: #f4f5f8;
-            --bg-soft: #f8f1fb;
-            --shadow: 0 24px 60px rgba(87, 38, 113, 0.2);
+            --line: #ffe8cc;
+            --bg: #e5e7eb;
+            --bg-soft: #e5e7eb;
+            --shadow: 0 24px 60px rgba(198, 40, 40, 0.2);
             --font-sans: "Sora", "Segoe UI", sans-serif;
             --font-display: "Space Grotesk", "Sora", sans-serif;
         }
@@ -35,9 +35,9 @@
             font-family: var(--font-sans);
             color: var(--text-main);
             background:
-                radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 42%),
-                radial-gradient(circle at 88% 0%, rgba(87, 38, 113, 0.22), transparent 36%),
-                radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.16), transparent 45%),
+                radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 42%),
+                radial-gradient(circle at 88% 0%, rgba(198, 40, 40, 0.12), transparent 36%),
+                radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.10), transparent 45%),
                 var(--bg);
         }
 
@@ -47,7 +47,7 @@
         }
 
         .login-card {
-            background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
             border: 1px solid var(--line);
             border-radius: 22px;
             padding: 2.3rem;
@@ -71,7 +71,7 @@
             width: 120px;
             display: block;
             margin: 0 auto 0.75rem;
-            filter: drop-shadow(0 10px 18px rgba(87, 38, 113, 0.22));
+            filter: drop-shadow(0 10px 18px rgba(198, 40, 40, 0.12));
         }
 
         .login-title {
@@ -103,15 +103,15 @@
         .form-select {
             height: 44px;
             border-radius: 10px;
-            border: 1px solid #d8dde7;
+            border: 1px solid #ffd8a8;
             font-size: 0.92rem;
-            background-color: #fbfbfd;
+            background-color: #fffdf8;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(87, 38, 113, 0.18);
+            box-shadow: 0 0 0 0.2rem rgba(198, 40, 40, 0.10);
             background-color: #fff;
         }
 
@@ -123,18 +123,18 @@
         .btn-primary {
             height: 46px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #66308b, var(--primary));
+            background: linear-gradient(135deg, #d32f2f, var(--primary));
             border: 0;
             font-weight: 600;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
-            box-shadow: 0 12px 26px rgba(87, 38, 113, 0.3);
+            box-shadow: 0 12px 26px rgba(198, 40, 40, 0.3);
         }
 
         .btn-primary:hover,
         .btn-primary:focus {
             transform: translateY(-1px);
-            box-shadow: 0 16px 30px rgba(87, 38, 113, 0.36);
-            background: linear-gradient(135deg, #5d2c80, #4d2264);
+            box-shadow: 0 16px 30px rgba(198, 40, 40, 0.36);
+            background: linear-gradient(135deg, #b71c1c, #8e0000);
         }
 
         a {
@@ -145,7 +145,7 @@
         }
 
         a:hover {
-            color: #7f024c;
+            color: #bf360c;
             text-decoration: underline;
         }
 
@@ -169,11 +169,11 @@
     <main class="login-page">
         <section class="login-card">
             <div class="text-center mb-3">
-                <img class="brand-logo" src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo PolicÃ­a Federal">
+                <img class="brand-logo" src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Escudo PolicÃƒÂ­a Federal">
             </div>
 
-            <h1 class="login-title">Sistema de Control Vehicular</h1>
-            <p class="login-subtitle">Gobierno del Estado de Tlaxcala</p>
+            <h1 class="login-title">Sistema de Clientes</h1>
+
 
             <form action="{% url 'login' %}" method="post" autocomplete="off">
                 {% csrf_token %}
@@ -205,7 +205,7 @@
                 </div>
             </form>
 
-            <div class="login-footer">2026 Gobierno del Estado de Tlaxcala</div>
+            <div class="login-footer">2026 Comercializadora Gonac SA de C V</div>
         </section>
     </main>
 
@@ -213,3 +213,6 @@
     <script src="{% static 'js/no-autocomplete.js' %}"></script>
 </body>
 </html>
+
+
+

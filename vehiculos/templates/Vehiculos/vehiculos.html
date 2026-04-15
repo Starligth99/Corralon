@@ -9,27 +9,27 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
-      --primary: #572671;
-      --secondary: #FEE6C4;
-      --accent-1: #AA0365;
-      --accent-2: #91ABA5;
-      --brand-900: #3d1b50;
-      --brand-700: #572671;
-      --brand-500: #AA0365;
-      --bg-soft: #fff7ee;
-      --line: #ead7c0;
+      --primary: #c62828;
+      --secondary: #ffe0b2;
+      --accent-1: #ef6c00;
+      --accent-2: #fbc02d;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --brand-500: #ef6c00;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
       --text-main: #1f2937;
       --text-muted: #6b7280;
-      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
       --font-sans: "Sora", "Segoe UI", sans-serif;
       --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
       background:
-        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
-        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
         var(--bg-soft);
       color: var(--text-main);
       min-height: 100vh;
@@ -37,21 +37,21 @@
     }
 
     .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
-      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .brand-mark {
       height: 48px;
       width: auto;
-      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
     }
 
     .surface {
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
       box-shadow: var(--shadow-soft);
       animation: riseIn 520ms ease;
     }
@@ -59,7 +59,7 @@
     .kpi {
       border-radius: 16px;
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, #ffffff 0%, #f5effb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff3cd 100%);
       padding: 0.9rem;
     }
 
@@ -87,10 +87,10 @@
       border: 1px solid transparent;
     }
 
-    .status-decomisado { color: #7f024c; background: #fce3f0; border-color: #f3b8d9; }
-    .status-custodia { color: #572671; background: #f3e9f8; border-color: #dec2f0; }
-    .status-liberado { color: #4f6e67; background: #ecf4f3; border-color: #c9dad5; }
-    .status-abandonado { color: #845f2d; background: #fff4de; border-color: #f0debe; }
+    .status-decomisado { color: #bf360c; background: #ffe0b2; border-color: #ffcc80; }
+    .status-custodia { color: #c62828; background: #fff0cc; border-color: #ffcc80; }
+    .status-liberado { color: #a84300; background: #fff9c4; border-color: #ffe082; }
+    .status-abandonado { color: #a45a00; background: #fff8e1; border-color: #ffe0b2; }
 
     .clickable-head {
       cursor: pointer;
@@ -98,16 +98,16 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #66308b, var(--primary));
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
       border: none;
-      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
+      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
       border-color: transparent;
-      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
+      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
     }
 
     .btn-outline-primary {
@@ -127,8 +127,8 @@
 
     .btn-danger:hover,
     .btn-danger:focus {
-      background-color: #7f024c;
-      border-color: #7f024c;
+      background-color: #bf360c;
+      border-color: #bf360c;
     }
 
     .text-primary {
@@ -140,7 +140,7 @@
     }
 
     .text-success {
-      color: #4f6e67 !important;
+      color: #a84300 !important;
     }
 
     h1, h2, h3, .navbar-brand {
@@ -151,7 +151,7 @@
     .detail-panel {
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
       box-shadow: var(--shadow-soft);
     }
 
@@ -185,7 +185,7 @@
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <img src="{% static 'Img/Escudo_PolicÃƒÂ­a_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
         <span>Corralon Vehicular</span>
       </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
@@ -203,8 +203,8 @@
     <section class="surface p-4 p-lg-5 mb-4">
       <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
         <div>
-          <h1 class="h4 mb-1">Inventario vehicular</h1>
-          <p class="text-secondary mb-0">Busqueda dinamica, filtros operativos y salida rapida a liberacion.</p>
+          <h1 class="h4 mb-1">Inventario de Clientes</h1>
+          <p class="text-secondary mb-0">Busqueda dinamica, filtros operativos y salida rapida a dar de alta a un Cliente.</p>
         </div>
         {% if can_registrar %}
         <a href="{% url 'registrar_vehiculo' %}" class="btn btn-primary btn-sm">Nuevo ingreso</a>
@@ -220,14 +220,8 @@
         </div>
         <div class="col-md-3">
           <div class="kpi">
-            <div class="kpi-label">En custodia</div>
+            <div class="kpi-label">Pendiente</div>
             <p class="kpi-value text-primary" id="kpiCustodia">0</p>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="kpi">
-            <div class="kpi-label">Decomisado</div>
-            <p class="kpi-value text-warning" id="kpiDecomisado">0</p>
           </div>
         </div>
         <div class="col-md-3">
@@ -241,26 +235,22 @@
       <div class="row g-3">
         <div class="col-md-3">
           <label for="qInput" class="form-label">Buscar</label>
-          <input id="qInput" type="text" class="form-control" placeholder="Folio, placa, VIN, marca">
+          <input id="qInput" type="text" class="form-control" placeholder="Numero de Cliente">
         </div>
         <div class="col-md-3">
-          <label for="tipoSelect" class="form-label">Tipo de servicio</label>
+          <label for="tipoSelect" class="form-label">Tipo de Cliente</label>
           <select id="tipoSelect" class="form-select">
             <option value="">Todos</option>
-            <option>Particular</option>
-            <option>Publico</option>
-            <option>Carga</option>
-            <option>Motocicleta</option>
+            <option>Cliente</option>
+            <option>Consignado</option>
           </select>
         </div>
         <div class="col-md-3">
-          <label for="estatusSelect" class="form-label">Estatus legal</label>
+          <label for="estatusSelect" class="form-label">Estatus del Cliente</label>
           <select id="estatusSelect" class="form-select">
             <option value="">Todos</option>
-            <option>En custodia</option>
-            <option>Decomisado</option>
-            <option>Liberado</option>
-            <option>Abandonado</option>
+            <option>(No dado de alta)</option>
+            <option>Alta</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -291,11 +281,11 @@
       </div>
       <div class="detail-grid">
         <div>
-          <div class="detail-label">Folio</div>
+          <div class="detail-label">Numero de Cliente</div>
           <div class="detail-value" id="detFolio">-</div>
         </div>
         <div>
-          <div class="detail-label">Vehiculo</div>
+          <div class="detail-label">Nombre</div>
           <div class="detail-value" id="detVehiculo">-</div>
         </div>
         <div>
@@ -303,15 +293,11 @@
           <div class="detail-value" id="detAnio">-</div>
         </div>
         <div>
-          <div class="detail-label">Placas</div>
+          <div class="detail-label">Tipo de Cliente</div>
           <div class="detail-value" id="detPlacas">-</div>
         </div>
         <div>
-          <div class="detail-label">VIN</div>
-          <div class="detail-value" id="detVin">-</div>
-        </div>
-        <div>
-          <div class="detail-label">Deposito</div>
+          <div class="detail-label">Estado donde opera</div>
           <div class="detail-value" id="detDeposito">-</div>
         </div>
         <div>
@@ -335,7 +321,7 @@
 
     <section class="surface p-3 p-lg-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h6 mb-0">Vehiculos registrados</h2>
+        <h2 class="h6 mb-0">Clientes registrados</h2>
         <small class="text-secondary">Mostrando <span id="rowsCount">0</span> resultados</small>
       </div>
 
@@ -467,9 +453,8 @@
 
       function renderKpis(rows) {
         kpiTotal.textContent = rows.length;
-        kpiCustodia.textContent = rows.filter((x) => x.estatus === "En custodia").length;
-        kpiDecomisado.textContent = rows.filter((x) => x.estatus === "Decomisado").length;
-        kpiLiberado.textContent = rows.filter((x) => x.estatus === "Liberado").length;
+        kpiCustodia.textContent = rows.filter((x) => x.estatus === "No dado de Alta").length;
+        kpiLiberado.textContent = rows.filter((x) => x.estatus === "Alta").length;
       }
 
       qInput.addEventListener("input", applyFilters);
@@ -508,8 +493,6 @@
             detVin.textContent = found.vin || "-";
             detDeposito.textContent = found.deposito || "-";
             detMotivo.textContent = found.motivo || "-";
-            detGruaMotivo.textContent = found.grua_motivo || "-";
-            detGruaDireccion.textContent = found.grua_direccion || "-";
             detEstatus.textContent = found.estatus || "-";
             detallePanel.classList.remove("d-none");
             detallePanel.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -526,3 +509,6 @@
   </script>
 </body>
 </html>
+
+
+

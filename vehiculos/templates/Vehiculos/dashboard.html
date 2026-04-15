@@ -13,29 +13,29 @@
 
   <style>
     :root {
-      --primary: #572671;
-      --secondary: #FEE6C4;
-      --accent-1: #AA0365;
-      --accent-2: #91ABA5;
-      --bg-soft: #fff7ee;
-      --card-border: #ecdcc7;
+      --primary: #d32f2f;
+      --secondary: #fbc02d;
+      --accent-1: #ff0000;
+      --accent-2: #fbc02d;
+      --bg-soft: #e5e7eb;
+      --card-border: #ffe0b2;
       --text-main: #1f2937;
       --text-muted: #6b7280;
-      --brand-1: #572671;
-      --brand-2: #91ABA5;
-      --ok: #91ABA5;
-      --warn: #AA0365;
-      --danger: #AA0365;
-      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --brand-1: #d32f2f;
+      --brand-2: #fbc02d;
+      --ok: #ffb300;
+      --warn: #ff0000;
+      --danger: #b71c1c;
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
       --font-sans: "Sora", "Segoe UI", sans-serif;
       --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
       background:
-        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.18), transparent 38%),
-        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 38%),
+        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
         var(--bg-soft);
       color: var(--text-main);
       min-height: 100vh;
@@ -43,15 +43,15 @@
     }
 
     .topbar {
-      background: linear-gradient(110deg, #3d1b50 0%, #572671 55%, #7f5a97 100%);
-      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.32);
+      background: linear-gradient(110deg, #ff9100 0%, #fbc02d 55%, #ff0000 100%);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.32);
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .brand-mark {
       height: 48px;
       width: auto;
-      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
     }
 
     .dashboard-shell {
@@ -64,7 +64,7 @@
       border: 1px solid var(--card-border);
       border-radius: 18px;
       box-shadow: var(--shadow-soft);
-      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
       animation: riseIn 520ms ease;
     }
 
@@ -119,18 +119,18 @@
     }
 
     .badge-pending {
-      background: #fce3f0;
-      color: #7f024c;
+      background: #ffe0b2;
+      color: #bf360c;
     }
 
     .badge-active {
-      background: #f3e9f8;
-      color: #572671;
+      background: #fff0cc;
+      color: #ff0000;
     }
 
     .badge-done {
-      background: #ecf4f3;
-      color: #4f6e67;
+      background: #fff9c4;
+      color: #ff8c00;
     }
 
     .text-primary-custom {
@@ -138,16 +138,16 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #66308b, var(--primary));
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
       border: none;
-      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
+      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
       border-color: transparent;
-      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
+      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
     }
 
     .link-primary,
@@ -156,11 +156,11 @@
     }
 
     .action-nav {
-      border: 1px solid rgba(87, 38, 113, 0.18);
+      border: 1px solid rgba(198, 40, 40, 0.10);
       border-radius: 16px;
       padding: 0.35rem 0.6rem;
       background: rgba(255, 255, 255, 0.88);
-      box-shadow: 0 18px 40px rgba(87, 38, 113, 0.12);
+      box-shadow: 0 18px 40px rgba(198, 40, 40, 0.12);
       backdrop-filter: blur(8px);
       display: flex;
       flex-wrap: wrap;
@@ -198,8 +198,8 @@
     }
 
     .action-link:hover {
-      background: rgba(87, 38, 113, 0.12);
-      border-color: rgba(87, 38, 113, 0.25);
+      background: rgba(198, 40, 40, 0.12);
+      border-color: rgba(198, 40, 40, 0.25);
       transform: translateY(-1px);
       color: var(--primary);
     }
@@ -219,8 +219,8 @@
       font-size: 0.78rem;
       font-weight: 700;
       color: #fff;
-      background: linear-gradient(135deg, #66308b, #4d2264);
-      box-shadow: 0 8px 16px rgba(87, 38, 113, 0.2);
+      background: linear-gradient(135deg, #ff0000, #ff9d00);
+      box-shadow: 0 8px 16px rgba(198, 40, 40, 0.2);
       flex: 0 0 auto;
     }
 
@@ -255,12 +255,12 @@
   <nav class="navbar navbar-expand-lg navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
-        <span>Sistema de Depositos Vehiculares</span>
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="GONAC" class="brand-mark">
+        <span>Sistema de Clientes</span>
       </span>
       <div class="d-flex align-items-center gap-3">
         <span class="text-white-50 small">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
-        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar sesion</a>
+        <a href="{% url 'logout' %}" class="btn btn-light btn-sm">Cerrar sesion</a>
       </div>
     </div>
   </nav>
@@ -291,7 +291,7 @@
     <section class="row g-3 mb-4">
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Vehiculos ingresados</p>
+          <p class="kpi-label">Clientes ingresados</p>
           <p class="kpi-value text-primary-custom" id="vehiculos">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
         </article>
@@ -305,14 +305,14 @@
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Liberados</p>
+          <p class="kpi-label">Clientes De Alta</p>
           <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
         </article>
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Tasa de liberacion</p>
+          <p class="kpi-label">Tasa de Clientes</p>
           <p class="kpi-value" id="tasaLiberacion" style="color: var(--brand-1)">0%</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
         </article>
@@ -322,7 +322,7 @@
     <section class="row g-3 mb-4">
       <div class="col-lg-4">
         <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Estado actual del inventario</h2>
+          <h2 class="h6 mb-3">Estado actual de Clientes</h2>
           <div class="chart-wrap">
             <canvas id="estadoChart"></canvas>
           </div>
@@ -341,7 +341,7 @@
     <section class="row g-3 mb-4">
       <div class="col-lg-6">
         <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Distribucion por tipo de vehiculo</h2>
+          <h2 class="h6 mb-3">Distribucion por tipo de Cliente</h2>
           <div class="chart-wrap">
             <canvas id="tipoChart"></canvas>
           </div>
@@ -357,8 +357,8 @@
             <table class="table align-middle mb-0">
               <thead>
                 <tr>
-                  <th>Folio</th>
-                  <th>Vehiculo</th>
+                  <th>Numero de Cliente</th>
+                  <th>Nombre</th>
                   <th>Estado</th>
                   <th>Fecha</th>
                 </tr>
@@ -393,50 +393,50 @@
 
     <section>
       <nav class="action-nav">
-        <span class="action-title">Accesos rapidos</span>
+        <span class="action-title">Acciones Permitidos</span>
         <div class="action-links">
           {% if can_registrar %}
           <a class="action-link" href="{% url 'registrar_vehiculo' %}">
             <span class="action-badge">R</span>
-            Registrar ingreso
+            Registrar Usuario
           </a>
           {% else %}
           <span class="action-link disabled">
             <span class="action-badge">R</span>
-            Registrar ingreso
+            Registrar Usuario
           </span>
           {% endif %}
           {% if can_inventario %}
           <a class="action-link" href="{% url 'vehiculos' %}">
             <span class="action-badge">I</span>
-            Inventario vehicular
+            Inventario Clientes
           </a>
           {% else %}
           <span class="action-link disabled">
             <span class="action-badge">I</span>
-            Inventario vehicular
+            Inventario Clientes
           </span>
           {% endif %}
           {% if can_liberar %}
           <a class="action-link" href="{% url 'liberar_vehiculo' %}">
             <span class="action-badge">L</span>
-            Liberacion / Baja
+            Alta / Baja
           </a>
           {% else %}
           <span class="action-link disabled">
             <span class="action-badge">L</span>
-            Liberacion / Baja
+            Alta / Baja
           </span>
           {% endif %}
           {% if can_depositos %}
           <a class="action-link" href="{% url 'depositos' %}">
             <span class="action-badge">D</span>
-            Gestion de depositos
+            Gestion de Clientes
           </a>
           {% else %}
           <span class="action-link disabled">
             <span class="action-badge">D</span>
-            Gestion de depositos
+            Gestion de Clientes
           </span>
           {% endif %}
           {% if can_correcciones %}
@@ -457,7 +457,7 @@
   </main>
 
   <footer class="text-center py-3 text-secondary small">
-    Sistema de Gestion de Corralon Vehicular | Cumplimiento Normativo Estatal
+    Sistema de Gestion de Clientes de Gonac
   </footer>
 
   {{ resumen_data|json_script:"resumen-data" }}
@@ -470,11 +470,11 @@
     const detailFromServer = JSON.parse(document.getElementById("detalle-data").textContent);
 
     const chartColors = {
-      primary: "#572671",
-      secondary: "#91ABA5",
-      warning: "#AA0365",
-      success: "#91ABA5",
-      neutral: "#8a7898"
+      primary: "#c62828",
+      secondary: "#fbc02d",
+      warning: "#ef6c00",
+      success: "#fbc02d",
+      neutral: "#b08968"
     };
 
     function safeNumber(value, defaultValue = 0) {
@@ -546,7 +546,7 @@
             label: "Ingresos",
             data: values,
             borderColor: chartColors.primary,
-            backgroundColor: "rgba(87, 38, 113, 0.12)",
+            backgroundColor: "rgba(198, 40, 40, 0.12)",
             fill: true,
             tension: 0.3,
             pointRadius: 4,
@@ -584,11 +584,11 @@
             label: "Vehiculos",
             data: values,
             backgroundColor: [
-              "#572671",
-              "#AA0365",
-              "#91ABA5",
-              "#7f5a97",
-              "#c8bcae"
+              "#c62828",
+              "#ef6c00",
+              "#fbc02d",
+              "#ff9800",
+              "#ffd8a8"
             ],
             borderRadius: 8,
             maxBarThickness: 38
@@ -649,3 +649,6 @@
   </script>
 </body>
 </html>
+
+
+

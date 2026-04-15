@@ -1,38 +1,38 @@
 .border-custom-primary {
-  border: 1px solid #572671; /* morado */
+  border: 1px solid #c62828; /* rojo */
 }
 
 .border-custom-warning {
-  border: 1px solid #aa0365; /* morado */
+  border: 1px solid #ef6c00; /* naranja */
 }
 
 .border-custom-success {
-  border: 1px solid #91aba5; /* morado */
+  border: 1px solid #fbc02d; /* amarillo */
 }
 
 .btn-primary-custom {
-  background-color: #572671; /* morado */
-  border-color: #572671; /* morado */
+  background-color: #c62828; /* rojo */
+  border-color: #c62828; /* rojo */
 }
 
 .btn-secondary-custom {
-  background-color: #aa0365; /* morado */
-  border-color: #aa0365; /* morado */
+  background-color: #ef6c00; /* naranja */
+  border-color: #ef6c00; /* naranja */
 }
 
 .btn-success-custom {
-  background-color: #91aba5; /* morado */
-  border-color: #91aba5; /* morado */
+  background-color: #fbc02d; /* amarillo */
+  border-color: #fbc02d; /* amarillo */
 }
 
 .text-primary-custom {
-  color: #572671; /* morado */
+  color: #c62828; /* rojo */
 }
 
 .text-warning-custom {
-  color: #aa0365; /* morado */
+  color: #ef6c00; /* naranja */
 }
 
 .text-success-custom {
-  color: #91aba5; /* morado */
+  color: #fbc02d; /* amarillo */
 }

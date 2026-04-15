@@ -9,28 +9,28 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
-      --primary: #572671;
-      --secondary: #FEE6C4;
-      --accent-1: #AA0365;
-      --accent-2: #91ABA5;
-      --brand-900: #3d1b50;
-      --brand-700: #572671;
-      --brand-500: #AA0365;
-      --bg-soft: #fff7ee;
-      --line: #ead7c0;
-      --ok: #91ABA5;
+      --primary: #c62828;
+      --secondary: #ffe0b2;
+      --accent-1: #ef6c00;
+      --accent-2: #fbc02d;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --brand-500: #ef6c00;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
+      --ok: #fbc02d;
       --text-main: #1f2937;
       --text-muted: #6b7280;
-      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
       --font-sans: "Sora", "Segoe UI", sans-serif;
       --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
       background:
-        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
-        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
         var(--bg-soft);
       color: var(--text-main);
       min-height: 100vh;
@@ -38,21 +38,21 @@
     }
 
     .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
-      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .brand-mark {
       height: 48px;
       width: auto;
-      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
     }
 
     .surface {
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
       box-shadow: var(--shadow-soft);
       animation: riseIn 520ms ease;
     }
@@ -61,22 +61,22 @@
       padding: 0.5rem 0.75rem;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: #f8fbff;
+      background: #fffdf5;
       color: #475569;
       font-weight: 600;
       font-size: 0.86rem;
     }
 
     .wizard-step.active {
-      background: #f3e9f8;
-      border-color: #dec2f0;
+      background: #fff0cc;
+      border-color: #ffcc80;
       color: var(--primary);
     }
 
     .wizard-step.done {
-      background: #ecf4f3;
-      border-color: #c9dad5;
-      color: #4f6e67;
+      background: #fff9c4;
+      border-color: #ffe082;
+      color: #a84300;
     }
 
     .step-panel {
@@ -120,37 +120,37 @@
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      border: 1px solid #c8d7ea;
-      background: #f3f8ff;
+      border: 1px solid #ffd8a8;
+      background: #fff6e5;
       padding: 0.3rem 0.7rem;
       font-size: 0.8rem;
-      color: #23446b;
+      color: #9a3412;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #66308b, var(--primary));
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
       border: none;
-      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
+      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
       border-color: transparent;
-      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
+      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
     }
 
     .btn-success {
       background-color: var(--accent-2);
       border-color: var(--accent-2);
       color: #1f2937;
-      box-shadow: 0 10px 22px rgba(145, 171, 165, 0.3);
+      box-shadow: 0 10px 22px rgba(251, 192, 45, 0.3);
     }
 
     .btn-success:hover,
     .btn-success:focus {
-      background-color: #7f9792;
-      border-color: #7f9792;
+      background-color: #f57c00;
+      border-color: #f57c00;
       color: #1f2937;
     }
 
@@ -189,7 +189,7 @@
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Escudo Policia Federal" class="brand-mark">
         <span>Corralon Vehicular</span>
       </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
@@ -217,8 +217,7 @@
 
           <div class="d-flex flex-wrap gap-2 mb-3" id="wizardSteps">
             <span class="wizard-step active" data-step-indicator="0">1. Proceso</span>
-            <span class="wizard-step" data-step-indicator="1">2. Vehiculo</span>
-            <span class="wizard-step" data-step-indicator="2">3. Legal y cierre</span>
+            <span class="wizard-step" data-step-indicator="1">2. Cliente y Cierre</span>
           </div>
 
           <div class="progress mb-4" role="progressbar" aria-label="Progreso de captura" aria-valuemin="0" aria-valuemax="100">
@@ -236,22 +235,9 @@
                   <input type="date" class="form-control" name="fecha_ingreso" required>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Folio</label>
+                  <label class="form-label">Numero de Cliente</label>
                   <input type="text" class="form-control" id="folio" name="folio" value="{{ folio_sugerido }}" maxlength="30" readonly aria-readonly="true" required>
                   <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Turno</label>
-                  <select class="form-select" name="turno" required>
-                    <option value="">Selecciona</option>
-                    <option>Matutino</option>
-                    <option>Vespertino</option>
-                    <option>Nocturno</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Autoridad que remite</label>
-                  <input type="text" class="form-control" name="autoridad" maxlength="120" required>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-between align-items-center">
@@ -270,20 +256,10 @@
                   <div class="form-text text-warning">No hay depositos registrados.</div>
                   {% endif %}
                 </div>
-                <div class="col-12">
-                  <label class="form-label">Motivo de ingreso</label>
-                  <textarea class="form-control" id="motivo" name="motivo" rows="3" maxlength="280" required></textarea>
-                  <div class="d-flex justify-content-end mt-1">
-                    <small class="text-secondary"><span id="motivoCount">0</span>/280</small>
-                  </div>
-                </div>
                 <div class="col-md-6">
-                  <label class="form-label">Motivo de grua</label>
-                  <textarea class="form-control" name="grua_motivo" rows="2" maxlength="240" required></textarea>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Direccion donde se encargo la grua</label>
-                  <input type="text" class="form-control" name="grua_direccion" maxlength="180" required>
+                  <label class="form-label">Ubicacion de la persona (Google Maps o direccion)</label>
+                  <input type="text" class="form-control" name="grua_direccion" maxlength="180" required placeholder="Ejemplo: https://maps.google.com/... o Calle/Colonia">
+                  <div class="form-text">Campo obligatorio para registrar el vehiculo.</div>
                 </div>
               </div>
             </section>
@@ -300,7 +276,7 @@
                   <input type="text" class="form-control" name="modelo" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Año</label>
+                  <label class="form-label">Anio</label>
                   <input type="number" class="form-control" name="anio" min="1950" max="2035" required>
                 </div>
                 <div class="col-md-4">

@@ -9,26 +9,26 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
-      --primary: #572671;
-      --secondary: #FEE6C4;
-      --accent-1: #AA0365;
-      --accent-2: #91ABA5;
-      --brand-900: #3d1b50;
-      --brand-700: #572671;
-      --line: #ead7c0;
-      --bg-soft: #fff7ee;
+      --primary: #c62828;
+      --secondary: #ffe0b2;
+      --accent-1: #ef6c00;
+      --accent-2: #fbc02d;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --line: #ffe0b2;
+      --bg-soft: #e5e7eb;
       --text-main: #1f2937;
       --text-muted: #6b7280;
-      --shadow-soft: 0 18px 45px rgba(87, 38, 113, 0.12);
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
       --font-sans: "Sora", "Segoe UI", sans-serif;
       --font-display: "Space Grotesk", "Sora", sans-serif;
     }
 
     body {
       background:
-        radial-gradient(circle at 12% 10%, rgba(170, 3, 101, 0.18), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(87, 38, 113, 0.16), transparent 36%),
-        radial-gradient(circle at 50% 95%, rgba(145, 171, 165, 0.14), transparent 48%),
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
         var(--bg-soft);
       color: var(--text-main);
       min-height: 100vh;
@@ -36,21 +36,21 @@
     }
 
     .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #7f5a97);
-      box-shadow: 0 12px 32px rgba(87, 38, 113, 0.3);
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .brand-mark {
       height: 48px;
       width: auto;
-      filter: drop-shadow(0 10px 16px rgba(87, 38, 113, 0.3));
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
     }
 
     .surface {
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f6f1fb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
       box-shadow: var(--shadow-soft);
       animation: riseIn 520ms ease;
     }
@@ -60,9 +60,9 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      border: 1px solid #dec2f0;
-      background: #f3e9f8;
-      color: #572671;
+      border: 1px solid #ffcc80;
+      background: #fff0cc;
+      color: #c62828;
       padding: 0.32rem 0.7rem;
       font-size: 0.8rem;
       font-weight: 600;
@@ -72,14 +72,14 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #AA0365;
+      background: #ef6c00;
     }
 
     .check-card {
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 0.75rem;
-      background: #f8fbff;
+      background: #fffdf5;
     }
 
     .summary-row {
@@ -105,16 +105,16 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #66308b, var(--primary));
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
       border: none;
-      box-shadow: 0 12px 26px rgba(87, 38, 113, 0.28);
+      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus {
-      background: linear-gradient(135deg, #5d2c80, #4d2264);
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
       border-color: transparent;
-      box-shadow: 0 16px 30px rgba(87, 38, 113, 0.32);
+      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
     }
 
     .btn-outline-primary {
@@ -134,14 +134,14 @@
 
     .btn-danger:hover,
     .btn-danger:focus {
-      background-color: #7f024c;
-      border-color: #7f024c;
+      background-color: #bf360c;
+      border-color: #bf360c;
     }
 
     .alert-warning {
-      background-color: #fff4de;
-      border-color: #f0debe;
-      color: #845f2d;
+      background-color: #fff8e1;
+      border-color: #ffe0b2;
+      color: #a45a00;
     }
 
     h1, h2, h3, .navbar-brand {
@@ -165,8 +165,8 @@
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_Policía_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
-        <span>Liberacion de Vehiculos</span>
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Escudo Policia Federal" class="brand-mark">
+        <span>Proceso de clientes dados de alta</span>
       </span>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
     </div>
@@ -185,7 +185,7 @@
         <section class="surface p-4 p-lg-5">
           <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
             <div>
-              <h1 class="h4 mb-1">Proceso de liberacion</h1>
+              <h1 class="h4 mb-1">Proceso de Alta</h1>
               <p class="text-secondary mb-0">Valida expediente, cumplimiento ambiental y autorizacion final.</p>
             </div>
             <span class="status-chip"><span class="status-dot"></span><span id="semaforoText">Validacion pendiente</span></span>
@@ -215,7 +215,7 @@
               </div>
             </div>
 
-            <div class="surface p-3 mb-4" style="background:#f8fbff;">
+            <div class="surface p-3 mb-4" style="background:#fffdf5;">
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Numero de oficio / acta</label>
@@ -428,3 +428,6 @@
   </script>
 </body>
 </html>
+
+
+
