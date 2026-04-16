@@ -49,11 +49,21 @@ def _env_list(key):
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_bool("DEBUG", default=True)
+DEBUG = _env_bool("DEBUG", default=False)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# In production set the SECRET_KEY environment variable to a strong random value.
+# Generate one with:  python -c "import secrets; print(secrets.token_urlsafe(50))"
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_',
+)
+if not DEBUG and SECRET_KEY.startswith('django-insecure'):
+    raise RuntimeError(
+        'SECRET_KEY no esta configurado. Establece la variable de entorno '
+        'SECRET_KEY con un valor seguro antes de iniciar en produccion.'
+    )
 
 _allowed_hosts = _env_list("ALLOWED_HOSTS")
 _render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
@@ -184,3 +194,27 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [
     BASE_DIR / 'vehiculos/static',
 ]
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ── Security hardening (active in production, i.e. when DEBUG is False) ──
+if not DEBUG:
+    # HTTPS / HSTS
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31_536_000          # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Cookie flags
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+
+    # Misc headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+
+# Session expiry — 8-hour sliding window (applies in all environments)
+SESSION_COOKIE_AGE = 8 * 60 * 60   # seconds
+SESSION_SAVE_EVERY_REQUEST = True
