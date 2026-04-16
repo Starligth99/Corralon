@@ -22,15 +22,24 @@ class Command(BaseCommand):
 
         defaults = {
             "ADMIN_EMAIL": "miguelromeroalcantara@smyt.gob.mx",
-            "ADMIN_PASSWORD": "12345",
             "OPERADOR_EMAIL": "gamalielalexis@smyt.gob.mx",
-            "OPERADOR_PASSWORD": "12345",
             "CONSULTA_EMAIL": "camilalunatepox@symt.gob.mx",
-            "CONSULTA_PASSWORD": "12345",
         }
 
         def get_env(key):
-            return os.getenv(key, defaults[key])
+            return os.getenv(key, defaults.get(key, ""))
+
+        # Passwords MUST come from environment variables — never use hardcoded defaults.
+        missing_passwords = [
+            key for key in ("ADMIN_PASSWORD", "OPERADOR_PASSWORD", "CONSULTA_PASSWORD")
+            if not os.getenv(key)
+        ]
+        if missing_passwords:
+            self.stderr.write(self.style.ERROR(
+                f"Variables de entorno requeridas no definidas: {', '.join(missing_passwords)}. "
+                "Establece las contraseñas antes de ejecutar seed_roles."
+            ))
+            return
 
         User = get_user_model()
 
