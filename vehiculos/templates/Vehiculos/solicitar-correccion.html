@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Solicitar correccion | Corralon</title>
+  <title>Solicitar correccion | Sistema de Clientes</title>
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
@@ -64,8 +64,8 @@
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_PolicÃƒÂ­a_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
-        <span>Corralon Vehicular</span>
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Sistema de Clientes</span>
       </a>
       <a href="{% url 'vehiculos' %}" class="btn btn-outline-light btn-sm">Volver al inventario</a>
     </div>
@@ -90,7 +90,7 @@
 
       {% if vehiculo %}
       <div class="alert alert-secondary py-2 mb-4">
-        <strong>Vehiculo:</strong> {{ vehiculo.folio }} Ã¢â‚¬â€ {{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.anio }})
+        <strong>Vehiculo:</strong> {{ vehiculo.folio }} - {{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.anio }})
       </div>
       {% else %}
       <div class="alert alert-warning py-2 mb-4">
@@ -134,6 +134,7 @@
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
 </body>
 </html>
+
 
 
 

@@ -1,11 +1,11 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | Corralon Vehicular</title>
+  <title>Dashboard | Sistema de Clientes</title>
 
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -406,17 +406,20 @@
             Registrar Usuario
           </span>
           {% endif %}
-          {% if can_inventario %}
-          <a class="action-link" href="{% url 'vehiculos' %}">
+          {% if can_operador %}
+          <a class="action-link" href="{% url 'operador' %}">
+            <span class="action-badge">R2</span>
+          </a>
+          {% else %}
+          <span class="action-link enable">
+            <span class="action-badge">R2</span>
+            Registracion
+          </span>
+          {% endif %}
+          <a class="action-link" id="btnInventario" href="{% url 'vehiculos' %}">
             <span class="action-badge">I</span>
             Inventario Clientes
           </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">I</span>
-            Inventario Clientes
-          </span>
-          {% endif %}
           {% if can_liberar %}
           <a class="action-link" href="{% url 'liberar_vehiculo' %}">
             <span class="action-badge">L</span>
@@ -649,6 +652,7 @@
   </script>
 </body>
 </html>
+
 
 
 

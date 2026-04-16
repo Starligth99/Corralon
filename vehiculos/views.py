@@ -29,6 +29,7 @@ ROLE_PERMISSIONS = {
         "ver_dashboard",
         "ver_inventario",
         "registrar",
+        "operadorregistrador",
         "liberar",
         "gestionar_depositos",
         "gestionar_correcciones",
@@ -37,6 +38,7 @@ ROLE_PERMISSIONS = {
     },
     ROLE_OPERADOR: {
         "ver_dashboard",
+        "operadorregistrador",
         "ver_inventario",
         "registrar",
         "liberar",
@@ -436,7 +438,171 @@ def registrar_vehiculo(request):
             'modelo': 60,
             'color': 40,
             'placas': 15,
-            'vin': 17,
+            'vin': 12,
+            'numero_motor': 40,
+            'tipo_servicio': 30,
+            'combustible': 20,
+            'oficio': 80,
+            'titular': 120,
+            'observaciones': 280,
+        }
+        for field, max_len in field_limits.items():
+            value = (post.get(field) or '').strip()
+            if value and len(value) > max_len:
+                label = CORRECCION_FIELDS.get(field, field)
+                messages.error(request, f'El campo {label} excede {max_len} caracteres.')
+                return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        vin_value = (post.get('vin') or '').strip()
+        if vin_value and len(vin_value) != 17:
+            messages.error(request, 'El VIN debe tener exactamente 17 caracteres.')
+            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        folio = request.session.get("folio_sugerido") or _generate_folio()
+        folio = folio.strip().upper()
+        if Vehiculo.objects.filter(folio=folio).exists():
+            folio = _generate_folio().strip().upper()
+
+        try:
+            anio = int(post.get('anio', '0'))
+            kilometraje = int(post.get('kilometraje', '0') or 0)
+        except ValueError:
+            messages.error(request, 'Revisa los campos numericos.')
+            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        vehiculo = Vehiculo.objects.create(
+            folio=folio,
+            fecha_ingreso=post.get('fecha_ingreso'),
+            turno=(post.get('turno') or '').strip(),
+            autoridad=(post.get('autoridad') or '').strip(),
+            deposito=(post.get('deposito') or '').strip(),
+            motivo=(post.get('motivo') or '').strip(),
+            grua_motivo=(post.get('grua_motivo') or '').strip(),
+            grua_direccion=(post.get('grua_direccion') or '').strip(),
+            marca=(post.get('marca') or '').strip(),
+            modelo=(post.get('modelo') or '').strip(),
+            anio=anio,
+            color=(post.get('color') or '').strip(),
+            placas=(post.get('placas') or '').strip().upper(),
+            vin=(post.get('vin') or '').strip().upper(),
+            numero_motor=(post.get('numero_motor') or '').strip().upper(),
+            tipo_servicio=(post.get('tipo_servicio') or '').strip(),
+            combustible=(post.get('combustible') or '').strip(),
+            kilometraje=kilometraje,
+            estatus_legal=(post.get('estatus_legal') or Vehiculo.ESTATUS_EN_CUSTODIA).strip(),
+            oficio=(post.get('oficio') or '').strip(),
+            fecha_oficio=post.get('fecha_oficio') or None,
+            titular=(post.get('titular') or '').strip(),
+            observaciones=(post.get('observaciones') or '').strip(),
+            documento_nombre=archivo.name if archivo else '',
+            liberado=(post.get('estatus_legal') or '').strip() == Vehiculo.ESTATUS_LIBERADO,
+        )
+
+        if vehiculo.liberado:
+            vehiculo.fecha_liberacion = timezone.now()
+            vehiculo.save(update_fields=['fecha_liberacion'])
+
+        request.session.pop("folio_sugerido", None)
+        messages.success(request, f'Vehiculo {vehiculo.folio} registrado correctamente.')
+        return redirect('vehiculos')
+
+    return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+
+def vehiculos_list(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "ver_inventario"):
+        return redirect('login')
+
+    depositos = list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True))
+    deposito_query = (request.GET.get('deposito') or '').strip()
+
+    data = [
+        {
+            'folio': v.folio,
+            'marca': v.marca,
+            'modelo': v.modelo,
+            'anio': v.anio,
+            'placas': v.placas,
+            'vin': v.vin,
+            'deposito': v.deposito,
+            'motivo': v.motivo,
+            'grua_motivo': v.grua_motivo,
+            'grua_direccion': v.grua_direccion,
+            'tipo': v.tipo_servicio,
+            'estatus': v.estatus_legal,
+            'fecha': v.fecha_ingreso.isoformat() if v.fecha_ingreso else '',
+        }
+        for v in Vehiculo.objects.all()
+    ]
+    return render(
+        request,
+        'Vehiculos/vehiculos.html',
+        {
+            'vehiculos_data': data,
+            'can_registrar': _has_permission(request, "registrar"),
+            'can_liberar': _has_permission(request, "liberar"),
+            'can_solicitar_correccion': _has_permission(request, "solicitar_correccion"),
+            'depositos': depositos,
+            'deposito_actual': deposito_query,
+        },
+    )
+
+
+def operadorregistrador_view(request, operadorregistrador_id):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "operadorregistrador"):
+        return _reject_unauthorized(request)
+
+    def build_context():
+        return {
+            'depositos': list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True)),
+            'can_depositos': _has_permission(request, "gestionar_depositos"),
+            'folio_sugerido': _get_folio_sugerido(request),
+        }
+
+    if request.method == 'POST':
+        post = request.POST
+        archivo = request.FILES.get('documento_pdf')
+
+        required = [
+            'fecha_ingreso',
+            'autoridad',
+            'deposito',
+            'sap',
+            'nombre',
+            'direccion',
+            'zona',
+            'rfc',
+            'numero_motor',
+            'tipo_servicio',
+            'estatus_legal',
+            'grua_motivo',
+            'grua_direccion',
+        ]
+        missing = [field for field in required if not (post.get(field) or '').strip()]
+        if missing:
+            missing_labels = [CORRECCION_FIELDS.get(field, field) for field in missing]
+            messages.error(
+                request,
+                f'Completa los campos obligatorios: {", ".join(missing_labels)}.',
+            )
+            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+        field_limits = {
+            'turno': 20,
+            'autoridad': 120,
+            'deposito': 120,
+            'motivo': 280,
+            'grua_motivo': 240,
+            'grua_direccion': 180,
+            'marca': 60,
+            'modelo': 60,
+            'color': 40,
+            'placas': 15,
+            'vin': 12,
             'numero_motor': 40,
             'tipo_servicio': 30,
             'combustible': 20,

@@ -1,10 +1,10 @@
-﻿{% load static %}
+!{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registrar Clientes  | Sistema de Clientes</title>
+  <title>Registrar Ventas</title>
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
@@ -190,7 +190,7 @@
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
         <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
-        <span>Sistema de Clientes</span>
+        <span>Sistema de Clientes "Operador"</span>
       </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
     </div>
@@ -224,7 +224,7 @@
             <div id="wizardProgress" class="progress-bar bg-success" style="width: 33%">33%</div>
           </div>
 
-          <form id="registroForm" method="post" action="{% url 'registrar_vehiculo' %}" enctype="multipart/form-data" novalidate>
+          <form id="registroForm" method="post" action="{% url 'operador' %}" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
             <section class="step-panel active" data-step-panel="0">
@@ -234,48 +234,70 @@
                   <label class="form-label">Fecha de ingreso</label>
                   <input type="date" class="form-control" name="fecha_ingreso" required>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Numero de Cliente</label>
-                  <input type="text" class="form-control" id="folio" name="folio" value="{{ folio_sugerido }}" maxlength="30" readonly aria-readonly="true" required>
-                  <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
-                </div>
-                <div class="col-md-6">
-                  <div class="d-flex justify-content-between align-items-center">
+                <!-- <div class="col-md-6"> -->
+                  <!-- <div class="d-flex justify-content-between align-items-center">
                     <label class="form-label">Estado</label>
                     {% if can_depositos %}
                     <a class="small text-decoration-none" href="{% url 'depositos' %}">Administrar Estados</a>
                     {% endif %}
-                  </div>
-                  <select class="form-select" name="deposito" required>
-                    <option value="">Selecciona</option>
-                    {% for deposito in depositos %}
-                    <option value="{{ deposito }}">{{ deposito }}</option>
-                    {% endfor %}
-                  </select>
-                  {% if not depositos %}
-                  <div class="form-text text-warning">No hay depositos registrados.</div>
-                  {% endif %}
-                </div>
-                <div class="col-md-6">
+                  </div> -->
+                <!-- </div> -->
+                <!-- <div class="col-md-6">
                   <label class="form-label">Ubicacion de la persona (Google Maps o direccion)</label>
                   <input type="text" class="form-control" name="grua_direccion" maxlength="180" required placeholder="Ejemplo: https://maps.google.com/... o Calle/Colonia">
                   <div class="form-text">Campo obligatorio para registrar el vehiculo.</div>
+                </div> -->
+                <div class="col-md-4">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" name="Nombre" maxlength="60" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" name="Apellidos" maxlength="60" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Numero de Sap</label>
+                  <input type="number" class="form-control" name="Sap" min="1950" max="2035" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Direccion</label>
+                  <input type="text" class="form-control" name="Direccion" maxlength="40" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Zona</label>
+                  <input type="text" class="form-control text-uppercase" id="Zona" name="Zona" placeholder="Example" maxlength="15" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Estado</label>
+                  <input type="text" class="form-control text-uppercase" id="Zona" name="Estado" placeholder="Example" maxlength="15" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Poblacion</label>
+                  <input type="text" class="form-control text-uppercase" id="Zona" name="Poblacion" placeholder="Example" maxlength="15" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Tipo de cuenta</label>
+                  <select class="form-select" name="tipo_cuenta" required>
+                    <option value="">Selecciona</option>
+                    <option>Directo</option>
+                    <option>Prespecto</option>
+                  </select>
                 </div>
               </div>
             </section>
 
             <section class="step-panel" data-step-panel="1">
-              <h2 class="h6 mb-3">Identificacion del Cliente</h2>
+              <h2 class="h6 mb-3">Latitud y longitud</h2>
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Nombre</label>
+                  <label class="form-label">latitud</label>
                   <input type="text" class="form-control" name="marca" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Apellidos</label>
+                  <label class="form-label">Longitud</label>
                   <input type="text" class="form-control" name="modelo" maxlength="60" required>
                 </div>
-                <div class="col-md-4">
+                <!-- <div class="col-md-4">
                   <label class="form-label">Edad</label>
                   <input type="number" class="form-control" name="anio" min="1950" max="2035" required>
                 </div>
@@ -296,11 +318,11 @@
                     <option>Carga</option>
                     <option>Motocicleta</option>
                   </select>
-                </div>
+                </div> -->
               </div>
             </section>
 
-            <section class="step-panel" data-step-panel="2">
+            <!-- <section class="step-panel" data-step-panel="2">
               <h2 class="h6 mb-3">Estatus legal y evidencia</h2>
               <div class="row g-3">
                 <div class="col-md-4">
@@ -326,17 +348,13 @@
                   <label class="form-label">Titular registrado</label>
                   <input type="text" class="form-control" name="titular" maxlength="120" required>
                 </div>
-                <div class="col-md-6">
+                 <div class="col-md-6">
                   <label class="form-label">Documento principal (PDF)</label>
                   <input type="file" class="form-control" id="documentoPdf" name="documento_pdf" accept="application/pdf" required>
                   <div class="mt-2">
                     <span id="pdfPill" class="file-pill d-none"></span>
                   </div>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Observaciones</label>
-                  <textarea class="form-control" name="observaciones" rows="3" maxlength="280" placeholder="Condicion fisica, objetos, notas relevantes"></textarea>
-                </div>
+                </div> 
                 <div class="col-12">
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="confirmacion" required>
@@ -346,7 +364,7 @@
                   </div>
                 </div>
               </div>
-            </section>
+            </section> -->
 
             <div class="d-flex flex-wrap justify-content-between gap-2 mt-4">
               <button type="button" id="btnPrev" class="btn btn-outline-secondary" disabled>Anterior</button>
@@ -363,27 +381,27 @@
         <aside class="surface p-4 sticky-top" style="top: 1rem;">
           <h2 class="h6 mb-3">Resumen en vivo</h2>
           <div class="summary-item">
-            <div class="summary-label">Folio</div>
+            <div class="summary-label">Numero de Sap</div>
             <div id="sumFolio" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Fecha</div>
+            <div class="summary-label">Nombre</div>
             <div id="sumFecha" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Vehiculo</div>
+            <div class="summary-label">Apellido</div>
             <div id="sumVehiculo" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Placas</div>
+            <div class="summary-label">Direccion</div>
             <div id="sumPlacas" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">VIN</div>
+            <div class="summary-label">Estado</div>
             <div id="sumVin" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Estatus legal</div>
+            <div class="summary-label">Tipo de cliente</div>
             <div id="sumEstatus" class="summary-value">-</div>
           </div>
           <div class="summary-item">

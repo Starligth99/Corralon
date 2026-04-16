@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Inventario Vehicular | Corralon</title>
+  <title>Inventario Vehicular | Sistema de Clientes</title>
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
@@ -185,8 +185,8 @@
   <nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/Escudo_PolicÃƒÂ­a_Federal_2019.png' %}" alt="Escudo Policia Federal" class="brand-mark">
-        <span>Corralon Vehicular</span>
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Sistema de Clientes</span>
       </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
     </div>
@@ -249,8 +249,11 @@
           <label for="estatusSelect" class="form-label">Estatus del Cliente</label>
           <select id="estatusSelect" class="form-select">
             <option value="">Todos</option>
-            <option>(No dado de alta)</option>
-            <option>Alta</option>
+            <option>En custodia</option>
+            <option>Decomisado</option>
+            <option>Siniestrado</option>
+            <option>Abandonado</option>
+            <option>Liberado</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -267,8 +270,8 @@
           <select id="ordenSelect" class="form-select">
             <option value="fecha_desc">Fecha ingreso (reciente)</option>
             <option value="fecha_asc">Fecha ingreso (antigua)</option>
-            <option value="anio_desc">Año (mayor)</option>
-            <option value="anio_asc">Año (menor)</option>
+            <option value="anio_desc">Anio (mayor)</option>
+            <option value="anio_asc">Anio (menor)</option>
           </select>
         </div>
       </div>
@@ -289,12 +292,16 @@
           <div class="detail-value" id="detVehiculo">-</div>
         </div>
         <div>
-          <div class="detail-label">Año</div>
+          <div class="detail-label">Anio</div>
           <div class="detail-value" id="detAnio">-</div>
         </div>
         <div>
           <div class="detail-label">Tipo de Cliente</div>
           <div class="detail-value" id="detPlacas">-</div>
+        </div>
+        <div>
+          <div class="detail-label">VIN</div>
+          <div class="detail-value" id="detVin">-</div>
         </div>
         <div>
           <div class="detail-label">Estado donde opera</div>
@@ -362,7 +369,6 @@
       const rowsCount = document.getElementById("rowsCount");
       const kpiTotal = document.getElementById("kpiTotal");
       const kpiCustodia = document.getElementById("kpiCustodia");
-      const kpiDecomisado = document.getElementById("kpiDecomisado");
       const kpiLiberado = document.getElementById("kpiLiberado");
       const heads = document.querySelectorAll("[data-sort]");
       const detallePanel = document.getElementById("detallePanel");
@@ -453,8 +459,8 @@
 
       function renderKpis(rows) {
         kpiTotal.textContent = rows.length;
-        kpiCustodia.textContent = rows.filter((x) => x.estatus === "No dado de Alta").length;
-        kpiLiberado.textContent = rows.filter((x) => x.estatus === "Alta").length;
+        kpiCustodia.textContent = rows.filter((x) => x.estatus !== "Liberado").length;
+        kpiLiberado.textContent = rows.filter((x) => x.estatus === "Liberado").length;
       }
 
       qInput.addEventListener("input", applyFilters);
@@ -509,6 +515,7 @@
   </script>
 </body>
 </html>
+
 
 
 
