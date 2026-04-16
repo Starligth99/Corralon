@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Bloquear binario grande accidental
 vehiculos/static/Img/install.exe
+
+# SQLite database (may contain sensitive data -- never commit)
+db.sqlite3

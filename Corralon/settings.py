@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import secrets
+
 import dj_database_url
 from pathlib import Path
 
@@ -50,10 +52,20 @@ def _env_list(key):
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+w+)w01-&1uo6&rgu^p_a8u83yovalt0_xz8(al%cl0v$i6)q_'
+# Read from the environment; fall back to a random key only during local development.
+_secret_key = os.getenv("SECRET_KEY")
+if not _secret_key:
+    if _env_bool("DEBUG", default=False):
+        _secret_key = "django-insecure-dev-only-key-do-not-use-in-production"
+    else:
+        raise RuntimeError(
+            "SECRET_KEY environment variable is required in production. "
+            "Generate one with: python -c 'import secrets; print(secrets.token_urlsafe(50))'"
+        )
+SECRET_KEY = _secret_key
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_bool("DEBUG", default=True)
+DEBUG = _env_bool("DEBUG", default=False)
 
 _allowed_hosts = _env_list("ALLOWED_HOSTS")
 _render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
@@ -184,3 +196,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [
     BASE_DIR / 'vehiculos/static',
 ]
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ---------------------------------------------------------------------------
+# Production security settings (only enforced when DEBUG is False)
+# ---------------------------------------------------------------------------
+if not DEBUG:
+    # HSTS -- tell browsers to only use HTTPS for this domain
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Redirect all HTTP requests to HTTPS
+    SECURE_SSL_REDIRECT = True
+
+    # Cookies only sent over HTTPS
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Prevent browsers from MIME-sniffing the content type
+    SECURE_CONTENT_TYPE_NOSNIFF = True

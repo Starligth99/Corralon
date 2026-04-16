@@ -1,8 +1,15 @@
 import os
+import secrets
+import string
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+
+
+def _random_password(length=16):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 class Command(BaseCommand):
@@ -20,17 +27,21 @@ class Command(BaseCommand):
             group, _ = Group.objects.get_or_create(name=role)
             groups[role] = group
 
-        defaults = {
+        email_defaults = {
             "ADMIN_EMAIL": "miguelromeroalcantara@smyt.gob.mx",
-            "ADMIN_PASSWORD": "12345",
             "OPERADOR_EMAIL": "gamalielalexis@smyt.gob.mx",
-            "OPERADOR_PASSWORD": "12345",
             "CONSULTA_EMAIL": "camilalunatepox@symt.gob.mx",
-            "CONSULTA_PASSWORD": "12345",
         }
 
-        def get_env(key):
-            return os.getenv(key, defaults[key])
+        def get_email(key):
+            return os.getenv(key, email_defaults[key])
+
+        def get_password(key):
+            value = os.getenv(key)
+            if value:
+                return value, False
+            generated = _random_password()
+            return generated, True
 
         User = get_user_model()
 
@@ -55,12 +66,12 @@ class Command(BaseCommand):
                 user.groups.add(groups[role])
             return created, password_set
 
-        admin_email = get_env("ADMIN_EMAIL")
-        admin_password = get_env("ADMIN_PASSWORD")
-        oper_email = get_env("OPERADOR_EMAIL")
-        oper_password = get_env("OPERADOR_PASSWORD")
-        cons_email = get_env("CONSULTA_EMAIL")
-        cons_password = get_env("CONSULTA_PASSWORD")
+        admin_email = get_email("ADMIN_EMAIL")
+        admin_password, admin_generated = get_password("ADMIN_PASSWORD")
+        oper_email = get_email("OPERADOR_EMAIL")
+        oper_password, oper_generated = get_password("OPERADOR_PASSWORD")
+        cons_email = get_email("CONSULTA_EMAIL")
+        cons_password, cons_generated = get_password("CONSULTA_PASSWORD")
 
         created_admin, pw_admin = ensure_user(admin_email, admin_password, "administrador", is_admin=True)
         created_oper, pw_oper = ensure_user(oper_email, oper_password, "operador", is_admin=False)
@@ -70,6 +81,20 @@ class Command(BaseCommand):
         self.stdout.write(f"Administrador: {admin_email} (password {'creada' if pw_admin else 'existente'})")
         self.stdout.write(f"Operador: {oper_email} (password {'creada' if pw_oper else 'existente'})")
         self.stdout.write(f"Consulta: {cons_email} (password {'creada' if pw_cons else 'existente'})")
+
+        # Warn if passwords were auto-generated (env vars not set)
+        for label, generated, pw in [
+            ("ADMIN_PASSWORD", admin_generated, admin_password),
+            ("OPERADOR_PASSWORD", oper_generated, oper_password),
+            ("CONSULTA_PASSWORD", cons_generated, cons_password),
+        ]:
+            if generated:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"WARNING: {label} env var not set. "
+                        f"Generated random password: {pw}  -- save it now!"
+                    )
+                )
 
         if created_admin or created_oper or created_cons:
             self.stdout.write(self.style.SUCCESS("Usuarios creados o actualizados correctamente."))
