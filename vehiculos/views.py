@@ -1,5 +1,5 @@
-﻿from datetime import date
-import random
+﻿import secrets
+from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
@@ -145,11 +145,11 @@ def _generate_folio():
     today = timezone.localdate()
     prefix = today.strftime("FOL-%y%m%d-")
     for _ in range(25):
-        serial = random.randint(100, 999)
+        serial = secrets.randbelow(900) + 100  # 100..999
         folio = f"{prefix}{serial}"
         if not Vehiculo.objects.filter(folio=folio).exists():
             return folio
-    return f"{prefix}{random.randint(1000, 9999)}"
+    return f"{prefix}{secrets.randbelow(9000) + 1000}"  # 1000..9999
 
 
 def _get_folio_sugerido(request):
@@ -438,7 +438,7 @@ def registrar_vehiculo(request):
             'modelo': 60,
             'color': 40,
             'placas': 15,
-            'vin': 12,
+            'vin': 17,
             'numero_motor': 40,
             'tipo_servicio': 30,
             'combustible': 20,
@@ -602,7 +602,7 @@ def operadorregistrador_view(request, operadorregistrador_id):
             'modelo': 60,
             'color': 40,
             'placas': 15,
-            'vin': 12,
+            'vin': 17,
             'numero_motor': 40,
             'tipo_servicio': 30,
             'combustible': 20,
