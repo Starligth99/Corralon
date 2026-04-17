@@ -438,7 +438,7 @@ def registrar_vehiculo(request):
             'modelo': 60,
             'color': 40,
             'placas': 15,
-            'vin': 12,
+            'vin': 17,
             'numero_motor': 40,
             'tipo_servicio': 30,
             'combustible': 20,
@@ -550,7 +550,7 @@ def vehiculos_list(request):
     )
 
 
-def operadorregistrador_view(request, operadorregistrador_id):
+def operadorregistrador_view(request):
     if not _is_logged_in(request):
         return redirect('login')
     if not _has_permission(request, "operadorregistrador"):
@@ -602,7 +602,7 @@ def operadorregistrador_view(request, operadorregistrador_id):
             'modelo': 60,
             'color': 40,
             'placas': 15,
-            'vin': 12,
+            'vin': 17,
             'numero_motor': 40,
             'tipo_servicio': 30,
             'combustible': 20,
@@ -671,47 +671,6 @@ def operadorregistrador_view(request, operadorregistrador_id):
         return redirect('vehiculos')
 
     return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
-
-
-def vehiculos_list(request):
-    if not _is_logged_in(request):
-        return redirect('login')
-    if not _has_permission(request, "ver_inventario"):
-        return redirect('login')
-
-    depositos = list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True))
-    deposito_query = (request.GET.get('deposito') or '').strip()
-
-    data = [
-        {
-            'folio': v.folio,
-            'marca': v.marca,
-            'modelo': v.modelo,
-            'anio': v.anio,
-            'placas': v.placas,
-            'vin': v.vin,
-            'deposito': v.deposito,
-            'motivo': v.motivo,
-            'grua_motivo': v.grua_motivo,
-            'grua_direccion': v.grua_direccion,
-            'tipo': v.tipo_servicio,
-            'estatus': v.estatus_legal,
-            'fecha': v.fecha_ingreso.isoformat() if v.fecha_ingreso else '',
-        }
-        for v in Vehiculo.objects.all()
-    ]
-    return render(
-        request,
-        'Vehiculos/vehiculos.html',
-        {
-            'vehiculos_data': data,
-            'can_registrar': _has_permission(request, "registrar"),
-            'can_liberar': _has_permission(request, "liberar"),
-            'can_solicitar_correccion': _has_permission(request, "solicitar_correccion"),
-            'depositos': depositos,
-            'deposito_actual': deposito_query,
-        },
-    )
 
 
 def liberar_vehiculo(request):
