@@ -428,6 +428,17 @@
             Mis clientes
           </span>
           {% endif %}
+          {% if can_historial %}
+          <a class="action-link" href="{% url 'historial' %}">
+            <span class="action-badge">H</span>
+            Mi historial
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">H</span>
+            Mi historial
+          </span>
+          {% endif %}
           <a class="action-link" id="btnInventario" href="{% url 'vehiculos' %}">
             <span class="action-badge">I</span>
             Inventario Clientes

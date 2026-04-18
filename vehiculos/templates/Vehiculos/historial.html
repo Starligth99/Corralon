@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi historial</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #c62828;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --accent-1: #ef6c00;
+      --accent-2: #fbc02d;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
+      --text-main: #1f2937;
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mes-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 0.9rem;
+      background: #ffffff;
+    }
+
+    .mes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: linear-gradient(90deg, #fff0cc 0%, #fff8e1 100%);
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .mes-header:hover {
+      background: linear-gradient(90deg, #ffe082 0%, #fff0cc 100%);
+    }
+
+    .mes-titulo {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--brand-900);
+      letter-spacing: 0.02em;
+    }
+
+    .mes-badge {
+      display: inline-block;
+      background: var(--brand-700);
+      color: #fff;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .mes-caret {
+      transition: transform 200ms ease;
+      color: var(--brand-900);
+    }
+
+    .mes-header[aria-expanded="true"] .mes-caret {
+      transform: rotate(180deg);
+    }
+
+    .mes-body {
+      padding: 0;
+      background: #fffdf5;
+      border-top: 1px dashed var(--line);
+    }
+
+    .mes-table {
+      margin: 0;
+    }
+
+    .mes-table th {
+      background: #fff8e1;
+      color: #6b7280;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .mes-table td {
+      vertical-align: middle;
+    }
+
+    .sap-badge {
+      display: inline-block;
+      background: var(--brand-700);
+      color: #fff;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-right: 0.4rem;
+    }
+
+    .tipo-pill {
+      display: inline-block;
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .tipo-pill.directo {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tipo-pill.prospecto {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #6b7280;
+    }
+
+    .summary-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      background: #fff0cc;
+      color: var(--brand-900);
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Mi historial</span>
+      </a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'operador' %}" class="btn btn-light btn-sm">+ Nuevo cliente</a>
+        <a href="{% url 'clientes_list' %}" class="btn btn-outline-light btn-sm">Mis clientes</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="h4 mb-1">Historial de actividad</h1>
+          <p class="text-secondary mb-0">Toda tu actividad agrupada por mes.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <span class="summary-pill">Meses con actividad: <strong>{{ total_meses }}</strong></span>
+          <span class="summary-pill">Clientes registrados: <strong>{{ total_clientes }}</strong></span>
+        </div>
+      </div>
+
+      {% if meses %}
+      <div class="accordion" id="historialAccordion">
+        {% for m in meses %}
+        <div class="mes-card">
+          <button class="mes-header" type="button" data-bs-toggle="collapse" data-bs-target="#mes-{{ m.slug }}" aria-expanded="false" aria-controls="mes-{{ m.slug }}">
+            <span class="d-flex align-items-center gap-3 flex-wrap">
+              <span class="mes-titulo">{{ m.etiqueta }}</span>
+              <span class="mes-badge">{{ m.total }} cliente{{ m.total|pluralize:"s" }}</span>
+            </span>
+            <span class="mes-caret fs-4">&#9662;</span>
+          </button>
+          <div id="mes-{{ m.slug }}" class="collapse" data-bs-parent="#historialAccordion">
+            <div class="mes-body">
+              <div class="table-responsive">
+                <table class="table mes-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Codigo SAP</th>
+                      <th>Nombre</th>
+                      <th>Tipo de cuenta</th>
+                      <th>Lista de precios</th>
+                      <th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for c in m.clientes %}
+                    <tr>
+                      <td>
+                        <span class="sap-badge">SAP</span>
+                        <strong>{{ c.sap }}</strong>
+                      </td>
+                      <td>{{ c.nombre }}</td>
+                      <td>
+                        {% if c.tipo_cuenta == 'DIRECTO' %}
+                          <span class="tipo-pill directo">Directo</span>
+                        {% elif c.tipo_cuenta == 'PROSPECTO' %}
+                          <span class="tipo-pill prospecto">Prospecto</span>
+                        {% else %}
+                          {{ c.get_tipo_cuenta_display }}
+                        {% endif %}
+                      </td>
+                      <td>{{ c.lista_precios|default:"-" }}</td>
+                      <td>{{ c.fecha_registro|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p>Todavia no tienes actividad registrada.</p>
+        <a href="{% url 'operador' %}" class="btn btn-primary">Registrar tu primer cliente</a>
+      </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
