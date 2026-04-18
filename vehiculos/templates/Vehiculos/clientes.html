@@ -139,6 +139,42 @@
       color: #1e293b;
     }
 
+    .credito-panel {
+      margin-top: 1.25rem;
+      padding: 1rem 1.1rem 1.1rem;
+      border: 1px solid #fbc02d;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fffdf5 0%, #fff3c4 100%);
+    }
+
+    .credito-panel h3 {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--brand-900);
+      margin-bottom: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .credito-panel .form-check {
+      padding: 0.4rem 0 0.4rem 1.75rem;
+      border-bottom: 1px dashed #fde68a;
+    }
+
+    .credito-panel .form-check:last-child {
+      border-bottom: none;
+    }
+
+    .credito-panel label {
+      font-size: 0.82rem;
+      color: #374151;
+    }
+
+    .credito-panel .form-control {
+      max-width: 160px;
+    }
+
     .empty-state {
       text-align: center;
       padding: 3rem 1rem;
@@ -267,6 +303,80 @@
                   </div>
                 </div>
               </div>
+
+              {% if can_editar_credito %}
+              <section class="credito-panel">
+                <h3>Panel de credito (Admin / Admin Master)</h3>
+                <form method="post" action="{% url 'editar_credito' c.id %}">
+                  {% csrf_token %}
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="dias_maximos_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias maximos de entrega</label>
+                      <input type="number" min="0" step="1" name="dias_maximos_entrega" id="dias_maximos_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_maximos_entrega }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label for="holgura_dto_pp-{{ c.id }}" class="form-label small fw-semibold">Holgura Dto PP</label>
+                      <input type="number" min="0" step="0.01" name="holgura_dto_pp" id="holgura_dto_pp-{{ c.id }}" class="form-control form-control-sm" value="{{ c.holgura_dto_pp }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label for="dias_para_fecha_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias para fecha de entrega</label>
+                      <input type="number" min="0" step="1" name="dias_para_fecha_entrega" id="dias_para_fecha_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_para_fecha_entrega }}">
+                    </div>
+                  </div>
+
+                  <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="pedido_excede_limite_credito" id="pedido_excede_limite_credito-{{ c.id }}" {% if c.pedido_excede_limite_credito %}checked{% endif %}>
+                        <label class="form-check-label" for="pedido_excede_limite_credito-{{ c.id }}">&iquest;Pedido puede exceder limite de credito?</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloquear_cliente_factura_vencida" id="bloquear_cliente_factura_vencida-{{ c.id }}" {% if c.bloquear_cliente_factura_vencida %}checked{% endif %}>
+                        <label class="form-check-label" for="bloquear_cliente_factura_vencida-{{ c.id }}">Bloquear cliente por factura vencida</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_venta_documento_pendiente" id="bloqueo_venta_documento_pendiente-{{ c.id }}" {% if c.bloqueo_venta_documento_pendiente %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_venta_documento_pendiente-{{ c.id }}">Bloqueo venta por documento pendiente</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="orden_compra_adquirida" id="orden_compra_adquirida-{{ c.id }}" {% if c.orden_compra_adquirida %}checked{% endif %}>
+                        <label class="form-check-label" for="orden_compra_adquirida-{{ c.id }}">Orden de compra adquirida</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permitir_devolucion" id="permitir_devolucion-{{ c.id }}" {% if c.permitir_devolucion %}checked{% endif %}>
+                        <label class="form-check-label" for="permitir_devolucion-{{ c.id }}">Permitir devolucion</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_venta" id="bloqueo_venta-{{ c.id }}" {% if c.bloqueo_venta %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_venta-{{ c.id }}">Bloqueo de venta</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_cheques_pendientes" id="bloqueo_cheques_pendientes-{{ c.id }}" {% if c.bloqueo_cheques_pendientes %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_cheques_pendientes-{{ c.id }}">Bloqueo de cheques pendientes</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tomar_inventario" id="tomar_inventario-{{ c.id }}" {% if c.tomar_inventario %}checked{% endif %}>
+                        <label class="form-check-label" for="tomar_inventario-{{ c.id }}">&iquest;Tomar inventario?</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="modificar_condicion_pago" id="modificar_condicion_pago-{{ c.id }}" {% if c.modificar_condicion_pago %}checked{% endif %}>
+                        <label class="form-check-label" for="modificar_condicion_pago-{{ c.id }}">Modificar la condicion de pago</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="orden_compra_automatico" id="orden_compra_automatico-{{ c.id }}" {% if c.orden_compra_automatico %}checked{% endif %}>
+                        <label class="form-check-label" for="orden_compra_automatico-{{ c.id }}">Orden de compra automatico (Auto Venta)</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary btn-sm">Guardar panel de credito</button>
+                  </div>
+                </form>
+              </section>
+              {% endif %}
             </div>
           </div>
         </div>
