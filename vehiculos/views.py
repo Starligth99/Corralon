@@ -36,6 +36,7 @@ _ADMIN_PERMS = {
     "gestionar_correcciones",
     "gestionar_usuarios",
     "solicitar_correccion",
+    "gestionar_credito",
 }
 
 ROLE_PERMISSIONS = {
@@ -665,9 +666,79 @@ def clientes_list_view(request):
         'rol': role,
         'rol_label': ROLE_LABELS[role],
         'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
+        'can_editar_credito': _has_permission(request, "gestionar_credito"),
+        'credito_fields_numericos': CREDITO_FIELDS_NUMERICOS,
+        'credito_fields_booleanos': CREDITO_FIELDS_BOOLEANOS,
         'total_clientes': len(clientes),
     }
     return render(request, 'Vehiculos/clientes.html', context)
+
+
+CREDITO_FIELDS_NUMERICOS = [
+    ('dias_maximos_entrega', 'Dias maximos de entrega', 'int'),
+    ('holgura_dto_pp', 'Holgura Dto PP', 'decimal'),
+    ('dias_para_fecha_entrega', 'Dias para fecha de entrega', 'int'),
+]
+
+CREDITO_FIELDS_BOOLEANOS = [
+    ('pedido_excede_limite_credito', '¿Pedido puede exceder limite de credito?'),
+    ('bloquear_cliente_factura_vencida', 'Bloquear cliente por factura vencida'),
+    ('bloqueo_venta_documento_pendiente', 'Bloqueo venta por documento pendiente'),
+    ('orden_compra_adquirida', 'Orden de compra adquirida'),
+    ('permitir_devolucion', 'Permitir devolucion'),
+    ('bloqueo_venta', 'Bloqueo de venta'),
+    ('bloqueo_cheques_pendientes', 'Bloqueo de cheques pendientes'),
+    ('tomar_inventario', '¿Tomar inventario?'),
+    ('modificar_condicion_pago', 'Modificar la condicion de pago'),
+    ('orden_compra_automatico', 'Orden de compra automatico (Auto Venta)'),
+]
+
+
+def editar_credito_view(request, cliente_id):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_credito"):
+        return _reject_unauthorized(request)
+    if request.method != 'POST':
+        return redirect('clientes_list')
+
+    try:
+        cliente = Cliente.objects.get(pk=cliente_id)
+    except Cliente.DoesNotExist:
+        messages.error(request, 'Cliente no encontrado.')
+        return redirect('clientes_list')
+
+    errores = []
+
+    for field, label, tipo in CREDITO_FIELDS_NUMERICOS:
+        raw = (request.POST.get(field) or '').strip()
+        if raw == '':
+            setattr(cliente, field, 0)
+            continue
+        try:
+            if tipo == 'int':
+                value = int(raw)
+                if value < 0:
+                    raise ValueError
+            else:
+                value = float(raw)
+                if value < 0:
+                    raise ValueError
+            setattr(cliente, field, value)
+        except ValueError:
+            errores.append(f'{label} debe ser un numero valido no negativo.')
+
+    for field, _label in CREDITO_FIELDS_BOOLEANOS:
+        setattr(cliente, field, request.POST.get(field) == 'on')
+
+    if errores:
+        for err in errores:
+            messages.error(request, err)
+        return redirect('clientes_list')
+
+    cliente.save()
+    messages.success(request, f'Panel de credito de {cliente.sap} actualizado correctamente.')
+    return redirect('clientes_list')
 
 
 MESES_ES = {
