@@ -255,6 +255,7 @@ def dashboard(request):
         'can_usuarios': _has_permission(request, "gestionar_usuarios"),
         'can_operador': _has_permission(request, "operadorregistrador"),
         'can_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
+        'can_historial': _has_permission(request, "operadorregistrador"),
     }
     return render(request, 'Vehiculos/dashboard.html', context)
 
@@ -667,6 +668,55 @@ def clientes_list_view(request):
         'total_clientes': len(clientes),
     }
     return render(request, 'Vehiculos/clientes.html', context)
+
+
+MESES_ES = {
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+    5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+    9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+}
+
+
+def historial_view(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "operadorregistrador"):
+        return _reject_unauthorized(request)
+
+    user = _get_current_user(request)
+    if user is None:
+        return redirect('login')
+
+    clientes = (
+        Cliente.objects.filter(operador=user)
+        .order_by('-fecha_registro', '-id')
+    )
+
+    grupos = {}
+    for cliente in clientes:
+        key = (cliente.fecha_registro.year, cliente.fecha_registro.month)
+        grupos.setdefault(key, []).append(cliente)
+
+    meses = []
+    for (anio, mes), items in sorted(grupos.items(), reverse=True):
+        meses.append({
+            'anio': anio,
+            'mes': mes,
+            'mes_nombre': MESES_ES[mes],
+            'etiqueta': f'{MESES_ES[mes]} {anio}',
+            'slug': f'{anio}-{mes:02d}',
+            'total': len(items),
+            'clientes': items,
+        })
+
+    context = {
+        'meses': meses,
+        'total_clientes': clientes.count(),
+        'total_meses': len(meses),
+        'rol': _get_role(request),
+        'rol_label': ROLE_LABELS[_get_role(request)],
+    }
+    return render(request, 'Vehiculos/historial.html', context)
 
 
 def vehiculos_list(request):
