@@ -409,11 +409,23 @@
           {% if can_operador %}
           <a class="action-link" href="{% url 'operador' %}">
             <span class="action-badge">R2</span>
+            Registrar cliente
           </a>
           {% else %}
-          <span class="action-link enable">
+          <span class="action-link disabled">
             <span class="action-badge">R2</span>
-            Registracion
+            Registrar cliente
+          </span>
+          {% endif %}
+          {% if can_clientes %}
+          <a class="action-link" href="{% url 'clientes_list' %}">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">C</span>
+            Mis clientes
           </span>
           {% endif %}
           <a class="action-link" id="btnInventario" href="{% url 'vehiculos' %}">

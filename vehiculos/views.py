@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from .models import Deposito, SolicitudCorreccion, Vehiculo
+from .models import Cliente, Deposito, PerfilUsuario, SolicitudCorreccion, Vehiculo
 
 
 ROLE_ADMIN_MASTER = "admin_master"
@@ -253,6 +253,8 @@ def dashboard(request):
         'can_depositos': _has_permission(request, "gestionar_depositos"),
         'can_correcciones': _has_permission(request, "gestionar_correcciones"),
         'can_usuarios': _has_permission(request, "gestionar_usuarios"),
+        'can_operador': _has_permission(request, "operadorregistrador"),
+        'can_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
     }
     return render(request, 'Vehiculos/dashboard.html', context)
 
@@ -557,127 +559,114 @@ def vehiculos_list(request):
     )
 
 
-def operadorregistrador_view(request, operadorregistrador_id):
+CLIENTE_FIELD_LABELS = {
+    'fecha_registro': 'Fecha de registro',
+    'sap': 'Codigo SAP',
+    'nombre': 'Nombre del lugar',
+    'tipo_cuenta': 'Tipo de cuenta',
+    'lista_precios': 'Lista de precios',
+    'latitud': 'Latitud',
+    'longitud': 'Longitud',
+    'direccion': 'Direccion',
+    'zona': 'Zona',
+    'estado': 'Estado',
+    'poblacion': 'Poblacion',
+}
+
+
+def operadorregistrador_view(request):
     if not _is_logged_in(request):
         return redirect('login')
     if not _has_permission(request, "operadorregistrador"):
         return _reject_unauthorized(request)
 
-    def build_context():
+    def build_context(values=None):
         return {
-            'depositos': list(Deposito.objects.order_by('nombre').values_list('nombre', flat=True)),
-            'can_depositos': _has_permission(request, "gestionar_depositos"),
-            'folio_sugerido': _get_folio_sugerido(request),
+            'form_values': values or {},
         }
 
     if request.method == 'POST':
         post = request.POST
-        archivo = request.FILES.get('documento_pdf')
+        values = {key: (post.get(key) or '').strip() for key in CLIENTE_FIELD_LABELS}
 
-        required = [
-            'fecha_ingreso',
-            'autoridad',
-            'deposito',
-            'sap',
-            'nombre',
-            'direccion',
-            'zona',
-            'rfc',
-            'numero_motor',
-            'tipo_servicio',
-            'estatus_legal',
-            'grua_motivo',
-            'grua_direccion',
-        ]
-        missing = [field for field in required if not (post.get(field) or '').strip()]
+        required = ['fecha_registro', 'sap', 'nombre', 'tipo_cuenta',
+                    'latitud', 'longitud', 'direccion', 'zona', 'estado', 'poblacion']
+        missing = [field for field in required if not values.get(field)]
         if missing:
-            missing_labels = [CORRECCION_FIELDS.get(field, field) for field in missing]
-            messages.error(
-                request,
-                f'Completa los campos obligatorios: {", ".join(missing_labels)}.',
-            )
-            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+            labels = [CLIENTE_FIELD_LABELS[field] for field in missing]
+            messages.error(request, f'Completa los campos obligatorios: {", ".join(labels)}.')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        field_limits = {
-            'turno': 20,
-            'autoridad': 120,
-            'deposito': 120,
-            'motivo': 280,
-            'grua_motivo': 240,
-            'grua_direccion': 180,
-            'marca': 60,
-            'modelo': 60,
-            'color': 40,
-            'placas': 15,
-            'vin': 12,
-            'numero_motor': 40,
-            'tipo_servicio': 30,
-            'combustible': 20,
-            'oficio': 80,
-            'titular': 120,
-            'observaciones': 280,
-        }
-        for field, max_len in field_limits.items():
-            value = (post.get(field) or '').strip()
-            if value and len(value) > max_len:
-                label = CORRECCION_FIELDS.get(field, field)
-                messages.error(request, f'El campo {label} excede {max_len} caracteres.')
-                return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+        if values['tipo_cuenta'] not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
+            messages.error(request, 'Selecciona un tipo de cuenta valido (Directo o Prospecto).')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        vin_value = (post.get('vin') or '').strip()
-        if vin_value and len(vin_value) != 17:
-            messages.error(request, 'El VIN debe tener exactamente 17 caracteres.')
-            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+        sap = values['sap'].upper()
+        if Cliente.objects.filter(sap=sap).exists():
+            messages.error(request, f'Ya existe un cliente con el codigo SAP "{sap}".')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        folio = request.session.get("folio_sugerido") or _generate_folio()
-        folio = folio.strip().upper()
-        if Vehiculo.objects.filter(folio=folio).exists():
-            folio = _generate_folio().strip().upper()
+        fecha = parse_date(values['fecha_registro'])
+        if fecha is None:
+            messages.error(request, 'La fecha de registro no es valida.')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
 
         try:
-            anio = int(post.get('anio', '0'))
-            kilometraje = int(post.get('kilometraje', '0') or 0)
+            latitud = float(values['latitud'])
+            longitud = float(values['longitud'])
         except ValueError:
-            messages.error(request, 'Revisa los campos numericos.')
-            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+            messages.error(request, 'Latitud y longitud deben ser numeros.')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        vehiculo = Vehiculo.objects.create(
-            folio=folio,
-            fecha_ingreso=post.get('fecha_ingreso'),
-            turno=(post.get('turno') or '').strip(),
-            autoridad=(post.get('autoridad') or '').strip(),
-            deposito=(post.get('deposito') or '').strip(),
-            motivo=(post.get('motivo') or '').strip(),
-            grua_motivo=(post.get('grua_motivo') or '').strip(),
-            grua_direccion=(post.get('grua_direccion') or '').strip(),
-            marca=(post.get('marca') or '').strip(),
-            modelo=(post.get('modelo') or '').strip(),
-            anio=anio,
-            color=(post.get('color') or '').strip(),
-            placas=(post.get('placas') or '').strip().upper(),
-            vin=(post.get('vin') or '').strip().upper(),
-            numero_motor=(post.get('numero_motor') or '').strip().upper(),
-            tipo_servicio=(post.get('tipo_servicio') or '').strip(),
-            combustible=(post.get('combustible') or '').strip(),
-            kilometraje=kilometraje,
-            estatus_legal=(post.get('estatus_legal') or Vehiculo.ESTATUS_EN_CUSTODIA).strip(),
-            oficio=(post.get('oficio') or '').strip(),
-            fecha_oficio=post.get('fecha_oficio') or None,
-            titular=(post.get('titular') or '').strip(),
-            observaciones=(post.get('observaciones') or '').strip(),
-            documento_nombre=archivo.name if archivo else '',
-            liberado=(post.get('estatus_legal') or '').strip() == Vehiculo.ESTATUS_LIBERADO,
+        cliente = Cliente.objects.create(
+            sap=sap,
+            nombre=values['nombre'],
+            tipo_cuenta=values['tipo_cuenta'],
+            lista_precios=values['lista_precios'].upper(),
+            latitud=latitud,
+            longitud=longitud,
+            direccion=values['direccion'],
+            zona=values['zona'].upper(),
+            estado=values['estado'].upper(),
+            poblacion=values['poblacion'].upper(),
+            fecha_registro=fecha,
+            operador=_get_current_user(request),
         )
 
-        if vehiculo.liberado:
-            vehiculo.fecha_liberacion = timezone.now()
-            vehiculo.save(update_fields=['fecha_liberacion'])
+        messages.success(request, f'Cliente {cliente.sap} - {cliente.nombre} registrado correctamente.')
+        return redirect('clientes_list')
 
-        request.session.pop("folio_sugerido", None)
-        messages.success(request, f'Vehiculo {vehiculo.folio} registrado correctamente.')
-        return redirect('vehiculos')
+    return render(request, 'Vehiculos/operador.html', build_context())
 
-    return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+
+def clientes_list_view(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
+        return _reject_unauthorized(request)
+
+    role = _get_role(request)
+    user = _get_current_user(request)
+
+    query = Cliente.objects.select_related('operador').order_by('-fecha_registro', '-id')
+    if role == ROLE_OPERADOR and user is not None:
+        query = query.filter(operador=user)
+
+    search = (request.GET.get('q') or '').strip()
+    if search:
+        query = query.filter(sap__icontains=search)
+
+    clientes = list(query)
+
+    context = {
+        'clientes': clientes,
+        'search': search,
+        'rol': role,
+        'rol_label': ROLE_LABELS[role],
+        'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
+        'total_clientes': len(clientes),
+    }
+    return render(request, 'Vehiculos/clientes.html', context)
 
 
 def vehiculos_list(request):

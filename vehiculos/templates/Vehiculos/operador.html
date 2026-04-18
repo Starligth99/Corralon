@@ -1,10 +1,10 @@
-!{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registrar Ventas</title>
+  <title>Registro de cliente</title>
   <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
   <style>
@@ -116,17 +116,6 @@
       min-height: 1.2rem;
     }
 
-    .file-pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      border: 1px solid #ffd8a8;
-      background: #fff6e5;
-      padding: 0.3rem 0.7rem;
-      font-size: 0.8rem;
-      color: #9a3412;
-    }
-
     .btn-primary {
       background: linear-gradient(135deg, #d32f2f, var(--primary));
       border: none;
@@ -190,9 +179,12 @@
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
         <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
-        <span>Sistema de Clientes "Operador"</span>
+        <span>Registro de cliente</span>
       </a>
-      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'clientes_list' %}" class="btn btn-outline-light btn-sm">Ver mis clientes</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+      </div>
     </div>
   </nav>
 
@@ -209,168 +201,94 @@
         <section class="surface p-4 p-lg-5">
           <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div>
-              <h1 class="h4 mb-1">Registro de ingreso de cliente</h1>
-              <p class="text-secondary mb-0">Carga guiada para capturar expediente operativo y legal.</p>
+              <h1 class="h4 mb-1">Registro de cliente</h1>
+              <p class="text-secondary mb-0">Captura el codigo SAP y los datos del lugar. El SAP es el identificador unico del cliente.</p>
             </div>
             <button type="button" id="btnResetWizard" class="btn btn-outline-secondary btn-sm">Limpiar formulario</button>
           </div>
 
           <div class="d-flex flex-wrap gap-2 mb-3" id="wizardSteps">
-            <span class="wizard-step active" data-step-indicator="0">1. Proceso</span>
-            <span class="wizard-step" data-step-indicator="1">2. Cliente y Cierre</span>
+            <span class="wizard-step active" data-step-indicator="0">1. Datos del cliente</span>
+            <span class="wizard-step" data-step-indicator="1">2. Ubicacion</span>
           </div>
 
           <div class="progress mb-4" role="progressbar" aria-label="Progreso de captura" aria-valuemin="0" aria-valuemax="100">
-            <div id="wizardProgress" class="progress-bar bg-success" style="width: 33%">33%</div>
+            <div id="wizardProgress" class="progress-bar bg-success" style="width: 50%">50%</div>
           </div>
 
-          <form id="registroForm" method="post" action="{% url 'operador' %}" enctype="multipart/form-data" novalidate>
+          <form id="registroForm" method="post" action="{% url 'operador' %}" novalidate>
             {% csrf_token %}
 
             <section class="step-panel active" data-step-panel="0">
-              <h2 class="h6 mb-3">Datos del proceso</h2>
+              <h2 class="h6 mb-3">Datos del cliente</h2>
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Fecha de ingreso</label>
-                  <input type="date" class="form-control" name="fecha_ingreso" required>
-                </div>
-                <!-- <div class="col-md-6"> -->
-                  <!-- <div class="d-flex justify-content-between align-items-center">
-                    <label class="form-label">Estado</label>
-                    {% if can_depositos %}
-                    <a class="small text-decoration-none" href="{% url 'depositos' %}">Administrar Estados</a>
-                    {% endif %}
-                  </div> -->
-                <!-- </div> -->
-                <!-- <div class="col-md-6">
-                  <label class="form-label">Ubicacion de la persona (Google Maps o direccion)</label>
-                  <input type="text" class="form-control" name="grua_direccion" maxlength="180" required placeholder="Ejemplo: https://maps.google.com/... o Calle/Colonia">
-                  <div class="form-text">Campo obligatorio para registrar el vehiculo.</div>
-                </div> -->
-                <div class="col-md-4">
-                  <label class="form-label">Nombre</label>
-                  <input type="text" class="form-control" name="Nombre" maxlength="60" required>
+                  <label class="form-label">Fecha de registro</label>
+                  <input type="date" class="form-control" name="fecha_registro" value="{{ form_values.fecha_registro|default:'' }}" required>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Apellidos</label>
-                  <input type="text" class="form-control" name="Apellidos" maxlength="60" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Numero de Sap</label>
-                  <input type="number" class="form-control" name="Sap" min="1950" max="2035" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Direccion</label>
-                  <input type="text" class="form-control" name="Direccion" maxlength="40" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Zona</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Zona" placeholder="Example" maxlength="15" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Estado</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Estado" placeholder="Example" maxlength="15" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Poblacion</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Poblacion" placeholder="Example" maxlength="15" required>
+                  <label class="form-label">Codigo SAP (ID)</label>
+                  <input type="text" class="form-control text-uppercase" id="sapInput" name="sap" maxlength="30" value="{{ form_values.sap|default:'' }}" placeholder="Ej. 123456" required>
+                  <div class="form-text">Identificador unico del cliente. No se puede repetir.</div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Tipo de cuenta</label>
                   <select class="form-select" name="tipo_cuenta" required>
                     <option value="">Selecciona</option>
-                    <option>Directo</option>
-                    <option>Prespecto</option>
+                    <option value="DIRECTO" {% if form_values.tipo_cuenta == "DIRECTO" %}selected{% endif %}>Directo</option>
+                    <option value="PROSPECTO" {% if form_values.tipo_cuenta == "PROSPECTO" %}selected{% endif %}>Prospecto</option>
                   </select>
+                </div>
+
+                <div class="col-md-8">
+                  <label class="form-label">Nombre del lugar</label>
+                  <input type="text" class="form-control" name="nombre" maxlength="120" value="{{ form_values.nombre|default:'' }}" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Lista de precios</label>
+                  <input type="text" class="form-control text-uppercase" name="lista_precios" maxlength="40" value="{{ form_values.lista_precios|default:'' }}" placeholder="BAJIO" list="listaPreciosOpts">
+                  <datalist id="listaPreciosOpts">
+                    <option value="BAJIO"></option>
+                  </datalist>
                 </div>
               </div>
             </section>
 
             <section class="step-panel" data-step-panel="1">
-              <h2 class="h6 mb-3">Latitud y longitud</h2>
+              <h2 class="h6 mb-3">Ubicacion</h2>
               <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">latitud</label>
-                  <input type="text" class="form-control" name="marca" maxlength="60" required>
+                <div class="col-md-3">
+                  <label class="form-label">Latitud</label>
+                  <input type="number" step="any" class="form-control" name="latitud" value="{{ form_values.latitud|default:'' }}" placeholder="19.432608" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <label class="form-label">Longitud</label>
-                  <input type="text" class="form-control" name="modelo" maxlength="60" required>
-                </div>
-                <!-- <div class="col-md-4">
-                  <label class="form-label">Edad</label>
-                  <input type="number" class="form-control" name="anio" min="1950" max="2035" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Color</label>
-                  <input type="text" class="form-control" name="color" maxlength="40" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Placas</label>
-                  <input type="text" class="form-control text-uppercase" id="placas" name="placas" placeholder="ABC123D" maxlength="15" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Tipo de servicio</label>
-                  <select class="form-select" name="tipo_servicio" required>
-                    <option value="">Selecciona</option>
-                    <option>Particular</option>
-                    <option>Publico</option>
-                    <option>Carga</option>
-                    <option>Motocicleta</option>
-                  </select>
-                </div> -->
-              </div>
-            </section>
-
-            <!-- <section class="step-panel" data-step-panel="2">
-              <h2 class="h6 mb-3">Estatus legal y evidencia</h2>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Estatus legal</label>
-                  <select class="form-select" name="estatus_legal" required>
-                    <option value="">Selecciona</option>
-                    <option>En custodia</option>
-                    <option>Decomisado</option>
-                    <option>Siniestrado</option>
-                    <option>Abandonado</option>
-                    <option>Liberado</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Numero de oficio</label>
-                  <input type="text" class="form-control" name="oficio" maxlength="80" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Fecha de oficio</label>
-                  <input type="date" class="form-control" name="fecha_oficio" required>
+                  <input type="number" step="any" class="form-control" name="longitud" value="{{ form_values.longitud|default:'' }}" placeholder="-99.133209" required>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Titular registrado</label>
-                  <input type="text" class="form-control" name="titular" maxlength="120" required>
+                  <label class="form-label">Direccion</label>
+                  <input type="text" class="form-control" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required>
                 </div>
-                 <div class="col-md-6">
-                  <label class="form-label">Documento principal (PDF)</label>
-                  <input type="file" class="form-control" id="documentoPdf" name="documento_pdf" accept="application/pdf" required>
-                  <div class="mt-2">
-                    <span id="pdfPill" class="file-pill d-none"></span>
-                  </div>
-                </div> 
-                <div class="col-12">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="confirmacion" required>
-                    <label class="form-check-label" for="confirmacion">
-                      Confirmo que la informacion capturada corresponde al expediente.
-                    </label>
-                  </div>
+                <div class="col-md-4">
+                  <label class="form-label">Zona</label>
+                  <input type="text" class="form-control text-uppercase" name="zona" maxlength="60" value="{{ form_values.zona|default:'' }}" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Estado</label>
+                  <input type="text" class="form-control text-uppercase" name="estado" maxlength="60" value="{{ form_values.estado|default:'' }}" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Poblacion</label>
+                  <input type="text" class="form-control text-uppercase" name="poblacion" maxlength="60" value="{{ form_values.poblacion|default:'' }}" required>
                 </div>
               </div>
-            </section> -->
+            </section>
 
             <div class="d-flex flex-wrap justify-content-between gap-2 mt-4">
               <button type="button" id="btnPrev" class="btn btn-outline-secondary" disabled>Anterior</button>
               <div class="d-flex gap-2">
                 <button type="button" id="btnNext" class="btn btn-primary">Siguiente</button>
-                <button type="submit" id="btnSubmit" class="btn btn-success d-none">Registrar vehiculo</button>
+                <button type="submit" id="btnSubmit" class="btn btn-success d-none">Registrar cliente</button>
               </div>
             </div>
           </form>
@@ -381,32 +299,32 @@
         <aside class="surface p-4 sticky-top" style="top: 1rem;">
           <h2 class="h6 mb-3">Resumen en vivo</h2>
           <div class="summary-item">
-            <div class="summary-label">Numero de Sap</div>
-            <div id="sumFolio" class="summary-value">-</div>
+            <div class="summary-label">Codigo SAP</div>
+            <div id="sumSap" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Nombre</div>
+            <div class="summary-label">Fecha de registro</div>
             <div id="sumFecha" class="summary-value">-</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">Apellido</div>
-            <div id="sumVehiculo" class="summary-value">-</div>
+            <div class="summary-label">Nombre del lugar</div>
+            <div id="sumNombre" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Tipo de cuenta</div>
+            <div id="sumTipo" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Lista de precios</div>
+            <div id="sumLista" class="summary-value">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Latitud / Longitud</div>
+            <div id="sumLatLng" class="summary-value">-</div>
           </div>
           <div class="summary-item">
             <div class="summary-label">Direccion</div>
-            <div id="sumPlacas" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Estado</div>
-            <div id="sumVin" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Tipo de cliente</div>
-            <div id="sumEstatus" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Documento</div>
-            <div id="sumDoc" class="summary-value">Sin archivo</div>
+            <div id="sumDireccion" class="summary-value">-</div>
           </div>
         </aside>
       </div>
@@ -425,40 +343,30 @@
       const btnNext = document.getElementById("btnNext");
       const btnSubmit = document.getElementById("btnSubmit");
       const btnReset = document.getElementById("btnResetWizard");
-      const motivo = document.getElementById("motivo");
-      const motivoCount = document.getElementById("motivoCount");
-      const pdfInput = document.getElementById("documentoPdf");
-      const pdfPill = document.getElementById("pdfPill");
-      const placasInput = document.getElementById("placas");
-      const vinInput = document.getElementById("vin");
 
       let currentStep = 0;
 
-      const summaryTargets = {
-        sumFolio: () => form.elements.folio.value || "-",
-        sumFecha: () => form.elements.fecha_ingreso.value || "-",
-        sumVehiculo: () => {
-          const marca = form.elements.marca.value || "";
-          const modelo = form.elements.modelo.value || "";
-          const anio = form.elements.anio.value || "";
-          const val = [marca, modelo, anio].filter(Boolean).join(" ");
-          return val || "-";
-        },
-        sumPlacas: () => form.elements.placas.value || "-",
-        sumVin: () => form.elements.vin.value || "-",
-        sumEstatus: () => form.elements.estatus_legal.value || "-",
-        sumDoc: () => (pdfInput.files[0] ? pdfInput.files[0].name : "Sin archivo"),
-      };
-
-      function updateSummary() {
-        Object.keys(summaryTargets).forEach((id) => {
-          const el = document.getElementById(id);
-          el.textContent = summaryTargets[id]();
-        });
+      function val(name) {
+        const el = form.elements[name];
+        if (!el) return "";
+        return (el.value || "").trim();
       }
 
-      function updateMotivoCount() {
-        motivoCount.textContent = motivo.value.length;
+      function setSummary(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text || "-";
+      }
+
+      function updateSummary() {
+        setSummary("sumSap", val("sap").toUpperCase());
+        setSummary("sumFecha", val("fecha_registro"));
+        setSummary("sumNombre", val("nombre"));
+        setSummary("sumTipo", val("tipo_cuenta"));
+        setSummary("sumLista", val("lista_precios").toUpperCase());
+        const lat = val("latitud");
+        const lng = val("longitud");
+        setSummary("sumLatLng", lat && lng ? lat + ", " + lng : "-");
+        setSummary("sumDireccion", val("direccion"));
       }
 
       function setStep(index) {
@@ -491,10 +399,6 @@
         return true;
       }
 
-      function normalizeUppercase(input) {
-        input.value = input.value.toUpperCase().replace(/\s+/g, "");
-      }
-
       btnNext.addEventListener("click", function () {
         if (!validateStep(currentStep)) return;
         setStep(Math.min(currentStep + 1, panels.length - 1));
@@ -506,32 +410,8 @@
 
       btnReset.addEventListener("click", function () {
         form.reset();
-        pdfPill.classList.add("d-none");
-        pdfPill.textContent = "";
-        updateMotivoCount();
         updateSummary();
         setStep(0);
-      });
-
-      pdfInput.addEventListener("change", function () {
-        if (!pdfInput.files[0]) {
-          pdfPill.classList.add("d-none");
-          pdfPill.textContent = "";
-        } else {
-          pdfPill.classList.remove("d-none");
-          pdfPill.textContent = "PDF: " + pdfInput.files[0].name;
-        }
-        updateSummary();
-      });
-
-      motivo.addEventListener("input", updateMotivoCount);
-      placasInput.addEventListener("input", function () {
-        normalizeUppercase(placasInput);
-        updateSummary();
-      });
-      vinInput.addEventListener("input", function () {
-        normalizeUppercase(vinInput);
-        updateSummary();
       });
 
       form.addEventListener("input", updateSummary);
@@ -544,11 +424,9 @@
         }
       });
 
-      updateMotivoCount();
       updateSummary();
       setStep(0);
     })();
   </script>
 </body>
 </html>
-

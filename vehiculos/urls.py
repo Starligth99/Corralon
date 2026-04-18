@@ -7,6 +7,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('vehiculos/registrar/', views.registrar_vehiculo, name='registrar_vehiculo'),
     path('vehiculos/operador_registrador', views.operadorregistrador_view, name='operador'),
+    path('clientes/', views.clientes_list_view, name='clientes_list'),
     path('vehiculos/inventario/', views.vehiculos_list, name='vehiculos'),
     path('inventario/', views.vehiculos_list, name='inventario'),
     path('vehiculos/', views.vehiculos_list),
