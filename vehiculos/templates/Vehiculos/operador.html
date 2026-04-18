@@ -1,4 +1,4 @@
-!{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -249,31 +249,31 @@
                 </div> -->
                 <div class="col-md-4">
                   <label class="form-label">Nombre</label>
-                  <input type="text" class="form-control" name="Nombre" maxlength="60" required>
+                  <input type="text" class="form-control" name="nombre" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Apellidos</label>
-                  <input type="text" class="form-control" name="Apellidos" maxlength="60" required>
+                  <input type="text" class="form-control" name="apellidos" maxlength="60" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Numero de Sap</label>
-                  <input type="number" class="form-control" name="Sap" min="1950" max="2035" required>
+                  <input type="text" class="form-control" name="sap" maxlength="30" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Direccion</label>
-                  <input type="text" class="form-control" name="Direccion" maxlength="40" required>
+                  <input type="text" class="form-control" name="direccion" maxlength="40" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Zona</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Zona" placeholder="Example" maxlength="15" required>
+                  <input type="text" class="form-control text-uppercase" id="zona" name="zona" placeholder="Example" maxlength="15" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Estado</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Estado" placeholder="Example" maxlength="15" required>
+                  <input type="text" class="form-control text-uppercase" id="estado" name="estado" placeholder="Example" maxlength="15" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Poblacion</label>
-                  <input type="text" class="form-control text-uppercase" id="Zona" name="Poblacion" placeholder="Example" maxlength="15" required>
+                  <input type="text" class="form-control text-uppercase" id="poblacion" name="poblacion" placeholder="Example" maxlength="15" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Tipo de cuenta</label>
@@ -425,40 +425,36 @@
       const btnNext = document.getElementById("btnNext");
       const btnSubmit = document.getElementById("btnSubmit");
       const btnReset = document.getElementById("btnResetWizard");
-      const motivo = document.getElementById("motivo");
-      const motivoCount = document.getElementById("motivoCount");
-      const pdfInput = document.getElementById("documentoPdf");
-      const pdfPill = document.getElementById("pdfPill");
-      const placasInput = document.getElementById("placas");
-      const vinInput = document.getElementById("vin");
 
       let currentStep = 0;
 
+      function fieldValue(name) {
+        const el = form.elements[name];
+        return el && el.value ? el.value : "";
+      }
+
       const summaryTargets = {
-        sumFolio: () => form.elements.folio.value || "-",
-        sumFecha: () => form.elements.fecha_ingreso.value || "-",
-        sumVehiculo: () => {
-          const marca = form.elements.marca.value || "";
-          const modelo = form.elements.modelo.value || "";
-          const anio = form.elements.anio.value || "";
-          const val = [marca, modelo, anio].filter(Boolean).join(" ");
-          return val || "-";
+        sumFolio: () => fieldValue("sap") || "-",
+        sumFecha: () => fieldValue("nombre") || "-",
+        sumVehiculo: () => fieldValue("apellidos") || "-",
+        sumPlacas: () => fieldValue("direccion") || "-",
+        sumVin: () => fieldValue("estado") || "-",
+        sumEstatus: () => fieldValue("tipo_cuenta") || "-",
+        sumDoc: () => {
+          const lat = fieldValue("marca");
+          const lng = fieldValue("modelo");
+          const val = [lat, lng].filter(Boolean).join(", ");
+          return val || "Sin archivo";
         },
-        sumPlacas: () => form.elements.placas.value || "-",
-        sumVin: () => form.elements.vin.value || "-",
-        sumEstatus: () => form.elements.estatus_legal.value || "-",
-        sumDoc: () => (pdfInput.files[0] ? pdfInput.files[0].name : "Sin archivo"),
       };
 
       function updateSummary() {
         Object.keys(summaryTargets).forEach((id) => {
           const el = document.getElementById(id);
-          el.textContent = summaryTargets[id]();
+          if (el) {
+            el.textContent = summaryTargets[id]();
+          }
         });
-      }
-
-      function updateMotivoCount() {
-        motivoCount.textContent = motivo.value.length;
       }
 
       function setStep(index) {
@@ -491,10 +487,6 @@
         return true;
       }
 
-      function normalizeUppercase(input) {
-        input.value = input.value.toUpperCase().replace(/\s+/g, "");
-      }
-
       btnNext.addEventListener("click", function () {
         if (!validateStep(currentStep)) return;
         setStep(Math.min(currentStep + 1, panels.length - 1));
@@ -506,32 +498,8 @@
 
       btnReset.addEventListener("click", function () {
         form.reset();
-        pdfPill.classList.add("d-none");
-        pdfPill.textContent = "";
-        updateMotivoCount();
         updateSummary();
         setStep(0);
-      });
-
-      pdfInput.addEventListener("change", function () {
-        if (!pdfInput.files[0]) {
-          pdfPill.classList.add("d-none");
-          pdfPill.textContent = "";
-        } else {
-          pdfPill.classList.remove("d-none");
-          pdfPill.textContent = "PDF: " + pdfInput.files[0].name;
-        }
-        updateSummary();
-      });
-
-      motivo.addEventListener("input", updateMotivoCount);
-      placasInput.addEventListener("input", function () {
-        normalizeUppercase(placasInput);
-        updateSummary();
-      });
-      vinInput.addEventListener("input", function () {
-        normalizeUppercase(vinInput);
-        updateSummary();
       });
 
       form.addEventListener("input", updateSummary);
@@ -544,7 +512,6 @@
         }
       });
 
-      updateMotivoCount();
       updateSummary();
       setStep(0);
     })();
