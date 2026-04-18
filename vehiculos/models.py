@@ -3,6 +3,84 @@ from django.db import models
 from django.utils import timezone
 
 
+class Cliente(models.Model):
+    TIPO_DIRECTO = "DIRECTO"
+    TIPO_PROSPECTO = "PROSPECTO"
+    TIPO_CHOICES = [
+        (TIPO_DIRECTO, "Directo"),
+        (TIPO_PROSPECTO, "Prospecto"),
+    ]
+
+    sap = models.CharField(max_length=30, unique=True, db_index=True)
+    nombre = models.CharField(max_length=120)
+    tipo_cuenta = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    lista_precios = models.CharField(max_length=40, blank=True)
+
+    latitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    direccion = models.CharField(max_length=180, blank=True)
+    zona = models.CharField(max_length=60, blank=True)
+    estado = models.CharField(max_length=60, blank=True)
+    poblacion = models.CharField(max_length=60, blank=True)
+
+    fecha_registro = models.DateField()
+    operador = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="clientes_registrados",
+        null=True,
+        blank=True,
+    )
+
+    dias_maximos_entrega = models.PositiveIntegerField(default=0)
+    pedido_excede_limite_credito = models.BooleanField(default=False)
+    bloquear_cliente_factura_vencida = models.BooleanField(default=False)
+    bloqueo_venta_documento_pendiente = models.BooleanField(default=False)
+    orden_compra_adquirida = models.BooleanField(default=False)
+    permitir_devolucion = models.BooleanField(default=True)
+    holgura_dto_pp = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    bloqueo_venta = models.BooleanField(default=False)
+    bloqueo_cheques_pendientes = models.BooleanField(default=False)
+    tomar_inventario = models.BooleanField(default=False)
+    modificar_condicion_pago = models.BooleanField(default=False)
+    dias_para_fecha_entrega = models.PositiveIntegerField(default=0)
+    orden_compra_automatico = models.BooleanField(default=False)
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-fecha_registro", "-id"]
+
+    def __str__(self):
+        return f"{self.sap} - {self.nombre}"
+
+
+class PerfilUsuario(models.Model):
+    PREFIJO_ADMIN_MASTER = "AMS"
+    PREFIJO_ADMINISTRADOR = "ADM"
+    PREFIJO_OPERADOR = "OPE"
+    PREFIJO_CONSULTA = "CON"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil",
+    )
+    numero_interno = models.CharField(max_length=20, unique=True)
+    rfc = models.CharField(max_length=13, blank=True)
+    direccion = models.CharField(max_length=180, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["numero_interno"]
+
+    def __str__(self):
+        return f"{self.numero_interno} - {self.user.get_username()}"
+
+
 class Deposito(models.Model):
     nombre = models.CharField(max_length=120, unique=True)
     creado_en = models.DateTimeField(auto_now_add=True)

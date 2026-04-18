@@ -13,29 +13,34 @@ from django.utils.dateparse import parse_date
 from .models import Deposito, SolicitudCorreccion, Vehiculo
 
 
+ROLE_ADMIN_MASTER = "admin_master"
 ROLE_ADMIN = "administrador"
 ROLE_OPERADOR = "operador"
 ROLE_CONSULTA = "consulta"
-ALLOWED_EMAIL_DOMAIN = "@smyt.gob.mx"
+ALLOWED_EMAIL_DOMAIN = "@gonac.com"
 
 ROLE_LABELS = {
+    ROLE_ADMIN_MASTER: "Admin Master",
     ROLE_ADMIN: "Administrador",
     ROLE_OPERADOR: "Operador",
     ROLE_CONSULTA: "Consulta",
 }
 
+_ADMIN_PERMS = {
+    "ver_dashboard",
+    "ver_inventario",
+    "registrar",
+    "operadorregistrador",
+    "liberar",
+    "gestionar_depositos",
+    "gestionar_correcciones",
+    "gestionar_usuarios",
+    "solicitar_correccion",
+}
+
 ROLE_PERMISSIONS = {
-    ROLE_ADMIN: {
-        "ver_dashboard",
-        "ver_inventario",
-        "registrar",
-        "operadorregistrador",
-        "liberar",
-        "gestionar_depositos",
-        "gestionar_correcciones",
-        "gestionar_usuarios",
-        "solicitar_correccion",
-    },
+    ROLE_ADMIN_MASTER: _ADMIN_PERMS | {"auditar_admin", "buscar_por_id"},
+    ROLE_ADMIN: set(_ADMIN_PERMS),
     ROLE_OPERADOR: {
         "ver_dashboard",
         "operadorregistrador",
@@ -84,6 +89,8 @@ def _get_role(request):
 
 
 def _get_role_for_user(user):
+    if user.groups.filter(name=ROLE_ADMIN_MASTER).exists():
+        return ROLE_ADMIN_MASTER
     if user.is_superuser:
         return ROLE_ADMIN
     if user.groups.filter(name=ROLE_ADMIN).exists():
@@ -316,7 +323,7 @@ def usuarios_view(request):
                 return redirect('usuarios')
 
             if not _email_allowed(email):
-                messages.error(request, 'Solo se permiten correos con dominio @smyt.gob.mx.')
+                messages.error(request, 'Solo se permiten correos con dominio @gonac.com.')
                 return redirect('usuarios')
 
             if User.objects.filter(username=email).exists():
@@ -350,7 +357,7 @@ def usuarios_view(request):
 
             target_email = _normalize_email(target.email or target.username)
             if not _email_allowed(target_email):
-                messages.error(request, 'Solo puedes eliminar cuentas con dominio @smyt.gob.mx.')
+                messages.error(request, 'Solo puedes eliminar cuentas con dominio @gonac.com.')
                 return redirect('usuarios')
 
             target.delete()

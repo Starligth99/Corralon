@@ -124,13 +124,13 @@
       <div class="col-lg-5">
         <section class="surface p-4 p-lg-5">
           <h1 class="h5 mb-2">Agregar cuenta</h1>
-          <p class="text-secondary mb-4">Solo se permiten correos @smyt.gob.mx.</p>
+          <p class="text-secondary mb-4">Solo se permiten correos @gonac.com.</p>
           <form method="post" action="{% url 'usuarios' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
             <div class="mb-3">
               <label class="form-label">Correo institucional</label>
-              <input type="email" class="form-control" name="email" placeholder="usuario@smyt.gob.mx" required autocomplete="off">
+              <input type="email" class="form-control" name="email" placeholder="usuario@gonac.com" required autocomplete="off">
             </div>
             <div class="mb-3">
               <label class="form-label">contraseña temporal</label>
