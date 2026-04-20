@@ -259,7 +259,7 @@
                   <div class="cliente-field-value">{{ c.sap }}</div>
                 </div>
                 <div class="col-md-8 cliente-field">
-                  <div class="cliente-field-label">Nombre del lugar</div>
+                  <div class="cliente-field-label">Nombre</div>
                   <div class="cliente-field-value">{{ c.nombre }}</div>
                 </div>
                 <div class="col-md-4 cliente-field">
@@ -302,7 +302,19 @@
                     {% if c.operador %}{{ c.operador.get_username }}{% else %}-{% endif %}
                   </div>
                 </div>
+                {% if can_solicitar_correccion %}
+                <div class="col-md-4 cliente-correccion">
+                  <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#credito-{{ c.id }}" aria-expanded="false" aria-controls="credito-{{ c.id }}" href="{% url 'solicitar_correccion' %}">
+                    Solicitud de cambios
+                  </button>
+                </div>
+                <div class="col-md-4 cliente-correccion">
+                  <a href="{% url 'solicitudes_correccion' %}?cliente_id={{ c.id }}" class="btn btn-sm btn-outline-secondary">
+                    Ver solicitudes
+                </div>
               </div>
+
+<!-- ----------------------ESTO ES EL PANEL DE CREDITO OSEA EL DE ABAJITO-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
               {% if can_editar_credito %}
               <section class="credito-panel">
@@ -314,14 +326,14 @@
                       <label for="dias_maximos_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias maximos de entrega</label>
                       <input type="number" min="0" step="1" name="dias_maximos_entrega" id="dias_maximos_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_maximos_entrega }}">
                     </div>
-                    <div class="col-md-4">
+                    <!-- <div class="col-md-4">
                       <label for="holgura_dto_pp-{{ c.id }}" class="form-label small fw-semibold">Holgura Dto PP</label>
                       <input type="number" min="0" step="0.01" name="holgura_dto_pp" id="holgura_dto_pp-{{ c.id }}" class="form-control form-control-sm" value="{{ c.holgura_dto_pp }}">
                     </div>
                     <div class="col-md-4">
                       <label for="dias_para_fecha_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias para fecha de entrega</label>
                       <input type="number" min="0" step="1" name="dias_para_fecha_entrega" id="dias_para_fecha_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_para_fecha_entrega }}">
-                    </div>
+                    </div> -->
                   </div>
 
                   <div class="row g-3 mt-1">
@@ -398,6 +410,30 @@
     </section>
   </main>
 
+<!-- ------------------------------------------------------------------------------------------------------------------------------------------ -->
+
+
+
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    // Evitar que el formulario de búsqueda se envíe al presionar Enter en el campo de búsqueda
+    document.querySelector('.search-input').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+      }
+    });
+  </script>
+  <script>
+    // Mantener el estado de los acordeones abiertos después de una acción
+    document.addEventListener('DOMContentLoaded', function() {
+      const hash = window.location.hash;
+      if (hash) {
+        const targetCollapse = document.querySelector(hash);
+        if (targetCollapse) {
+          const collapseInstance = new bootstrap.Collapse(targetCollapse, { toggle: true });
+        }
+      }
+    });
+  </script>
 </body>
 </html>

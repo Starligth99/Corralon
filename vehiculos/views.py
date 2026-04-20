@@ -29,7 +29,6 @@ ROLE_LABELS = {
 _ADMIN_PERMS = {
     "ver_dashboard",
     "ver_inventario",
-    "registrar",
     "operadorregistrador",
     "liberar",
     "gestionar_depositos",
@@ -46,8 +45,6 @@ ROLE_PERMISSIONS = {
         "ver_dashboard",
         "operadorregistrador",
         "ver_inventario",
-        "registrar",
-        "liberar",
         "solicitar_correccion",
     },
     ROLE_CONSULTA: {"ver_dashboard", "ver_inventario"},
@@ -817,18 +814,18 @@ def vehiculos_list(request):
         }
         for v in Vehiculo.objects.all()
     ]
-    return render(
-        request,
-        'Vehiculos/vehiculos.html',
-        {
-            'vehiculos_data': data,
-            'can_registrar': _has_permission(request, "registrar"),
-            'can_liberar': _has_permission(request, "liberar"),
-            'can_solicitar_correccion': _has_permission(request, "solicitar_correccion"),
-            'depositos': depositos,
-            'deposito_actual': deposito_query,
-        },
-    )
+    # return render(
+    #     request,
+    #     'Vehiculos/vehiculos.html',
+    #     {
+    #         'vehiculos_data': data,
+    #         'can_registrar': _has_permission(request, "registrar"),
+    #         'can_liberar': _has_permission(request, "liberar"),
+    #         'can_solicitar_correccion': _has_permission(request, "solicitar_correccion"),
+    #         'depositos': depositos,
+    #         'deposito_actual': deposito_query,
+    #     },
+    # )
 
 
 def liberar_vehiculo(request):

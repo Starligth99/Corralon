@@ -395,8 +395,8 @@
       <nav class="action-nav">
         <span class="action-title">Acciones Permitidos</span>
         <div class="action-links">
-          {% if can_registrar %}
-          <a class="action-link" href="{% url 'registrar_vehiculo' %}">
+          <!-- {% if can_registrar %}
+           <a class="action-link" href="{% url 'registrar_vehiculo' %}">
             <span class="action-badge">R</span>
             Registrar Usuario
           </a>
@@ -405,10 +405,10 @@
             <span class="action-badge">R</span>
             Registrar Usuario
           </span>
-          {% endif %}
-          {% if can_operador %}
+          {% endif %} -->
+           {% if can_operador %}
           <a class="action-link" href="{% url 'operador' %}">
-            <span class="action-badge">R2</span>
+            <span class="action-badge">R</span>
             Registrar cliente
           </a>
           {% else %}

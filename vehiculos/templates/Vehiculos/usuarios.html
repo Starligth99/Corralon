@@ -209,6 +209,16 @@
           <form method="post" action="{% url 'usuarios' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
+                <div class="mb-3">
+                  <label class="form-label">Ubicacion de la persona (Google Maps o direccion)</label>
+                  <input type="text" class="form-control" name="ubicacionpersona" maxlength="180" required placeholder="Ejemplo: https://maps.google.com/... o Calle/Colonia">
+                  <div class="form-text">Campo obligatorio para registrar el vehiculo.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Numero de Cliente</label>
+                  <input type="text" class="form-control" id="folio" name="folio" value="{{ folio_sugerido }}" maxlength="30" readonly aria-readonly="true" required>
+                  <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
+                </div>
             <div class="mb-3">
               <label class="form-label">Correo institucional</label>
               <input type="email" class="form-control" name="email" placeholder="usuario@gonac.com" required autocomplete="off">
@@ -217,6 +227,32 @@
               <label class="form-label">contraseña temporal</label>
               <input type="password" class="form-control" name="password" placeholder="Crea una contraseña" required autocomplete="new-password">
             </div>
+            <div class="mb-3">
+              <label class="form-label">Nombre Completo</label>
+              <input type="name" class="form-control" name="Nombre" placeholder="ingresa tu nombre" required autocomplete="name">
+            </div>
+                <div class="md-3">
+                  <label class="form-label">RFC</label>
+                  <input type="file" class="form-control" id="documentoPdfRFC" name="documento_pdf" accept="application/pdf" required>
+                  <div class="mt-2">
+                    <span id="pdfPill" class="file-pill d-none"></span>
+                  </div>
+                </div>
+                <div class="md-3">
+                  <label class="form-label">Comprobante de domicilio</label>
+                  <input type="file" class="form-control" id="documentoPdfCDD" name="documento_pdf" accept="application/pdf" required>
+                  <div class="mt-2">
+                    <span id="pdfPill" class="file-pill d-none"></span>
+                  </div>
+                </div>
+                  <div class="md-3">
+                  <label class="form-label">INE </label>
+                  <input type="file" class="form-control" id="documentoPdfINE" name="documento_pdf" accept="application/pdf" required>
+                  <div class="mt-2">
+                    <span id="pdfPill" class="file-pill d-none"></span>
+                  </div>
+                </div>
+            
             <div class="mb-3">
               <label class="form-label">Rol</label>
               <select class="form-select" name="role" required>
