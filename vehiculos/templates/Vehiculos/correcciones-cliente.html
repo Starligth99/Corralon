@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Correcciones de cliente | Sistema de Clientes</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #c62828;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
+      --text-main: #1f2937;
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
+    }
+    .brand-mark { height: 48px; width: auto; }
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
+      box-shadow: var(--shadow-soft);
+    }
+    .badge-status { border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.75rem; font-weight: 600; }
+    .status-Pendiente { background: #fff0cc; color: #c62828; }
+    .status-Aprobada { background: #c8e6c9; color: #1b5e20; }
+    .status-Rechazada { background: #ffe0b2; color: #bf360c; }
+    h1, h2, .navbar-brand { font-family: var(--font-display); }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Correcciones de cliente</span>
+      </a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'clientes_list' %}" class="btn btn-light btn-sm">Volver a clientes</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <h1 class="h4 mb-1">Solicitudes de correccion de clientes</h1>
+          <p class="text-secondary mb-0">Los operadores proponen cambios; aqui los apruebas o rechazas.</p>
+        </div>
+        <form method="get" class="d-flex gap-2 align-items-center">
+          <label class="small text-secondary mb-0" for="estado">Estado:</label>
+          <select class="form-select form-select-sm" id="estado" name="estado" onchange="this.form.submit()">
+            {% for value, label in estados %}
+            <option value="{{ value }}" {% if value == estado_filtro %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+
+      {% if solicitudes %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Cliente</th>
+              <th>Campo</th>
+              <th>Valor actual</th>
+              <th>Valor propuesto</th>
+              <th>Motivo</th>
+              <th>Solicitante</th>
+              <th>Estatus</th>
+              <th>Accion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in solicitudes %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ s.cliente_sap }}</div>
+                <div class="small text-secondary">{{ s.cliente_nombre }}</div>
+              </td>
+              <td>{{ s.campo_label }}</td>
+              <td class="text-secondary">{{ s.valor_anterior|default:"—" }}</td>
+              <td class="fw-semibold">{{ s.valor_nuevo }}</td>
+              <td class="text-secondary small">{{ s.motivo|default:"—" }}</td>
+              <td>{{ s.solicitante }}</td>
+              <td><span class="badge-status status-{{ s.estatus }}">{{ s.estatus }}</span></td>
+              <td>
+                {% if s.is_pendiente %}
+                <form method="post" action="{% url 'resolver_correccion_cliente' s.id %}" class="d-flex flex-column gap-1" style="min-width: 220px;">
+                  {% csrf_token %}
+                  <input type="text" class="form-control form-control-sm" name="notas" placeholder="Notas (opcional)">
+                  <div class="btn-group btn-group-sm">
+                    <button type="submit" name="decision" value="aprobar" class="btn btn-success">Aprobar</button>
+                    <button type="submit" name="decision" value="rechazar" class="btn btn-outline-danger">Rechazar</button>
+                  </div>
+                </form>
+                {% else %}
+                <div class="small text-secondary">
+                  {% if s.resuelto_por %}Por {{ s.resuelto_por }}<br>{% endif %}
+                  {% if s.resuelto_en %}{{ s.resuelto_en|date:"d/m/Y H:i" }}{% endif %}
+                  {% if s.notas_resolucion %}<div class="fst-italic">"{{ s.notas_resolucion }}"</div>{% endif %}
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-secondary py-5">
+        <p class="mb-0">No hay solicitudes con este filtro.</p>
+      </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

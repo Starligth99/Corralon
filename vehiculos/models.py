@@ -166,6 +166,52 @@ class Vehiculo(models.Model):
         self.fecha_liberacion = timezone.now()
 
 
+class SolicitudCorreccionCliente(models.Model):
+    ESTATUS_PENDIENTE = "Pendiente"
+    ESTATUS_APROBADA = "Aprobada"
+    ESTATUS_RECHAZADA = "Rechazada"
+
+    ESTATUS_CHOICES = [
+        (ESTATUS_PENDIENTE, "Pendiente"),
+        (ESTATUS_APROBADA, "Aprobada"),
+        (ESTATUS_RECHAZADA, "Rechazada"),
+    ]
+
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.CASCADE, related_name="correcciones"
+    )
+    solicitante = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_cliente_solicitadas",
+    )
+    campo = models.CharField(max_length=40)
+    valor_anterior = models.TextField(blank=True)
+    valor_nuevo = models.TextField()
+    motivo = models.TextField(blank=True)
+    estatus = models.CharField(
+        max_length=20, choices=ESTATUS_CHOICES, default=ESTATUS_PENDIENTE
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    resuelto_en = models.DateTimeField(null=True, blank=True)
+    resuelto_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_cliente_resueltas",
+    )
+    notas_resolucion = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return f"{self.cliente.sap} - {self.campo} ({self.estatus})"
+
+
 class SolicitudCorreccion(models.Model):
     ESTATUS_PENDIENTE = "Pendiente"
     ESTATUS_APROBADA = "Aprobada"
