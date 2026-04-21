@@ -71,6 +71,11 @@ class PerfilUsuario(models.Model):
     rfc = models.CharField(max_length=13, blank=True)
     direccion = models.CharField(max_length=180, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
+    rfc_pdf = models.FileField(upload_to="perfil/rfc/", null=True, blank=True)
+    ine_pdf = models.FileField(upload_to="perfil/ine/", null=True, blank=True)
+    comprobante_domicilio_pdf = models.FileField(
+        upload_to="perfil/comprobante/", null=True, blank=True
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

@@ -124,10 +124,21 @@
       <div class="col-lg-5">
         <section class="surface p-4 p-lg-5">
           <h1 class="h5 mb-2">Agregar cuenta</h1>
-          <p class="text-secondary mb-4">Solo se permiten correos @gonac.com.</p>
-          <form method="post" action="{% url 'usuarios' %}">
+          <p class="text-secondary mb-4">Solo se permiten correos @gonac.com. El numero de empleado se genera automaticamente al guardar.</p>
+          <form method="post" action="{% url 'usuarios' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
+            <div class="mb-3">
+              <label class="form-label">Numero de empleado</label>
+              <input type="text" class="form-control" value="Se asigna automaticamente al crear la cuenta" readonly tabindex="-1">
+              <div class="form-text small">
+                Proximo numero segun rol:
+                <code>{{ role_previews.admin_master }}</code> Admin Master &middot;
+                <code>{{ role_previews.administrador }}</code> Administrador &middot;
+                <code>{{ role_previews.operador }}</code> Operador &middot;
+                <code>{{ role_previews.consulta }}</code> Consulta
+              </div>
+            </div>
             <div class="mb-3">
               <label class="form-label">Correo institucional</label>
               <input type="email" class="form-control" name="email" placeholder="usuario@gonac.com" required autocomplete="off">
@@ -144,6 +155,20 @@
                 {% endfor %}
               </select>
             </div>
+            <hr class="my-3">
+            <p class="text-secondary small mb-2">Documentos obligatorios (solo PDF):</p>
+            <div class="mb-3">
+              <label class="form-label">RFC (PDF)</label>
+              <input type="file" class="form-control" name="rfc_pdf" accept="application/pdf,.pdf" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">INE (PDF)</label>
+              <input type="file" class="form-control" name="ine_pdf" accept="application/pdf,.pdf" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Comprobante de domicilio (PDF)</label>
+              <input type="file" class="form-control" name="comprobante_domicilio_pdf" accept="application/pdf,.pdf" required>
+            </div>
             <button type="submit" class="btn btn-primary">Crear cuenta</button>
           </form>
         </section>
@@ -159,16 +184,26 @@
             <table class="table align-middle mb-0">
               <thead class="table-light">
                 <tr>
+                  <th>Num. empleado</th>
                   <th>Correo</th>
                   <th>Rol</th>
+                  <th>Documentos</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {% for usuario in usuarios %}
                 <tr>
+                  <td><code>{{ usuario.numero_interno }}</code></td>
                   <td class="fw-semibold">{{ usuario.email }}</td>
                   <td>{{ usuario.role_label }}</td>
+                  <td class="small">
+                    {% if usuario.rfc_pdf_url %}<a href="{{ usuario.rfc_pdf_url }}" target="_blank" rel="noopener">RFC</a>{% else %}<span class="text-danger">RFC</span>{% endif %}
+                    &middot;
+                    {% if usuario.ine_pdf_url %}<a href="{{ usuario.ine_pdf_url }}" target="_blank" rel="noopener">INE</a>{% else %}<span class="text-danger">INE</span>{% endif %}
+                    &middot;
+                    {% if usuario.comprobante_pdf_url %}<a href="{{ usuario.comprobante_pdf_url }}" target="_blank" rel="noopener">Comprobante</a>{% else %}<span class="text-danger">Comprobante</span>{% endif %}
+                  </td>
                   <td>
                     {% if usuario.is_self %}
                     <span class="text-secondary small">Sesion actual</span>

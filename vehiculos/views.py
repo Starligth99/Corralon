@@ -303,6 +303,49 @@ def depositos_view(request):
     )
 
 
+ROLE_PREFIJO = {
+    ROLE_ADMIN_MASTER: PerfilUsuario.PREFIJO_ADMIN_MASTER,
+    ROLE_ADMIN: PerfilUsuario.PREFIJO_ADMINISTRADOR,
+    ROLE_OPERADOR: PerfilUsuario.PREFIJO_OPERADOR,
+    ROLE_CONSULTA: PerfilUsuario.PREFIJO_CONSULTA,
+}
+
+PERFIL_PDF_FIELDS = (
+    ("rfc_pdf", "RFC"),
+    ("ine_pdf", "INE"),
+    ("comprobante_domicilio_pdf", "Comprobante de domicilio"),
+)
+
+
+def _next_numero_interno(prefix):
+    existing = (
+        PerfilUsuario.objects.filter(numero_interno__startswith=f"{prefix}-")
+        .order_by("-numero_interno")
+        .values_list("numero_interno", flat=True)
+        .first()
+    )
+    if existing:
+        try:
+            last = int(existing.split("-")[-1])
+        except ValueError:
+            last = 0
+    else:
+        last = 0
+    return f"{prefix}-{last + 1:04d}"
+
+
+def _is_pdf_upload(uploaded):
+    if uploaded is None:
+        return False
+    nombre = (getattr(uploaded, "name", "") or "").lower()
+    content_type = (getattr(uploaded, "content_type", "") or "").lower()
+    if not nombre.endswith(".pdf"):
+        return False
+    if content_type and content_type not in ("application/pdf", "application/x-pdf"):
+        return False
+    return True
+
+
 def usuarios_view(request):
     if not _is_logged_in(request):
         return redirect('login')
@@ -334,6 +377,32 @@ def usuarios_view(request):
                 messages.error(request, 'Ya existe una cuenta registrada con ese correo.')
                 return redirect('usuarios')
 
+            pdf_uploads = {}
+            missing_labels = []
+            invalid_labels = []
+            for field_name, label in PERFIL_PDF_FIELDS:
+                uploaded = request.FILES.get(field_name)
+                if uploaded is None:
+                    missing_labels.append(label)
+                    continue
+                if not _is_pdf_upload(uploaded):
+                    invalid_labels.append(label)
+                    continue
+                pdf_uploads[field_name] = uploaded
+
+            if missing_labels:
+                messages.error(
+                    request,
+                    'Faltan los PDFs obligatorios: ' + ', '.join(missing_labels) + '.',
+                )
+                return redirect('usuarios')
+            if invalid_labels:
+                messages.error(
+                    request,
+                    'Los archivos deben ser PDF: ' + ', '.join(invalid_labels) + '.',
+                )
+                return redirect('usuarios')
+
             user = User.objects.create_user(username=email, email=email, password=password)
             role_group = role_groups[role]
             user.groups.remove(*Group.objects.filter(name__in=role_names))
@@ -345,7 +414,16 @@ def usuarios_view(request):
                 user.is_staff = False
                 user.is_superuser = False
             user.save()
-            messages.success(request, f'Cuenta {email} creada correctamente.')
+
+            numero_interno = _next_numero_interno(ROLE_PREFIJO[role])
+            perfil_defaults = {"numero_interno": numero_interno}
+            perfil_defaults.update(pdf_uploads)
+            PerfilUsuario.objects.create(user=user, **perfil_defaults)
+
+            messages.success(
+                request,
+                f'Cuenta {email} creada correctamente con numero de empleado {numero_interno}.',
+            )
             return redirect('usuarios')
 
         if action == 'delete':
@@ -372,11 +450,12 @@ def usuarios_view(request):
         return redirect('usuarios')
 
     usuarios = []
-    for user in User.objects.order_by('username'):
+    for user in User.objects.order_by('username').select_related('perfil'):
         display_email = (user.email or user.username or '').strip()
         if not _email_allowed(display_email):
             continue
         role = _get_role_for_user(user)
+        perfil = getattr(user, 'perfil', None)
         usuarios.append(
             {
                 'id': user.id,
@@ -384,8 +463,20 @@ def usuarios_view(request):
                 'role': role,
                 'role_label': ROLE_LABELS.get(role, role),
                 'is_self': current_user and user.id == current_user.id,
+                'numero_interno': perfil.numero_interno if perfil else '—',
+                'rfc_pdf_url': perfil.rfc_pdf.url if perfil and perfil.rfc_pdf else '',
+                'ine_pdf_url': perfil.ine_pdf.url if perfil and perfil.ine_pdf else '',
+                'comprobante_pdf_url': (
+                    perfil.comprobante_domicilio_pdf.url
+                    if perfil and perfil.comprobante_domicilio_pdf
+                    else ''
+                ),
             }
         )
+
+    role_previews = {
+        role: _next_numero_interno(prefix) for role, prefix in ROLE_PREFIJO.items()
+    }
 
     return render(
         request,
@@ -393,6 +484,7 @@ def usuarios_view(request):
         {
             'usuarios': usuarios,
             'role_options': [(key, ROLE_LABELS[key]) for key in ROLE_LABELS],
+            'role_previews': role_previews,
         },
     )
 
