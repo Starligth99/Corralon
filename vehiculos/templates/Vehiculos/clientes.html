@@ -207,6 +207,12 @@
         {% if can_registrar_cliente %}
         <a href="{% url 'operador' %}" class="btn btn-light btn-sm">+ Nuevo cliente</a>
         {% endif %}
+        {% if can_gestionar_correcciones %}
+        <a href="{% url 'solicitudes_correccion_cliente' %}" class="btn btn-warning btn-sm">
+          Correcciones
+          {% if pendientes_correccion_cliente %}<span class="badge bg-danger ms-1">{{ pendientes_correccion_cliente }}</span>{% endif %}
+        </a>
+        {% endif %}
         <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
       </div>
     </div>
@@ -375,6 +381,43 @@
                     <button type="submit" class="btn btn-primary btn-sm">Guardar panel de credito</button>
                   </div>
                 </form>
+              </section>
+              {% endif %}
+
+              {% if can_solicitar_correccion %}
+              <section class="correccion-panel mt-3 p-3" style="border: 1px dashed #6c757d; border-radius: 8px; background: #f8f9fa;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h3 class="h6 mb-0">Solicitud de correccion</h3>
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#correccion-{{ c.id }}" aria-expanded="false">Solicitar correccion</button>
+                </div>
+                <p class="text-secondary small mb-2">El codigo SAP no se corrige desde aqui; requiere una solicitud separada. Los demas campos los revisa Admin o Admin Master.</p>
+                <div class="collapse" id="correccion-{{ c.id }}">
+                  <form method="post" action="{% url 'solicitar_correccion_cliente' c.id %}">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                      <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Campo a corregir</label>
+                        <select class="form-select form-select-sm" name="campo" required>
+                          <option value="">Elige un campo...</option>
+                          {% for opt in correccion_opciones %}
+                          <option value="{{ opt.value }}">{{ opt.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Nuevo valor</label>
+                        <input type="text" class="form-control form-control-sm" name="valor_nuevo" placeholder="Para Tipo de cuenta: DIRECTO o PROSPECTO" required>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Motivo (opcional)</label>
+                        <input type="text" class="form-control form-control-sm" name="motivo" placeholder="Por que es incorrecto el valor actual">
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                      <button type="submit" class="btn btn-primary btn-sm">Enviar solicitud</button>
+                    </div>
+                  </form>
+                </div>
               </section>
               {% endif %}
             </div>

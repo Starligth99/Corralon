@@ -10,7 +10,14 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from .models import Cliente, Deposito, PerfilUsuario, SolicitudCorreccion, Vehiculo
+from .models import (
+    Cliente,
+    Deposito,
+    PerfilUsuario,
+    SolicitudCorreccion,
+    SolicitudCorreccionCliente,
+    Vehiculo,
+)
 
 
 ROLE_ADMIN_MASTER = "admin_master"
@@ -752,6 +759,22 @@ def clientes_list_view(request):
 
     clientes = list(query)
 
+    can_solicitar_correccion = _has_permission(request, "solicitar_correccion")
+    can_gestionar_correcciones = _has_permission(request, "gestionar_correcciones")
+    pendientes_cliente = SolicitudCorreccionCliente.objects.filter(
+        estatus=SolicitudCorreccionCliente.ESTATUS_PENDIENTE
+    ).count() if can_gestionar_correcciones else 0
+
+    correccion_opciones = [
+        {
+            'value': name,
+            'label': label,
+            'tipo': tipo,
+            'choices': choices or [],
+        }
+        for (name, label, tipo, choices) in CLIENTE_CORRECCION_FIELDS
+    ]
+
     context = {
         'clientes': clientes,
         'search': search,
@@ -759,8 +782,12 @@ def clientes_list_view(request):
         'rol_label': ROLE_LABELS[role],
         'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
         'can_editar_credito': _has_permission(request, "gestionar_credito"),
+        'can_solicitar_correccion': can_solicitar_correccion,
+        'can_gestionar_correcciones': can_gestionar_correcciones,
         'credito_fields_numericos': CREDITO_FIELDS_NUMERICOS,
         'credito_fields_booleanos': CREDITO_FIELDS_BOOLEANOS,
+        'correccion_opciones': correccion_opciones,
+        'pendientes_correccion_cliente': pendientes_cliente,
         'total_clientes': len(clientes),
     }
     return render(request, 'Vehiculos/clientes.html', context)
@@ -831,6 +858,212 @@ def editar_credito_view(request, cliente_id):
     cliente.save()
     messages.success(request, f'Panel de credito de {cliente.sap} actualizado correctamente.')
     return redirect('clientes_list')
+
+
+CLIENTE_CORRECCION_FIELDS = [
+    ("nombre", "Nombre del lugar", "text", None),
+    ("tipo_cuenta", "Tipo de cuenta", "choice", [("DIRECTO", "Directo"), ("PROSPECTO", "Prospecto")]),
+    ("lista_precios", "Lista de precios", "text", None),
+    ("latitud", "Latitud", "decimal", None),
+    ("longitud", "Longitud", "decimal", None),
+    ("direccion", "Direccion", "text", None),
+    ("zona", "Zona", "text", None),
+    ("estado", "Estado", "text", None),
+    ("poblacion", "Poblacion", "text", None),
+]
+
+CLIENTE_CORRECCION_FIELDS_MAP = {f[0]: f for f in CLIENTE_CORRECCION_FIELDS}
+
+
+def _format_cliente_value(cliente, field):
+    value = getattr(cliente, field, "")
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _parse_cliente_correccion_value(field, raw):
+    spec = CLIENTE_CORRECCION_FIELDS_MAP.get(field)
+    if not spec:
+        return None, f'Campo "{field}" no es corregible.'
+    _name, label, tipo, choices = spec
+    raw = (raw or "").strip()
+    if raw == "":
+        return None, f'El nuevo valor para {label} no puede estar vacio.'
+    if tipo == "choice":
+        valid = {value for value, _ in choices}
+        if raw not in valid:
+            return None, f'{label} debe ser uno de: {", ".join(sorted(valid))}.'
+        return raw, None
+    if tipo == "decimal":
+        try:
+            return str(float(raw)), None
+        except ValueError:
+            return None, f'{label} debe ser un numero decimal valido.'
+    return raw, None
+
+
+def solicitar_correccion_cliente(request, cliente_id):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "solicitar_correccion"):
+        return _reject_unauthorized(request)
+    if request.method != 'POST':
+        return redirect('clientes_list')
+
+    try:
+        cliente = Cliente.objects.get(pk=cliente_id)
+    except Cliente.DoesNotExist:
+        messages.error(request, 'Cliente no encontrado.')
+        return redirect('clientes_list')
+
+    campo = (request.POST.get('campo') or '').strip()
+    valor_nuevo_raw = request.POST.get('valor_nuevo') or ''
+    motivo = (request.POST.get('motivo') or '').strip()
+
+    if campo == 'sap':
+        messages.error(
+            request,
+            'El codigo SAP no se puede corregir desde este flujo. Usa una solicitud separada.',
+        )
+        return redirect('clientes_list')
+
+    if campo not in CLIENTE_CORRECCION_FIELDS_MAP:
+        messages.error(request, 'Selecciona un campo valido para corregir.')
+        return redirect('clientes_list')
+
+    valor_nuevo, error = _parse_cliente_correccion_value(campo, valor_nuevo_raw)
+    if error:
+        messages.error(request, error)
+        return redirect('clientes_list')
+
+    valor_anterior = _format_cliente_value(cliente, campo)
+    if str(valor_anterior) == str(valor_nuevo):
+        messages.error(request, 'El nuevo valor es igual al valor actual.')
+        return redirect('clientes_list')
+
+    SolicitudCorreccionCliente.objects.create(
+        cliente=cliente,
+        solicitante=_get_current_user(request),
+        campo=campo,
+        valor_anterior=valor_anterior,
+        valor_nuevo=valor_nuevo,
+        motivo=motivo,
+    )
+
+    label = CLIENTE_CORRECCION_FIELDS_MAP[campo][1]
+    messages.success(
+        request,
+        f'Solicitud de correccion enviada para {cliente.sap} - {label}. Un administrador la revisara.',
+    )
+    return redirect('clientes_list')
+
+
+def solicitudes_correccion_cliente(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_correcciones"):
+        return _reject_unauthorized(request)
+
+    estado_filtro = (request.GET.get('estado') or SolicitudCorreccionCliente.ESTATUS_PENDIENTE).strip()
+    query = SolicitudCorreccionCliente.objects.select_related('cliente', 'solicitante', 'resuelto_por')
+    if estado_filtro and estado_filtro != 'todos':
+        query = query.filter(estatus=estado_filtro)
+
+    solicitudes = []
+    for s in query:
+        spec = CLIENTE_CORRECCION_FIELDS_MAP.get(s.campo)
+        label = spec[1] if spec else s.campo
+        solicitudes.append(
+            {
+                'id': s.id,
+                'cliente_sap': s.cliente.sap,
+                'cliente_nombre': s.cliente.nombre,
+                'campo': s.campo,
+                'campo_label': label,
+                'valor_anterior': s.valor_anterior,
+                'valor_nuevo': s.valor_nuevo,
+                'motivo': s.motivo,
+                'estatus': s.estatus,
+                'creado_en': s.creado_en,
+                'solicitante': s.solicitante.get_username() if s.solicitante else '—',
+                'resuelto_en': s.resuelto_en,
+                'resuelto_por': s.resuelto_por.get_username() if s.resuelto_por else '',
+                'notas_resolucion': s.notas_resolucion,
+                'is_pendiente': s.estatus == SolicitudCorreccionCliente.ESTATUS_PENDIENTE,
+            }
+        )
+
+    return render(
+        request,
+        'Vehiculos/correcciones-cliente.html',
+        {
+            'solicitudes': solicitudes,
+            'estado_filtro': estado_filtro,
+            'estados': [
+                ('todos', 'Todos'),
+                (SolicitudCorreccionCliente.ESTATUS_PENDIENTE, 'Pendientes'),
+                (SolicitudCorreccionCliente.ESTATUS_APROBADA, 'Aprobadas'),
+                (SolicitudCorreccionCliente.ESTATUS_RECHAZADA, 'Rechazadas'),
+            ],
+        },
+    )
+
+
+def resolver_correccion_cliente(request, solicitud_id):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_correcciones"):
+        return _reject_unauthorized(request)
+    if request.method != 'POST':
+        return redirect('solicitudes_correccion_cliente')
+
+    try:
+        solicitud = SolicitudCorreccionCliente.objects.select_related('cliente').get(pk=solicitud_id)
+    except SolicitudCorreccionCliente.DoesNotExist:
+        messages.error(request, 'Solicitud no encontrada.')
+        return redirect('solicitudes_correccion_cliente')
+
+    if solicitud.estatus != SolicitudCorreccionCliente.ESTATUS_PENDIENTE:
+        messages.error(request, 'Esta solicitud ya fue resuelta.')
+        return redirect('solicitudes_correccion_cliente')
+
+    decision = (request.POST.get('decision') or '').strip().lower()
+    notas = (request.POST.get('notas') or '').strip()
+
+    if decision not in ('aprobar', 'rechazar'):
+        messages.error(request, 'Decision invalida.')
+        return redirect('solicitudes_correccion_cliente')
+
+    if decision == 'aprobar':
+        spec = CLIENTE_CORRECCION_FIELDS_MAP.get(solicitud.campo)
+        if not spec:
+            messages.error(request, f'Campo "{solicitud.campo}" ya no es corregible.')
+            return redirect('solicitudes_correccion_cliente')
+        _name, label, tipo, _choices = spec
+        valor = solicitud.valor_nuevo
+        if tipo == 'decimal':
+            try:
+                valor = float(valor)
+            except ValueError:
+                messages.error(request, f'Valor invalido para {label}.')
+                return redirect('solicitudes_correccion_cliente')
+        setattr(solicitud.cliente, solicitud.campo, valor)
+        solicitud.cliente.save()
+        solicitud.estatus = SolicitudCorreccionCliente.ESTATUS_APROBADA
+        messages.success(
+            request,
+            f'Correccion aprobada: {solicitud.cliente.sap} - {label} actualizado.',
+        )
+    else:
+        solicitud.estatus = SolicitudCorreccionCliente.ESTATUS_RECHAZADA
+        messages.success(request, f'Solicitud de {solicitud.cliente.sap} rechazada.')
+
+    solicitud.resuelto_en = timezone.now()
+    solicitud.resuelto_por = _get_current_user(request)
+    solicitud.notas_resolucion = notas
+    solicitud.save()
+    return redirect('solicitudes_correccion_cliente')
 
 
 MESES_ES = {
