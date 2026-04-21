@@ -147,3 +147,6 @@ db.sqlite3
 staticfiles/
 __pycache__/
 *.pyc
+
+# Media uploads (local dev)
+media/
