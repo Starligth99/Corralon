@@ -61,7 +61,7 @@ class Command(BaseCommand):
                     last = 0
             else:
                 last = 0
-            return f"{prefix}-{last + 1:04d}"
+            return f"{prefix}-{last + 1:05d}"
 
         @transaction.atomic
         def ensure_user(email, password, role, is_admin=False):

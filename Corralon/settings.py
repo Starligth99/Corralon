@@ -122,8 +122,11 @@ WSGI_APPLICATION = 'Corralon.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 _database_url = os.getenv('DATABASE_URL', '').strip()
+USE_DATABASE_URL = _env_bool("USE_DATABASE_URL", default=False)
 
-if _database_url:
+# Use DATABASE_URL automatically only on Render (RENDER_EXTERNAL_HOSTNAME is set).
+# For local dev, default to SQLite unless USE_DATABASE_URL=1 is explicitly set.
+if _database_url and (_render_host or USE_DATABASE_URL):
     DATABASES = {
         'default': dj_database_url.parse(_database_url, conn_max_age=600),
     }
@@ -183,3 +186,6 @@ STORAGES = {
 STATICFILES_DIRS = [
     BASE_DIR / 'vehiculos/static',
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

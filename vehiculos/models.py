@@ -67,8 +67,16 @@ class PerfilUsuario(models.Model):
         on_delete=models.CASCADE,
         related_name="perfil",
     )
-    numero_interno = models.CharField(max_length=20, unique=True)
+    numero_interno = models.CharField(max_length=20, unique=True, editable=False)
+    nombre_completo = models.CharField(max_length=120, blank=True)
     rfc = models.CharField(max_length=13, blank=True)
+    rfc_pdf = models.FileField(upload_to="usuarios/rfc/", null=True, blank=True)
+    ine_pdf = models.FileField(upload_to="usuarios/ine/", null=True, blank=True)
+    comprobante_domicilio_pdf = models.FileField(
+        upload_to="usuarios/comprobante_domicilio/",
+        null=True,
+        blank=True,
+    )
     direccion = models.CharField(max_length=180, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -199,3 +207,51 @@ class SolicitudCorreccion(models.Model):
 
     def __str__(self):
         return f"{self.vehiculo.folio} - {self.campo} ({self.estatus})"
+
+
+class SolicitudCorreccionCliente(models.Model):
+    ESTATUS_PENDIENTE = "Pendiente"
+    ESTATUS_APROBADA = "Aprobada"
+    ESTATUS_RECHAZADA = "Rechazada"
+
+    ESTATUS_CHOICES = [
+        (ESTATUS_PENDIENTE, "Pendiente"),
+        (ESTATUS_APROBADA, "Aprobada"),
+        (ESTATUS_RECHAZADA, "Rechazada"),
+    ]
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name="correcciones",
+    )
+    solicitante = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_clientes_solicitadas",
+    )
+    campo = models.CharField(max_length=60)
+    valor_nuevo = models.TextField()
+    motivo = models.TextField()
+    estatus = models.CharField(
+        max_length=20,
+        choices=ESTATUS_CHOICES,
+        default=ESTATUS_PENDIENTE,
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    resuelto_en = models.DateTimeField(null=True, blank=True)
+    resuelto_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="correcciones_clientes_resueltas",
+    )
+
+    class Meta:
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return f"{self.cliente.sap} - {self.campo} ({self.estatus})"

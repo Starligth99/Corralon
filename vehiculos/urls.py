@@ -18,5 +18,7 @@ urlpatterns = [
     path('usuarios/', views.usuarios_view, name='usuarios'),
     path('vehiculos/correcciones/solicitar/', views.solicitar_correccion, name='solicitar_correccion'),
     path('vehiculos/correcciones/', views.solicitudes_correccion, name='solicitudes_correccion'),
+    path('clientes/correcciones/solicitar/', views.solicitar_correccion_cliente, name='solicitar_correccion_cliente'),
+    path('clientes/correcciones/', views.solicitudes_correccion_clientes, name='solicitudes_correccion_clientes'),
     path('logout/', views.logout_view, name='logout'),
 ]

@@ -266,53 +266,63 @@
                   <div class="cliente-field-label">Tipo de cuenta</div>
                   <div class="cliente-field-value">{{ c.get_tipo_cuenta_display }}</div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Latitud / Longitud</div>
                   <div class="cliente-field-value">
                     {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}
                   </div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Lista de precios</div>
                   <div class="cliente-field-value">{{ c.lista_precios|default:"-" }}</div>
                 </div>
+                
                 <div class="col-md-8 cliente-field">
                   <div class="cliente-field-label">Direccion</div>
                   <div class="cliente-field-value">{{ c.direccion|default:"-" }}</div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Zona</div>
                   <div class="cliente-field-value">{{ c.zona|default:"-" }}</div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Estado</div>
                   <div class="cliente-field-value">{{ c.estado|default:"-" }}</div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Poblacion</div>
                   <div class="cliente-field-value">{{ c.poblacion|default:"-" }}</div>
                 </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Fecha de registro</div>
                   <div class="cliente-field-value">{{ c.fecha_registro|date:"d M Y" }}</div>
                 </div>
+                
                 <div class="col-md-8 cliente-field">
                   <div class="cliente-field-label">Registrado por</div>
-                  <div class="cliente-field-value">
-                    {% if c.operador %}{{ c.operador.get_username }}{% else %}-{% endif %}
-                  </div>
+                  <div class="cliente-field-value">{% if c.operador %}{{ c.operador.get_username }}{% else %}-{% endif %}</div>
                 </div>
-                {% if can_solicitar_correccion %}
-                <div class="col-md-4 cliente-correccion">
-                  <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#credito-{{ c.id }}" aria-expanded="false" aria-controls="credito-{{ c.id }}" href="{% url 'solicitar_correccion' %}">
-                    Solicitud de cambios
-                  </button>
-                </div>
-                <div class="col-md-4 cliente-correccion">
-                  <a href="{% url 'solicitudes_correccion' %}?cliente_id={{ c.id }}" class="btn btn-sm btn-outline-secondary">
+                
+                <div class="col-12 mt-3 d-flex gap-2 flex-wrap">
+                  {% if can_solicitar_correccion_cliente %}
+                  <a href="{% url 'solicitar_correccion_cliente' %}?sap={{ c.sap|urlencode }}" class="btn btn-sm btn-outline-primary">
+                    Solicitar correccion
+                  </a>
+                  {% endif %}
+                  {% if can_gestionar_correcciones_clientes %}
+                  <a href="{% url 'solicitudes_correccion_clientes' %}" class="btn btn-sm btn-outline-secondary">
                     Ver solicitudes
+                  </a>
+                  {% endif %}
                 </div>
               </div>
+
 
 <!-- ----------------------ESTO ES EL PANEL DE CREDITO OSEA EL DE ABAJITO-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
@@ -415,6 +425,7 @@
 
 
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     // Evitar que el formulario de búsqueda se envíe al presionar Enter en el campo de búsqueda
     document.querySelector('.search-input').addEventListener('keydown', function(event) {

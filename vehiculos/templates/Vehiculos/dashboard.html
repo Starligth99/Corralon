@@ -103,6 +103,10 @@
       min-height: 280px;
     }
 
+    .chart-wrap--donut {
+      min-height: 360px;
+    }
+
     .table thead th {
       font-size: 0.8rem;
       text-transform: uppercase;
@@ -292,20 +296,20 @@
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
           <p class="kpi-label">Clientes ingresados</p>
-          <p class="kpi-value text-primary-custom" id="vehiculos">0</p>
+          <p class="kpi-value text-primary-custom" id="Clientes">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
         </article>
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Pendientes</p>
+          <p class="kpi-label">Clientes rospectos</p>
           <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
         </article>
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Clientes De Alta</p>
+          <p class="kpi-label">Clientes Directos</p>
           <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
         </article>
@@ -322,8 +326,8 @@
     <section class="row g-3 mb-4">
       <div class="col-lg-4">
         <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Estado actual de Clientes</h2>
-          <div class="chart-wrap">
+          <h2 class="h6 mb-3">Lista de Precios</h2>
+          <div class="chart-wrap chart-wrap--donut">
             <canvas id="estadoChart"></canvas>
           </div>
         </article>
@@ -351,7 +355,7 @@
         <article class="panel-card p-3 h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Actividad reciente</h2>
-            <a href="{% url 'vehiculos' %}" class="small link-primary">Ver inventario completo</a>
+            <a href="{% url 'clientes_list' %}" class="small link-primary">Ver inventario completo</a>
           </div>
           <div class="table-responsive">
             <table class="table align-middle mb-0">
@@ -364,20 +368,14 @@
                 </tr>
               </thead>
               <tbody id="actividadBody">
-                {% for v in actividad %}
+                {% for c in actividad %}
                 <tr>
-                  <td>{{ v.folio }}</td>
-                  <td>{{ v.marca }} {{ v.modelo }}</td>
+                  <td class="fw-semibold">{{ c.sap }}</td>
+                  <td>{{ c.nombre }}</td>
                   <td>
-                    {% if v.estatus_legal == 'Liberado' %}
-                    <span class="badge-soft badge-done">{{ v.estatus_legal }}</span>
-                    {% elif v.estatus_legal == 'En custodia' %}
-                    <span class="badge-soft badge-active">{{ v.estatus_legal }}</span>
-                    {% else %}
-                    <span class="badge-soft badge-pending">{{ v.estatus_legal }}</span>
-                    {% endif %}
+                    {{ c.estado|default:"-" }}
                   </td>
-                  <td>{{ v.fecha_ingreso|date:'d/m/Y' }}</td>
+                  <td>{{ c.fecha_registro|date:'d/m/Y' }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -395,17 +393,6 @@
       <nav class="action-nav">
         <span class="action-title">Acciones Permitidos</span>
         <div class="action-links">
-          <!-- {% if can_registrar %}
-           <a class="action-link" href="{% url 'registrar_vehiculo' %}">
-            <span class="action-badge">R</span>
-            Registrar Usuario
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">R</span>
-            Registrar Usuario
-          </span>
-          {% endif %} -->
            {% if can_operador %}
           <a class="action-link" href="{% url 'operador' %}">
             <span class="action-badge">R</span>
@@ -439,21 +426,6 @@
             Mi historial
           </span>
           {% endif %}
-          <a class="action-link" id="btnInventario" href="{% url 'vehiculos' %}">
-            <span class="action-badge">I</span>
-            Inventario Clientes
-          </a>
-          {% if can_liberar %}
-          <a class="action-link" href="{% url 'liberar_vehiculo' %}">
-            <span class="action-badge">L</span>
-            Alta / Baja
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">L</span>
-            Alta / Baja
-          </span>
-          {% endif %}
           {% if can_depositos %}
           <a class="action-link" href="{% url 'depositos' %}">
             <span class="action-badge">D</span>
@@ -466,9 +438,9 @@
           </span>
           {% endif %}
           {% if can_correcciones %}
-          <a class="action-link" href="{% url 'solicitudes_correccion' %}">
+          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
             <span class="action-badge">C</span>
-            Correcciones
+            Correcciones (clientes)
           </a>
           {% endif %}
           {% if can_usuarios %}
@@ -488,8 +460,8 @@
 
   {{ resumen_data|json_script:"resumen-data" }}
   {{ detalle_data|json_script:"detalle-data" }}
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     const summaryFromServer = JSON.parse(document.getElementById("resumen-data").textContent);
@@ -535,31 +507,64 @@
       });
     }
 
-    function buildDoughnut(data) {
-      const ctx = document.getElementById("estadoChart").getContext("2d");
-      const enProceso = Math.max(data.total - data.pendientes - data.liberados, 0);
+      function buildDoughnut(labels, values) {
+        const ctx = document.getElementById("estadoChart").getContext("2d");
 
-      new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Pendientes", "En proceso", "Liberados"],
-          datasets: [{
-            data: [data.pendientes, enProceso, data.liberados],
-            backgroundColor: [chartColors.warning, chartColors.primary, chartColors.success],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "bottom"
+        const palette = [
+          "#c62828",
+          "#ef6c00",
+          "#fbc02d",
+          "#ff9800",
+          "#b71c1c",
+          "#8e0000",
+          "#ffb300",
+          "#bf360c",
+          "#7f1d1d",
+          "#ffcc80",
+          "#d84315",
+          "#ffd54f",
+        ];
+
+        const normalized = new Map();
+        (labels || []).forEach((raw, idx) => {
+          const key = (raw || "").trim() || "SIN LISTA";
+          const count = safeNumber((values || [])[idx], 0);
+          normalized.set(key, (normalized.get(key) || 0) + count);
+        });
+
+        const finalLabels = Array.from(normalized.keys());
+        const finalValues = finalLabels.map((k) => normalized.get(k));
+        const finalColors = finalLabels.map((_, idx) => palette[idx % palette.length]);
+
+        const legendPosition = window.matchMedia("(min-width: 992px)").matches ? "right" : "bottom";
+
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: finalLabels,
+            datasets: [{
+              data: finalValues,
+              backgroundColor: finalColors,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: legendPosition,
+                labels: {
+                  boxWidth: 10,
+                  boxHeight: 10,
+                  padding: 10,
+                  font: { size: 11 },
+                }
+              }
             }
           }
-        }
-      });
-    }
+        });
+      }
 
     function buildLineChart(labels, values) {
       const ctx = document.getElementById("ingresosChart").getContext("2d");
@@ -607,7 +612,7 @@
         data: {
           labels,
           datasets: [{
-            label: "Vehiculos",
+            label: "Clientes",
             data: values,
             backgroundColor: [
               "#c62828",
@@ -646,7 +651,7 @@
       const liberados = safeNumber(summaryFromServer && summaryFromServer.liberados, 0);
       const tasaLiberacion = total > 0 ? Math.round((liberados / total) * 100) : 0;
 
-      animateValue(document.getElementById("vehiculos"), total);
+      animateValue(document.getElementById("Clientes"), total);
       animateValue(document.getElementById("pendientes"), pendientes);
       animateValue(document.getElementById("liberados"), liberados);
       animateValue(document.getElementById("tasaLiberacion"), tasaLiberacion, "%");
@@ -665,8 +670,14 @@
       const typeValues = (detailFromServer && Array.isArray(detailFromServer.typeValues) && detailFromServer.typeValues.length)
         ? detailFromServer.typeValues
         : [];
+      const listaLabels = (detailFromServer && Array.isArray(detailFromServer.labels) && detailFromServer.labels.length)
+        ? detailFromServer.labels
+        : [];
+      const listaValues = (detailFromServer && Array.isArray(detailFromServer.values) && detailFromServer.values.length)
+        ? detailFromServer.values
+        : [];
 
-      buildDoughnut({ total, pendientes, liberados });
+      buildDoughnut(listaLabels, listaValues);
       buildLineChart(monthlyLabels, monthlyIngress);
       buildBarChart(typeLabels, typeValues);
     }
@@ -675,7 +686,3 @@
   </script>
 </body>
 </html>
-
-
-
-

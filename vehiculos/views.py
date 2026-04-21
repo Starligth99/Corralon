@@ -1,23 +1,37 @@
 ﻿from datetime import date
 import random
+import os
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import Group
+from django.db import transaction
+from django.db.utils import ProgrammingError
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from .models import Cliente, Deposito, PerfilUsuario, SolicitudCorreccion, Vehiculo
+from .models import (
+    Cliente,
+    Deposito,
+    PerfilUsuario,
+    SolicitudCorreccion,
+    SolicitudCorreccionCliente,
+    Vehiculo,
+)
 
 
 ROLE_ADMIN_MASTER = "admin_master"
 ROLE_ADMIN = "administrador"
 ROLE_OPERADOR = "operador"
 ROLE_CONSULTA = "consulta"
-ALLOWED_EMAIL_DOMAIN = "@gonac.com"
+ALLOWED_EMAIL_DOMAINS = [
+    item.strip().lower()
+    for item in (os.getenv("ALLOWED_EMAIL_DOMAINS", "") or "").split(",")
+    if item.strip()
+]
 
 ROLE_LABELS = {
     ROLE_ADMIN_MASTER: "Admin Master",
@@ -33,8 +47,10 @@ _ADMIN_PERMS = {
     "liberar",
     "gestionar_depositos",
     "gestionar_correcciones",
+    "gestionar_correcciones_clientes",
     "gestionar_usuarios",
     "solicitar_correccion",
+    "solicitar_correccion_cliente",
     "gestionar_credito",
 }
 
@@ -46,34 +62,31 @@ ROLE_PERMISSIONS = {
         "operadorregistrador",
         "ver_inventario",
         "solicitar_correccion",
+        "solicitar_correccion_cliente",
     },
     ROLE_CONSULTA: {"ver_dashboard", "ver_inventario"},
 }
 
 CORRECCION_FIELDS = {
-    "folio": "Folio",
     "fecha_ingreso": "Fecha de ingreso",
-    "turno": "Turno",
-    "autoridad": "Autoridad que remite",
     "deposito": "Deposito",
-    "motivo": "Motivo de ingreso",
-    "grua_motivo": "Motivo de grua",
-    "grua_direccion": "Direccion de grua",
-    "marca": "Marca",
-    "modelo": "Modelo",
-    "anio": "Año",
-    "color": "Color",
-    "placas": "Placas",
-    "vin": "VIN",
-    "numero_motor": "Numero de motor",
-    "tipo_servicio": "Tipo de servicio",
-    "combustible": "Combustible",
-    "kilometraje": "Kilometraje",
-    "estatus_legal": "Estatus legal",
     "oficio": "Numero de oficio",
     "fecha_oficio": "Fecha de oficio",
     "titular": "Titular",
     "observaciones": "Observaciones",
+}
+
+CLIENTE_CORRECCION_FIELDS = {
+    "sap": "Codigo SAP",
+    "nombre": "Nombre",
+    "tipo_cuenta": "Tipo de cuenta",
+    "lista_precios": "Lista de precios",
+    "latitud": "Latitud",
+    "longitud": "Longitud",
+    "direccion": "Direccion",
+    "zona": "Zona",
+    "estado": "Estado",
+    "poblacion": "Poblacion",
 }
 
 
@@ -114,7 +127,7 @@ def _normalize_email(value):
 
 def _email_allowed(email):
     normalized = _normalize_email(email)
-    if not normalized.endswith(ALLOWED_EMAIL_DOMAIN):
+    if ALLOWED_EMAIL_DOMAINS and not any(normalized.endswith(domain) for domain in ALLOWED_EMAIL_DOMAINS):
         return False
     if normalized.count("@") != 1:
         return False
@@ -128,6 +141,70 @@ def _get_role_groups():
         group, _ = Group.objects.get_or_create(name=role)
         groups[role] = group
     return groups
+
+
+def _role_to_prefijo(role):
+    if role == ROLE_ADMIN_MASTER:
+        return PerfilUsuario.PREFIJO_ADMIN_MASTER
+    if role == ROLE_ADMIN:
+        return PerfilUsuario.PREFIJO_ADMINISTRADOR
+    if role == ROLE_OPERADOR:
+        return PerfilUsuario.PREFIJO_OPERADOR
+    return PerfilUsuario.PREFIJO_CONSULTA
+
+
+def _generar_numero_empleado(role):
+    prefijo = _role_to_prefijo(role)
+    last = (
+        PerfilUsuario.objects.filter(numero_interno__startswith=f"{prefijo}-")
+        .order_by("-numero_interno")
+        .first()
+    )
+    last_num = 0
+    if last and "-" in (last.numero_interno or ""):
+        try:
+            last_num = int(last.numero_interno.split("-", 1)[1])
+        except ValueError:
+            last_num = 0
+
+    for candidate_num in range(last_num + 1, last_num + 100000):
+        candidate = f"{prefijo}-{candidate_num:05d}"
+        if not PerfilUsuario.objects.filter(numero_interno=candidate).exists():
+            return candidate
+    raise ValueError("No se pudo generar un numero de empleado unico.")
+
+
+def _validate_pdf(file_obj, label):
+    if not file_obj:
+        return f"Falta el PDF de {label}."
+    name = (getattr(file_obj, "name", "") or "").lower()
+    content_type = (getattr(file_obj, "content_type", "") or "").lower()
+    if not name.endswith(".pdf"):
+        return f"El archivo de {label} debe ser PDF."
+    if content_type and content_type != "application/pdf":
+        return f"El archivo de {label} debe ser PDF."
+    return None
+
+
+def _coerce_model_field_value(model_cls, field_name, raw_value):
+    field = model_cls._meta.get_field(field_name)
+    if raw_value is None:
+        return None
+    value = raw_value.strip()
+
+    internal = field.get_internal_type()
+    if internal in ("IntegerField", "PositiveIntegerField", "BigIntegerField", "SmallIntegerField"):
+        return int(value)
+    if internal == "DateField":
+        parsed = parse_date(value)
+        if not parsed:
+            raise ValueError("Fecha invalida. Usa formato YYYY-MM-DD.")
+        return parsed
+    if internal in ("DecimalField", "FloatField"):
+        return float(value)
+    if internal == "BooleanField":
+        return value.lower() in ("1", "true", "si", "sí", "on")
+    return value
 
 
 def _coerce_field_value(field_name, raw_value):
@@ -148,7 +225,7 @@ def _coerce_field_value(field_name, raw_value):
 
 def _generate_folio():
     today = timezone.localdate()
-    prefix = today.strftime("FOL-%y%m%d-")
+    prefix = today.strftime("Number-%y%m%d-")
     for _ in range(25):
         serial = random.randint(100, 999)
         folio = f"{prefix}{serial}"
@@ -202,58 +279,64 @@ def dashboard(request):
     if not _has_permission(request, "ver_dashboard"):
         return redirect('login')
 
-    total = Vehiculo.objects.count()
-    liberados = Vehiculo.objects.filter(estatus_legal=Vehiculo.ESTATUS_LIBERADO).count()
-    pendientes = Vehiculo.objects.exclude(estatus_legal=Vehiculo.ESTATUS_LIBERADO).count()
-    en_proceso = max(total - pendientes - liberados, 0)
+    clientes = Cliente.objects.all()
+    
+    total = Cliente.objects.count()
 
-    monthly_data = (
-        Vehiculo.objects.filter(fecha_ingreso__isnull=False)
-        .annotate(month=TruncMonth('fecha_ingreso'))
+    directos = Cliente.objects.filter(tipo_cuenta=Cliente.TIPO_DIRECTO).count()
+    prospectos = Cliente.objects.filter(tipo_cuenta=Cliente.TIPO_PROSPECTO).count()
+
+    pendientes = prospectos
+    liberados = directos
+    en_proceso = 0
+
+    monthly_data = list(reversed(
+        Cliente.objects.filter(fecha_registro__isnull=False)
+        .annotate(month=TruncMonth('fecha_registro'))
         .values('month')
         .annotate(total=Count('id'))
         .order_by('-month')[:6]
-    )
+    ))
     monthly_data = list(reversed(monthly_data))
     monthly_labels = [item['month'].strftime('%b') for item in monthly_data]
     monthly_ingress = [item['total'] for item in monthly_data]
 
     tipo_data = (
-        Vehiculo.objects.values('tipo_servicio')
+        Cliente.objects.values('tipo_cuenta')
         .annotate(total=Count('id'))
-        .order_by('-total')[:5]
     )
-    type_labels = [item['tipo_servicio'] for item in tipo_data]
+    
+    type_labels = [item['tipo_cuenta'] for item in tipo_data]
     type_values = [item['total'] for item in tipo_data]
 
-    actividad = Vehiculo.objects.order_by('-creado_en')[:5]
+    actividad = Cliente.objects.order_by('-fecha_registro')[:5]
 
     context = {
-        'resumen_data': {
-            'total': total,
-            'pendientes': pendientes,
-            'liberados': liberados,
-            'enProceso': en_proceso,
-        },
-        'detalle_data': {
-            'monthlyLabels': monthly_labels,
-            'monthlyIngress': monthly_ingress,
-            'typeLabels': type_labels,
-            'typeValues': type_values,
-        },
-        'actividad': actividad,
-        'hoy': date.today(),
-        'rol': _get_role(request),
-        'rol_label': ROLE_LABELS[_get_role(request)],
-        'can_registrar': _has_permission(request, "registrar"),
-        'can_inventario': _has_permission(request, "ver_inventario"),
-        'can_liberar': _has_permission(request, "liberar"),
-        'can_depositos': _has_permission(request, "gestionar_depositos"),
-        'can_correcciones': _has_permission(request, "gestionar_correcciones"),
-        'can_usuarios': _has_permission(request, "gestionar_usuarios"),
-        'can_operador': _has_permission(request, "operadorregistrador"),
-        'can_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
-        'can_historial': _has_permission(request, "operadorregistrador"),
+    'resumen_data': {
+    'total': total,
+    'pendientes': pendientes,
+    'liberados': liberados,
+    'enProceso': en_proceso,
+    },
+    'detalle_data': {
+        'listas': list(Cliente.objects.values('lista_precios').annotate(total=Count('id'))),
+        'labels': [item['lista_precios'] for item in Cliente.objects.values('lista_precios').annotate(total=Count('id'))],
+        'values': [item['total'] for item in Cliente.objects.values('lista_precios').annotate(total=Count('id'))],
+        'monthlyLabels': monthly_labels,
+        'monthlyIngress': monthly_ingress,
+        'typeLabels': type_labels,
+        'typeValues': type_values,
+    },
+    'actividad': actividad,
+    'hoy': date.today(),
+    'rol': _get_role(request),
+    'rol_label': ROLE_LABELS[_get_role(request)],
+    'can_operador': _has_permission(request, "operadorregistrador"),
+    'can_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
+    'can_historial': _has_permission(request, "operadorregistrador"),
+    'can_depositos': _has_permission(request, "gestionar_depositos"),
+    'can_correcciones': _has_permission(request, "gestionar_correcciones_clientes"),
+    'can_usuarios': _has_permission(request, "gestionar_usuarios"),
     }
     return render(request, 'Vehiculos/dashboard.html', context)
 
@@ -317,10 +400,14 @@ def usuarios_view(request):
         if action == 'create':
             email = _normalize_email(request.POST.get('email'))
             password = request.POST.get('password') or ''
+            nombre_completo = (request.POST.get('nombre_completo') or '').strip()
             role = (request.POST.get('role') or '').strip()
+            rfc_pdf = request.FILES.get('rfc_pdf')
+            ine_pdf = request.FILES.get('ine_pdf')
+            comprobante_pdf = request.FILES.get('comprobante_domicilio_pdf')
 
-            if not email or not password or role not in ROLE_LABELS:
-                messages.error(request, 'Completa correo, contraseña y rol para crear la cuenta.')
+            if not email or not password or not nombre_completo or role not in ROLE_LABELS:
+                messages.error(request, 'Completa nombre, correo, contraseña y rol para crear la cuenta.')
                 return redirect('usuarios')
 
             if not _email_allowed(email):
@@ -331,17 +418,38 @@ def usuarios_view(request):
                 messages.error(request, 'Ya existe una cuenta registrada con ese correo.')
                 return redirect('usuarios')
 
-            user = User.objects.create_user(username=email, email=email, password=password)
-            role_group = role_groups[role]
-            user.groups.remove(*Group.objects.filter(name__in=role_names))
-            user.groups.add(role_group)
-            if role == ROLE_ADMIN:
-                user.is_staff = True
-                user.is_superuser = True
-            else:
-                user.is_staff = False
-                user.is_superuser = False
-            user.save()
+            pdf_errors = [
+                _validate_pdf(rfc_pdf, "RFC"),
+                _validate_pdf(ine_pdf, "INE"),
+                _validate_pdf(comprobante_pdf, "Comprobante de domicilio"),
+            ]
+            pdf_errors = [err for err in pdf_errors if err]
+            if pdf_errors:
+                for err in pdf_errors:
+                    messages.error(request, err)
+                return redirect('usuarios')
+
+            with transaction.atomic():
+                user = User.objects.create_user(username=email, email=email, password=password)
+                user.first_name = nombre_completo
+                role_group = role_groups[role]
+                user.groups.remove(*Group.objects.filter(name__in=role_names))
+                user.groups.add(role_group)
+                if role == ROLE_ADMIN:
+                    user.is_staff = True
+                    user.is_superuser = True
+                else:
+                    user.is_staff = False
+                    user.is_superuser = False
+                user.save()
+                PerfilUsuario.objects.create(
+                    user=user,
+                    numero_interno=_generar_numero_empleado(role),
+                    nombre_completo=nombre_completo,
+                    rfc_pdf=rfc_pdf,
+                    ine_pdf=ine_pdf,
+                    comprobante_domicilio_pdf=comprobante_pdf,
+                )
             messages.success(request, f'Cuenta {email} creada correctamente.')
             return redirect('usuarios')
 
@@ -369,15 +477,33 @@ def usuarios_view(request):
         return redirect('usuarios')
 
     usuarios = []
-    for user in User.objects.order_by('username'):
+    all_users = list(User.objects.order_by('username'))
+    try:
+        perfiles = {
+            perfil.user_id: perfil
+            for perfil in PerfilUsuario.objects.filter(user__in=all_users)
+        }
+    except ProgrammingError:
+        messages.error(request, "Faltan migraciones de PerfilUsuario. Ejecuta: manage.py migrate")
+        perfiles = {}
+    for user in all_users:
         display_email = (user.email or user.username or '').strip()
         if not _email_allowed(display_email):
             continue
         role = _get_role_for_user(user)
+        perfil = perfiles.get(user.id)
         usuarios.append(
             {
                 'id': user.id,
                 'email': display_email,
+                'nombre_completo': (perfil.nombre_completo if perfil else (user.first_name or '')).strip(),
+                'numero_empleado': perfil.numero_interno if perfil else '',
+                'docs_ok': bool(
+                    perfil
+                    and perfil.rfc_pdf
+                    and perfil.ine_pdf
+                    and perfil.comprobante_domicilio_pdf
+                ),
                 'role': role,
                 'role_label': ROLE_LABELS.get(role, role),
                 'is_self': current_user and user.id == current_user.id,
@@ -459,27 +585,27 @@ def registrar_vehiculo(request):
             if value and len(value) > max_len:
                 label = CORRECCION_FIELDS.get(field, field)
                 messages.error(request, f'El campo {label} excede {max_len} caracteres.')
-                return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+                return render(request, 'Vehiculos/clientes.html', build_context())
 
-        vin_value = (post.get('vin') or '').strip()
-        if vin_value and len(vin_value) != 17:
-            messages.error(request, 'El VIN debe tener exactamente 17 caracteres.')
-            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+        # vin_value = (post.get('vin') or '').strip()
+        # if vin_value and len(vin_value) != 17:
+        #     messages.error(request, 'El VIN debe tener exactamente 17 caracteres.')
+        #     return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
 
-        folio = request.session.get("folio_sugerido") or _generate_folio()
-        folio = folio.strip().upper()
-        if Vehiculo.objects.filter(folio=folio).exists():
-            folio = _generate_folio().strip().upper()
+        #  NumerodeCliente = request.session.get("Numero_de_Cliente_sugerido") or _generate_NumerodeCliente()
+        #  NumerodeCliente = NumerodeCliente.strip().upper()
+        #  if Vehiculo.objects.filter(NumerodeCliente=NumerodeCliente).exists():
+        #      NumerodeCliente = _generate_NumerodeCliente().strip().upper()
 
-        try:
-            anio = int(post.get('anio', '0'))
-            kilometraje = int(post.get('kilometraje', '0') or 0)
-        except ValueError:
-            messages.error(request, 'Revisa los campos numericos.')
-            return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
+        # try:
+        #     anio = int(post.get('anio', '0'))
+        #     kilometraje = int(post.get('kilometraje', '0') or 0)
+        # except ValueError:
+        #     messages.error(request, 'Revisa los campos numericos.')
+        #     return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
 
         vehiculo = Vehiculo.objects.create(
-            folio=folio,
+            # NumerodeCliente=NumerodeCliente,
             fecha_ingreso=post.get('fecha_ingreso'),
             turno=(post.get('turno') or '').strip(),
             autoridad=(post.get('autoridad') or '').strip(),
@@ -489,14 +615,14 @@ def registrar_vehiculo(request):
             grua_direccion=(post.get('grua_direccion') or '').strip(),
             marca=(post.get('marca') or '').strip(),
             modelo=(post.get('modelo') or '').strip(),
-            anio=anio,
-            color=(post.get('color') or '').strip(),
-            placas=(post.get('placas') or '').strip().upper(),
-            vin=(post.get('vin') or '').strip().upper(),
-            numero_motor=(post.get('numero_motor') or '').strip().upper(),
-            tipo_servicio=(post.get('tipo_servicio') or '').strip(),
-            combustible=(post.get('combustible') or '').strip(),
-            kilometraje=kilometraje,
+            # anio=anio,
+            # color=(post.get('color') or '').strip(),
+            # placas=(post.get('placas') or '').strip().upper(),
+            # vin=(post.get('vin') or '').strip().upper(),
+            # numero_motor=(post.get('numero_motor') or '').strip().upper(),
+            # tipo_servicio=(post.get('tipo_servicio') or '').strip(),
+            # combustible=(post.get('combustible') or '').strip(),
+            # kilometraje=kilometraje,
             estatus_legal=(post.get('estatus_legal') or Vehiculo.ESTATUS_EN_CUSTODIA).strip(),
             oficio=(post.get('oficio') or '').strip(),
             fecha_oficio=post.get('fecha_oficio') or None,
@@ -510,8 +636,8 @@ def registrar_vehiculo(request):
             vehiculo.fecha_liberacion = timezone.now()
             vehiculo.save(update_fields=['fecha_liberacion'])
 
-        request.session.pop("folio_sugerido", None)
-        messages.success(request, f'Vehiculo {vehiculo.folio} registrado correctamente.')
+        request.session.pop("Numero_de_Cliente_sugerido", None)
+        messages.success(request, f'Vehiculo {vehiculo.NumerodeCliente} registrado correctamente.')
         return redirect('vehiculos')
 
     return render(request, 'Vehiculos/registrar-vehiculo.html', build_context())
@@ -528,7 +654,7 @@ def vehiculos_list(request):
 
     data = [
         {
-            'folio': v.folio,
+            'NumerodeCliente': v.NumerodeCliente,
             'marca': v.marca,
             'modelo': v.modelo,
             'anio': v.anio,
@@ -664,6 +790,8 @@ def clientes_list_view(request):
         'rol_label': ROLE_LABELS[role],
         'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
         'can_editar_credito': _has_permission(request, "gestionar_credito"),
+        'can_solicitar_correccion_cliente': _has_permission(request, "solicitar_correccion_cliente"),
+        'can_gestionar_correcciones_clientes': _has_permission(request, "gestionar_correcciones_clientes"),
         'credito_fields_numericos': CREDITO_FIELDS_NUMERICOS,
         'credito_fields_booleanos': CREDITO_FIELDS_BOOLEANOS,
         'total_clientes': len(clientes),
@@ -798,7 +926,7 @@ def vehiculos_list(request):
 
     data = [
         {
-            'folio': v.folio,
+            'CodigoSap': v.CodigoSAp,
             'marca': v.marca,
             'modelo': v.modelo,
             'anio': v.anio,
@@ -1031,6 +1159,147 @@ def solicitudes_correccion(request):
     return render(
         request,
         'Vehiculos/solicitudes-correccion.html',
+        {
+            'solicitudes': solicitudes,
+        },
+    )
+
+
+def solicitar_correccion_cliente(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "solicitar_correccion_cliente"):
+        return _reject_unauthorized(request)
+
+    sap_query = (request.GET.get('sap') or '').strip()
+    cliente = Cliente.objects.filter(sap__iexact=sap_query).first() if sap_query else None
+
+    if request.method == 'POST':
+        sap = (request.POST.get('sap') or '').strip()
+        campo = (request.POST.get('campo') or '').strip()
+        valor_nuevo = (request.POST.get('valor_nuevo') or '').strip()
+        motivo = (request.POST.get('motivo') or '').strip()
+
+        cliente = Cliente.objects.filter(sap__iexact=sap).first()
+        if not cliente:
+            messages.error(request, 'No se encontro el cliente solicitado.')
+            return redirect('solicitar_correccion_cliente')
+
+        if campo not in CLIENTE_CORRECCION_FIELDS:
+            messages.error(request, 'Selecciona un campo valido para corregir.')
+            return redirect('solicitar_correccion_cliente')
+
+        if not valor_nuevo:
+            messages.error(request, 'Ingresa el valor correcto.')
+            return redirect('solicitar_correccion_cliente')
+
+        field = Cliente._meta.get_field(campo)
+        if field.choices:
+            valid_choices = [choice[0] for choice in field.choices]
+            if valor_nuevo not in valid_choices:
+                messages.error(request, 'El valor no es valido para el campo seleccionado.')
+                return redirect('solicitar_correccion_cliente')
+
+        try:
+            _coerce_model_field_value(Cliente, campo, valor_nuevo)
+        except Exception:
+            messages.error(request, 'El valor no tiene el formato correcto para ese campo.')
+            return redirect('solicitar_correccion_cliente')
+
+        try:
+            SolicitudCorreccionCliente.objects.create(
+                cliente=cliente,
+                solicitante=_get_current_user(request),
+                campo=campo,
+                valor_nuevo=valor_nuevo,
+                motivo=motivo,
+            )
+        except ProgrammingError:
+            messages.error(request, "Faltan migraciones de correcciones de clientes. Ejecuta: manage.py migrate")
+            return redirect('clientes_list')
+        messages.success(request, 'Solicitud enviada al administrador.')
+        return redirect('clientes_list')
+
+    return render(
+        request,
+        'Vehiculos/solicitar-correccion-cliente.html',
+        {
+            'cliente': cliente,
+            'campos': CLIENTE_CORRECCION_FIELDS,
+        },
+    )
+
+
+def solicitudes_correccion_clientes(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_correcciones_clientes"):
+        return _reject_unauthorized(request)
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        solicitud_id = request.POST.get('solicitud_id')
+        try:
+            solicitud = (
+                SolicitudCorreccionCliente.objects.select_related('cliente')
+                .filter(id=solicitud_id)
+                .first()
+            )
+        except ProgrammingError:
+            messages.error(request, "Faltan migraciones de correcciones de clientes. Ejecuta: manage.py migrate")
+            return redirect('dashboard')
+
+        if not solicitud:
+            messages.error(request, 'No se encontro la solicitud.')
+            return redirect('solicitudes_correccion_clientes')
+
+        if solicitud.estatus != SolicitudCorreccionCliente.ESTATUS_PENDIENTE:
+            messages.error(request, 'La solicitud ya fue atendida.')
+            return redirect('solicitudes_correccion_clientes')
+
+        if action == 'rechazar':
+            solicitud.estatus = SolicitudCorreccionCliente.ESTATUS_RECHAZADA
+            solicitud.resuelto_en = timezone.now()
+            solicitud.resuelto_por = _get_current_user(request)
+            solicitud.save(update_fields=['estatus', 'resuelto_en', 'resuelto_por'])
+            messages.info(request, 'Solicitud rechazada.')
+            return redirect('solicitudes_correccion_clientes')
+
+        if action == 'aprobar':
+            try:
+                nuevo_valor = _coerce_model_field_value(Cliente, solicitud.campo, solicitud.valor_nuevo)
+            except Exception:
+                messages.error(request, 'No se pudo aplicar el cambio por formato invalido.')
+                return redirect('solicitudes_correccion_clientes')
+
+            cliente = solicitud.cliente
+            setattr(cliente, solicitud.campo, nuevo_valor)
+            cliente.save()
+
+            solicitud.estatus = SolicitudCorreccionCliente.ESTATUS_APROBADA
+            solicitud.resuelto_en = timezone.now()
+            solicitud.resuelto_por = _get_current_user(request)
+            solicitud.save(update_fields=['estatus', 'resuelto_en', 'resuelto_por'])
+
+            messages.success(request, 'Solicitud aplicada correctamente.')
+            return redirect('solicitudes_correccion_clientes')
+
+        messages.error(request, 'Accion invalida.')
+        return redirect('solicitudes_correccion_clientes')
+
+    try:
+        solicitudes = list(
+            SolicitudCorreccionCliente.objects.select_related('cliente', 'solicitante').order_by('-creado_en')
+        )
+    except ProgrammingError:
+        messages.error(request, "Faltan migraciones de correcciones de clientes. Ejecuta: manage.py migrate")
+        solicitudes = []
+    for solicitud in solicitudes:
+        solicitud.campo_label = CLIENTE_CORRECCION_FIELDS.get(solicitud.campo, solicitud.campo)
+
+    return render(
+        request,
+        'Vehiculos/solicitudes-correccion-clientes.html',
         {
             'solicitudes': solicitudes,
         },

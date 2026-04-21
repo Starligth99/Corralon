@@ -206,53 +206,39 @@
         <section class="surface p-4 p-lg-5">
           <h1 class="h5 mb-2">Agregar cuenta</h1>
           <p class="text-secondary mb-4">Solo se permiten correos @gonac.com.</p>
-          <form method="post" action="{% url 'usuarios' %}">
+          <form method="post" action="{% url 'usuarios' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
-                <div class="mb-3">
-                  <label class="form-label">Ubicacion de la persona (Google Maps o direccion)</label>
-                  <input type="text" class="form-control" name="ubicacionpersona" maxlength="180" required placeholder="Ejemplo: https://maps.google.com/... o Calle/Colonia">
-                  <div class="form-text">Campo obligatorio para registrar el vehiculo.</div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Numero de Cliente</label>
-                  <input type="text" class="form-control" id="folio" name="folio" value="{{ folio_sugerido }}" maxlength="30" readonly aria-readonly="true" required>
-                  <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
-                </div>
+            <div class="mb-3">
+              <label class="form-label">Numero de empleado</label>
+              <input type="text" class="form-control" value="Se asigna automaticamente" disabled aria-disabled="true">
+              <div class="form-text">Se genera automaticamente y no se puede modificar.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nombre completo</label>
+              <input type="text" class="form-control" name="nombre_completo" placeholder="Nombre(s) y apellidos" required autocomplete="name">
+            </div>
             <div class="mb-3">
               <label class="form-label">Correo institucional</label>
               <input type="email" class="form-control" name="email" placeholder="usuario@gonac.com" required autocomplete="off">
             </div>
             <div class="mb-3">
-              <label class="form-label">contraseña temporal</label>
+              <label class="form-label">Contraseña temporal</label>
               <input type="password" class="form-control" name="password" placeholder="Crea una contraseña" required autocomplete="new-password">
             </div>
             <div class="mb-3">
-              <label class="form-label">Nombre Completo</label>
-              <input type="name" class="form-control" name="Nombre" placeholder="ingresa tu nombre" required autocomplete="name">
+              <label class="form-label">RFC (PDF)</label>
+              <input type="file" class="form-control" name="rfc_pdf" accept="application/pdf" required>
             </div>
-                <div class="md-3">
-                  <label class="form-label">RFC</label>
-                  <input type="file" class="form-control" id="documentoPdfRFC" name="documento_pdf" accept="application/pdf" required>
-                  <div class="mt-2">
-                    <span id="pdfPill" class="file-pill d-none"></span>
-                  </div>
-                </div>
-                <div class="md-3">
-                  <label class="form-label">Comprobante de domicilio</label>
-                  <input type="file" class="form-control" id="documentoPdfCDD" name="documento_pdf" accept="application/pdf" required>
-                  <div class="mt-2">
-                    <span id="pdfPill" class="file-pill d-none"></span>
-                  </div>
-                </div>
-                  <div class="md-3">
-                  <label class="form-label">INE </label>
-                  <input type="file" class="form-control" id="documentoPdfINE" name="documento_pdf" accept="application/pdf" required>
-                  <div class="mt-2">
-                    <span id="pdfPill" class="file-pill d-none"></span>
-                  </div>
-                </div>
-            
+            <div class="mb-3">
+              <label class="form-label">INE (PDF)</label>
+              <input type="file" class="form-control" name="ine_pdf" accept="application/pdf" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Comprobante de domicilio (PDF)</label>
+              <input type="file" class="form-control" name="comprobante_domicilio_pdf" accept="application/pdf" required>
+            </div>
+             
             <div class="mb-3">
               <label class="form-label">Rol</label>
               <select class="form-select" name="role" required>
@@ -274,22 +260,34 @@
           {% if usuarios %}
           <div class="table-responsive">
             <table class="table align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>Correo</th>
-                  <th>Rol</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
+               <thead class="table-light">
+                 <tr>
+                   <th>No. empleado</th>
+                   <th>Nombre</th>
+                   <th>Correo</th>
+                   <th>Rol</th>
+                   <th>Documentos</th>
+                   <th>Acciones</th>
+                 </tr>
+               </thead>
               <tbody>
                 {% for usuario in usuarios %}
-                <tr>
-                  <td class="fw-semibold">{{ usuario.email }}</td>
-                  <td>{{ usuario.role_label }}</td>
-                  <td>
-                    {% if usuario.is_self %}
-                    <span class="text-secondary small">Sesion actual</span>
-                    {% else %}
+                 <tr>
+                   <td class="fw-semibold">{{ usuario.numero_empleado|default:"-" }}</td>
+                   <td>{{ usuario.nombre_completo|default:"-" }}</td>
+                   <td class="fw-semibold">{{ usuario.email }}</td>
+                   <td>{{ usuario.role_label }}</td>
+                   <td>
+                     {% if usuario.docs_ok %}
+                     <span class="badge text-bg-success">OK</span>
+                     {% else %}
+                     <span class="badge text-bg-warning">Pendiente</span>
+                     {% endif %}
+                   </td>
+                   <td>
+                     {% if usuario.is_self %}
+                     <span class="text-secondary small">Sesion actual</span>
+                     {% else %}
                     <form method="post" action="{% url 'usuarios' %}" class="d-inline">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
