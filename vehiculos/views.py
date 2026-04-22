@@ -90,6 +90,54 @@ CLIENTE_CORRECCION_FIELDS = {
 }
 
 
+def _normalize_excel_header(value):
+    import unicodedata
+
+    if value is None:
+        return ""
+    text = str(value).strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return (
+        text.replace("\u00a0", " ")
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("/", "_")
+    )
+
+
+def _parse_excel_date(value):
+    if value is None or value == "":
+        return None
+
+    from datetime import datetime
+
+    if isinstance(value, (date,)) and not isinstance(value, datetime):
+        return value
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    raw = str(value).strip()
+
+    parsed = parse_date(raw)
+    if parsed:
+        return parsed
+
+    # Soportar DD/MM/YYYY
+    if "/" in raw:
+        parts = raw.split("/")
+        if len(parts) == 3:
+            try:
+                day = int(parts[0])
+                month = int(parts[1])
+                year = int(parts[2])
+                return date(year, month, day)
+            except Exception:
+                return None
+    return None
+
+
 def _is_logged_in(request):
     return "usuario" in request.session
 
@@ -247,6 +295,17 @@ def _has_permission(request, permission):
     return permission in ROLE_PERMISSIONS.get(_get_role(request), set())
 
 
+def _scoped_clientes_queryset(request):
+    role = _get_role(request)
+    if role != ROLE_OPERADOR:
+        return Cliente.objects.all()
+
+    user = _get_current_user(request)
+    if user is None:
+        return Cliente.objects.none()
+    return Cliente.objects.filter(operador=user)
+
+
 def _reject_unauthorized(request):
     messages.error(request, "Tu rol no tiene permiso para esta accion.")
     return redirect("dashboard")
@@ -279,37 +338,36 @@ def dashboard(request):
     if not _has_permission(request, "ver_dashboard"):
         return redirect('login')
 
-    clientes = Cliente.objects.all()
-    
-    total = Cliente.objects.count()
+    clientes_qs = _scoped_clientes_queryset(request)
 
-    directos = Cliente.objects.filter(tipo_cuenta=Cliente.TIPO_DIRECTO).count()
-    prospectos = Cliente.objects.filter(tipo_cuenta=Cliente.TIPO_PROSPECTO).count()
+    total = clientes_qs.count()
+
+    directos = clientes_qs.filter(tipo_cuenta=Cliente.TIPO_DIRECTO).count()
+    prospectos = clientes_qs.filter(tipo_cuenta=Cliente.TIPO_PROSPECTO).count()
 
     pendientes = prospectos
     liberados = directos
     en_proceso = 0
 
-    monthly_data = list(reversed(
-        Cliente.objects.filter(fecha_registro__isnull=False)
-        .annotate(month=TruncMonth('fecha_registro'))
-        .values('month')
-        .annotate(total=Count('id'))
-        .order_by('-month')[:6]
-    ))
+    monthly_data = list(
+        reversed(
+            clientes_qs.filter(fecha_registro__isnull=False)
+            .annotate(month=TruncMonth('fecha_registro'))
+            .values('month')
+            .annotate(total=Count('id'))
+            .order_by('-month')[:6]
+        )
+    )
     monthly_data = list(reversed(monthly_data))
     monthly_labels = [item['month'].strftime('%b') for item in monthly_data]
     monthly_ingress = [item['total'] for item in monthly_data]
 
-    tipo_data = (
-        Cliente.objects.values('tipo_cuenta')
-        .annotate(total=Count('id'))
-    )
+    tipo_data = clientes_qs.values('tipo_cuenta').annotate(total=Count('id'))
     
     type_labels = [item['tipo_cuenta'] for item in tipo_data]
     type_values = [item['total'] for item in tipo_data]
 
-    actividad = Cliente.objects.order_by('-fecha_registro')[:5]
+    actividad = clientes_qs.order_by('-fecha_registro', '-id')[:5]
 
     context = {
     'resumen_data': {
@@ -319,9 +377,9 @@ def dashboard(request):
     'enProceso': en_proceso,
     },
     'detalle_data': {
-        'listas': list(Cliente.objects.values('lista_precios').annotate(total=Count('id'))),
-        'labels': [item['lista_precios'] for item in Cliente.objects.values('lista_precios').annotate(total=Count('id'))],
-        'values': [item['total'] for item in Cliente.objects.values('lista_precios').annotate(total=Count('id'))],
+        'listas': list(clientes_qs.values('lista_precios').annotate(total=Count('id'))),
+        'labels': [item['lista_precios'] for item in clientes_qs.values('lista_precios').annotate(total=Count('id'))],
+        'values': [item['total'] for item in clientes_qs.values('lista_precios').annotate(total=Count('id'))],
         'monthlyLabels': monthly_labels,
         'monthlyIngress': monthly_ingress,
         'typeLabels': type_labels,
@@ -773,6 +831,28 @@ def clientes_list_view(request):
     role = _get_role(request)
     user = _get_current_user(request)
 
+    can_borrar_clientes = _has_permission(request, "gestionar_usuarios")
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip()
+        if action == "delete_cliente":
+            if not can_borrar_clientes:
+                return _reject_unauthorized(request)
+
+            cliente_id = request.POST.get("cliente_id")
+            cliente = Cliente.objects.filter(id=cliente_id).first()
+            if not cliente:
+                messages.error(request, "Cliente no encontrado.")
+                return redirect("clientes_list")
+
+            sap = cliente.sap
+            nombre = cliente.nombre
+            cliente.delete()
+            messages.success(request, f'Cliente {sap} - {nombre} eliminado correctamente.')
+            return redirect("clientes_list")
+
+        messages.error(request, "Accion invalida.")
+        return redirect("clientes_list")
+
     query = Cliente.objects.select_related('operador').order_by('-fecha_registro', '-id')
     if role == ROLE_OPERADOR and user is not None:
         query = query.filter(operador=user)
@@ -789,14 +869,202 @@ def clientes_list_view(request):
         'rol': role,
         'rol_label': ROLE_LABELS[role],
         'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
+        'can_importar_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
         'can_editar_credito': _has_permission(request, "gestionar_credito"),
         'can_solicitar_correccion_cliente': _has_permission(request, "solicitar_correccion_cliente"),
         'can_gestionar_correcciones_clientes': _has_permission(request, "gestionar_correcciones_clientes"),
+        'can_borrar_clientes': can_borrar_clientes,
         'credito_fields_numericos': CREDITO_FIELDS_NUMERICOS,
         'credito_fields_booleanos': CREDITO_FIELDS_BOOLEANOS,
         'total_clientes': len(clientes),
     }
     return render(request, 'Vehiculos/clientes.html', context)
+
+
+def importar_clientes_excel(request):
+    if not _is_logged_in(request):
+        return redirect("login")
+
+    # Permitir importar a quien pueda registrar clientes o administrar usuarios.
+    if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
+        return _reject_unauthorized(request)
+
+    if request.method != "POST":
+        return render(
+            request,
+            "Vehiculos/importar-clientes.html",
+            {
+                "required_columns": [
+                    "sap",
+                    "nombre",
+                    "tipo_cuenta",
+                    "fecha_registro",
+                ],
+                "optional_columns": [
+                    "lista_precios",
+                    "latitud",
+                    "longitud",
+                    "direccion",
+                    "zona",
+                    "estado",
+                    "poblacion",
+                ],
+            },
+        )
+
+    archivo = request.FILES.get("excel")
+    if not archivo:
+        messages.error(request, "Selecciona un archivo .xlsx o .csv para importar.")
+        return redirect("importar_clientes_excel")
+
+    name = (getattr(archivo, "name", "") or "").lower()
+    if not (name.endswith(".xlsx") or name.endswith(".csv")):
+        messages.error(request, "El archivo debe ser .xlsx (Excel) o .csv.")
+        return redirect("importar_clientes_excel")
+
+    rows = []
+    if name.endswith(".csv"):
+        import csv
+        from io import StringIO, TextIOWrapper
+
+        raw_bytes = archivo.read()
+        decoded = None
+        for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+            try:
+                decoded = raw_bytes.decode(encoding)
+                break
+            except Exception:
+                decoded = None
+        if decoded is None:
+            messages.error(request, "No se pudo leer el CSV (codificacion desconocida).")
+            return redirect("importar_clientes_excel")
+
+        sio = StringIO(decoded)
+        sample = decoded[:2048]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        except Exception:
+            dialect = csv.excel
+        reader = csv.reader(sio, dialect)
+        rows = list(reader)
+    else:
+        try:
+            from openpyxl import load_workbook
+        except Exception:
+            messages.error(
+                request,
+                "Para .xlsx necesitas openpyxl. Si no puedes instalarlo, exporta el Excel a CSV y sube el .csv.",
+            )
+            return redirect("importar_clientes_excel")
+
+        try:
+            wb = load_workbook(archivo, data_only=True)
+        except Exception:
+            messages.error(request, "No se pudo leer el Excel. Verifica que no este dañado.")
+            return redirect("importar_clientes_excel")
+
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        messages.error(request, "El Excel esta vacio.")
+        return redirect("importar_clientes_excel")
+
+    header_row = rows[0]
+    headers = [_normalize_excel_header(cell) for cell in header_row]
+    header_to_index = {h: idx for idx, h in enumerate(headers) if h}
+
+    required = ["sap", "nombre", "tipo_cuenta", "fecha_registro"]
+    missing = [col for col in required if col not in header_to_index]
+    if missing:
+        messages.error(
+            request,
+            f"Faltan columnas obligatorias: {', '.join(missing)} (usa nombres iguales a los del sistema).",
+        )
+        return redirect("importar_clientes_excel")
+
+    created = 0
+    skipped = 0
+    errores = []
+    current_user = _get_current_user(request)
+
+    with transaction.atomic():
+        for row_num, row in enumerate(rows[1:], start=2):
+            if not row or all(cell in (None, "") for cell in row):
+                continue
+
+            def cell_value(col):
+                idx = header_to_index.get(col)
+                if idx is None or idx >= len(row):
+                    return None
+                return row[idx]
+
+            sap_raw = cell_value("sap")
+            nombre_raw = cell_value("nombre")
+            tipo_raw = cell_value("tipo_cuenta")
+            fecha_raw = cell_value("fecha_registro")
+
+            sap = (str(sap_raw).strip().upper() if sap_raw is not None else "")
+            nombre = (str(nombre_raw).strip() if nombre_raw is not None else "")
+            tipo = (str(tipo_raw).strip().upper() if tipo_raw is not None else "")
+            fecha = _parse_excel_date(fecha_raw)
+
+            if not sap or not nombre or not tipo or not fecha:
+                errores.append(f"Fila {row_num}: falta sap/nombre/tipo_cuenta/fecha_registro.")
+                continue
+
+            if tipo not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
+                errores.append(
+                    f"Fila {row_num}: tipo_cuenta invalido ({tipo}). Usa DIRECTO o PROSPECTO.",
+                )
+                continue
+
+            if Cliente.objects.filter(sap=sap).exists():
+                skipped += 1
+                continue
+
+            lista_precios = cell_value("lista_precios")
+            latitud = cell_value("latitud")
+            longitud = cell_value("longitud")
+
+            def to_float(value):
+                if value is None or value == "":
+                    return None
+                try:
+                    text = str(value).strip()
+                    if "," in text and "." not in text:
+                        text = text.replace(",", ".")
+                    return float(text)
+                except Exception:
+                    return None
+
+            cliente = Cliente.objects.create(
+                sap=sap,
+                nombre=nombre,
+                tipo_cuenta=tipo,
+                lista_precios=(str(lista_precios).strip().upper() if lista_precios not in (None, "") else ""),
+                latitud=to_float(latitud),
+                longitud=to_float(longitud),
+                direccion=(str(cell_value("direccion")).strip() if cell_value("direccion") not in (None, "") else ""),
+                zona=(str(cell_value("zona")).strip().upper() if cell_value("zona") not in (None, "") else ""),
+                estado=(str(cell_value("estado")).strip().upper() if cell_value("estado") not in (None, "") else ""),
+                poblacion=(str(cell_value("poblacion")).strip().upper() if cell_value("poblacion") not in (None, "") else ""),
+                fecha_registro=fecha,
+                operador=current_user,
+            )
+            created += 1
+
+    if created:
+        messages.success(request, f"Importacion completa: {created} cliente(s) creados.")
+    if skipped:
+        messages.info(request, f"Omitidos por SAP duplicado: {skipped}.")
+    if errores:
+        # Limitar para no saturar la UI
+        for msg in errores[:10]:
+            messages.error(request, msg)
+        if len(errores) > 10:
+            messages.error(request, f"Y {len(errores) - 10} error(es) mas.")
+
+    return redirect("clientes_list")
 
 
 CREDITO_FIELDS_NUMERICOS = [
@@ -1172,7 +1440,8 @@ def solicitar_correccion_cliente(request):
         return _reject_unauthorized(request)
 
     sap_query = (request.GET.get('sap') or '').strip()
-    cliente = Cliente.objects.filter(sap__iexact=sap_query).first() if sap_query else None
+    clientes_qs = _scoped_clientes_queryset(request)
+    cliente = clientes_qs.filter(sap__iexact=sap_query).first() if sap_query else None
 
     if request.method == 'POST':
         sap = (request.POST.get('sap') or '').strip()
@@ -1180,7 +1449,7 @@ def solicitar_correccion_cliente(request):
         valor_nuevo = (request.POST.get('valor_nuevo') or '').strip()
         motivo = (request.POST.get('motivo') or '').strip()
 
-        cliente = Cliente.objects.filter(sap__iexact=sap).first()
+        cliente = clientes_qs.filter(sap__iexact=sap).first()
         if not cliente:
             messages.error(request, 'No se encontro el cliente solicitado.')
             return redirect('solicitar_correccion_cliente')

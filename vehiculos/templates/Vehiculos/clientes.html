@@ -207,6 +207,9 @@
         {% if can_registrar_cliente %}
         <a href="{% url 'operador' %}" class="btn btn-light btn-sm">+ Nuevo cliente</a>
         {% endif %}
+        {% if can_importar_clientes %}
+        <a href="{% url 'importar_clientes_excel' %}" class="btn btn-warning btn-sm">Importar Excel</a>
+        {% endif %}
         <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
       </div>
     </div>
@@ -319,6 +322,20 @@
                   <a href="{% url 'solicitudes_correccion_clientes' %}" class="btn btn-sm btn-outline-secondary">
                     Ver solicitudes
                   </a>
+                  {% endif %}
+                  {% if can_borrar_clientes %}
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_cliente">
+                    <input type="hidden" name="cliente_id" value="{{ c.id }}">
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('¿Seguro que quieres eliminar este cliente? Esta acción no se puede deshacer.');"
+                    >
+                      Eliminar cliente
+                    </button>
+                  </form>
                   {% endif %}
                 </div>
               </div>
