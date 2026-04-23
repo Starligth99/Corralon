@@ -106,6 +106,51 @@ def _normalize_excel_header(value):
     )
 
 
+def _canonicalize_import_header(normalized_header):
+    header = normalized_header or ""
+
+    if header.startswith("codigo_sa"):
+        return "sap"
+    if header in ("sap", "codigo_sap"):
+        return "sap"
+
+    if header.startswith("tipo_cuen"):
+        return "tipo_cuenta"
+    if header in ("tipo_cuenta", "tipo_de_cuenta"):
+        return "tipo_cuenta"
+
+    if header in ("nombre",):
+        return "nombre"
+
+    if header in ("direccion",):
+        return "direccion"
+
+    if header in ("zona",):
+        return "zona"
+
+    if header in ("estado",):
+        return "estado"
+
+    if header in ("poblacion",):
+        return "poblacion"
+
+    if header in ("latitud",):
+        return "latitud"
+
+    if header in ("longitud",):
+        return "longitud"
+
+    if header.startswith("lista_de_pre"):
+        return "lista_precios"
+    if header in ("lista_precios", "lista_de_precios"):
+        return "lista_precios"
+
+    if header in ("fecha_registro", "fecha_de_registro", "fecha_ingreso", "fecha_de_ingreso"):
+        return "fecha_registro"
+
+    return header
+
+
 def _parse_excel_date(value):
     if value is None or value == "":
         return None
@@ -895,19 +940,19 @@ def importar_clientes_excel(request):
             "Vehiculos/importar-clientes.html",
             {
                 "required_columns": [
-                    "sap",
-                    "nombre",
-                    "tipo_cuenta",
-                    "fecha_registro",
+                    "Código SAP",
+                    "Nombre",
+                    "Tipo Cuenta",
+                    "Dirección",
+                    "Zona",
+                    "Estado",
+                    "Población",
+                    "Latitud",
+                    "Longitud",
+                    "Lista de Precios",
                 ],
                 "optional_columns": [
-                    "lista_precios",
-                    "latitud",
-                    "longitud",
-                    "direccion",
-                    "zona",
-                    "estado",
-                    "poblacion",
+                    "Fecha de registro (opcional: si no viene, se usa hoy)",
                 ],
             },
         )
@@ -970,15 +1015,28 @@ def importar_clientes_excel(request):
         return redirect("importar_clientes_excel")
 
     header_row = rows[0]
-    headers = [_normalize_excel_header(cell) for cell in header_row]
-    header_to_index = {h: idx for idx, h in enumerate(headers) if h}
+    raw_headers = [_normalize_excel_header(cell) for cell in header_row]
+    canonical_headers = [_canonicalize_import_header(h) for h in raw_headers]
+    header_to_index = {h: idx for idx, h in enumerate(canonical_headers) if h}
 
-    required = ["sap", "nombre", "tipo_cuenta", "fecha_registro"]
+    required = [
+        "sap",
+        "nombre",
+        "tipo_cuenta",
+        "direccion",
+        "zona",
+        "estado",
+        "poblacion",
+        "latitud",
+        "longitud",
+        "lista_precios",
+    ]
     missing = [col for col in required if col not in header_to_index]
     if missing:
         messages.error(
             request,
-            f"Faltan columnas obligatorias: {', '.join(missing)} (usa nombres iguales a los del sistema).",
+            "Faltan columnas obligatorias. Deben venir exactamente estas columnas: "
+            "Código SAP, Nombre, Tipo Cuenta, Dirección, Zona, Estado, Población, Latitud, Longitud, Lista de Precios.",
         )
         return redirect("importar_clientes_excel")
 
@@ -986,6 +1044,7 @@ def importar_clientes_excel(request):
     skipped = 0
     errores = []
     current_user = _get_current_user(request)
+    today = timezone.localdate()
 
     with transaction.atomic():
         for row_num, row in enumerate(rows[1:], start=2):
@@ -1001,15 +1060,28 @@ def importar_clientes_excel(request):
             sap_raw = cell_value("sap")
             nombre_raw = cell_value("nombre")
             tipo_raw = cell_value("tipo_cuenta")
-            fecha_raw = cell_value("fecha_registro")
 
-            sap = (str(sap_raw).strip().upper() if sap_raw is not None else "")
+            def normalize_code(value):
+                if value is None:
+                    return ""
+                if isinstance(value, float) and value.is_integer():
+                    value = int(value)
+                return str(value).strip()
+
+            sap = normalize_code(sap_raw).upper()
             nombre = (str(nombre_raw).strip() if nombre_raw is not None else "")
             tipo = (str(tipo_raw).strip().upper() if tipo_raw is not None else "")
-            fecha = _parse_excel_date(fecha_raw)
 
-            if not sap or not nombre or not tipo or not fecha:
-                errores.append(f"Fila {row_num}: falta sap/nombre/tipo_cuenta/fecha_registro.")
+            if tipo.startswith("DIR"):
+                tipo = Cliente.TIPO_DIRECTO
+            elif tipo.startswith("PRO"):
+                tipo = Cliente.TIPO_PROSPECTO
+
+            fecha_raw = cell_value("fecha_registro")
+            fecha = _parse_excel_date(fecha_raw) if fecha_raw not in (None, "") else today
+
+            if not sap or not nombre or not tipo:
+                errores.append(f"Fila {row_num}: falta Código SAP / Nombre / Tipo Cuenta.")
                 continue
 
             if tipo not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):

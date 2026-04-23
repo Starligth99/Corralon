@@ -101,9 +101,9 @@
     {% endif %}
 
     <section class="card shadow-sm p-4">
-      <h1 class="h5 mb-2">Sube un archivo .xlsx</h1>
+      <h1 class="h5 mb-2">Importar clientes (CSV o XLSX)</h1>
       <p class="text-secondary mb-4">
-        Puedes subir un archivo <strong>.xlsx</strong> o <strong>.csv</strong>. La primera fila debe tener encabezados; no importan mayúsculas/acentos.
+        Sube un archivo <strong>.csv</strong> (recomendado) o <strong>.xlsx</strong>. La primera fila debe tener encabezados como en tu plantilla.
       </p>
 
       <div class="row g-3 mb-4">
@@ -133,7 +133,7 @@
         <div class="fw-semibold">Notas</div>
         <ul class="mb-0">
           <li><span class="mono">tipo_cuenta</span> debe ser <span class="mono">DIRECTO</span> o <span class="mono">PROSPECTO</span>.</li>
-          <li><span class="mono">fecha_registro</span> acepta <span class="mono">YYYY-MM-DD</span> o <span class="mono">DD/MM/YYYY</span>.</li>
+          <li><strong>Fecha de ingreso/registro:</strong> si tu archivo no trae fecha, se guarda automáticamente con la fecha de hoy.</li>
           <li>Si el <span class="mono">sap</span> ya existe, esa fila se omite.</li>
           <li>Si no puedes instalar <span class="mono">openpyxl</span> por SSL, exporta tu Excel a <strong>CSV</strong> y sube el <span class="mono">.csv</span>.</li>
         </ul>
