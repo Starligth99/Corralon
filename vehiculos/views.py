@@ -970,28 +970,32 @@ def importar_clientes_excel(request):
     rows = []
     if name.endswith(".csv"):
         import csv
-        from io import StringIO, TextIOWrapper
+        from io import BytesIO, TextIOWrapper
 
         raw_bytes = archivo.read()
-        decoded = None
+        encoding_used = None
         for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
             try:
-                decoded = raw_bytes.decode(encoding)
+                raw_bytes.decode(encoding)
+                encoding_used = encoding
                 break
             except Exception:
-                decoded = None
-        if decoded is None:
+                encoding_used = None
+        if encoding_used is None:
             messages.error(request, "No se pudo leer el CSV (codificacion desconocida).")
             return redirect("importar_clientes_excel")
 
-        sio = StringIO(decoded)
-        sample = decoded[:2048]
-        try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-        except Exception:
-            dialect = csv.excel
-        reader = csv.reader(sio, dialect)
-        rows = list(reader)
+        bio = BytesIO(raw_bytes)
+        # csv module requiere newline="" para manejar saltos de linea correctamente
+        with TextIOWrapper(bio, encoding=encoding_used, newline="") as text_stream:
+            sample = text_stream.read(2048)
+            text_stream.seek(0)
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+            except Exception:
+                dialect = csv.excel
+            reader = csv.reader(text_stream, dialect)
+            rows = list(reader)
     else:
         try:
             from openpyxl import load_workbook
