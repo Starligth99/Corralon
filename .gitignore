@@ -147,3 +147,9 @@ db.sqlite3
 staticfiles/
 __pycache__/
 *.pyc
+
+# Django user uploads
+media/
+
+# Local DB dumps / exports
+Base de datos de PgAdmin/
