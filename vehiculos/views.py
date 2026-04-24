@@ -12,6 +12,8 @@ from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseForbidden
 
 from .models import (
     Cliente,
@@ -26,7 +28,7 @@ from .models import (
 ROLE_ADMIN_MASTER = "admin_master"
 ROLE_ADMIN = "administrador"
 ROLE_OPERADOR = "operador"
-ROLE_CONSULTA = "consulta"
+ROLE_PROMOTOR = "promotor"
 ALLOWED_EMAIL_DOMAINS = [
     item.strip().lower()
     for item in (os.getenv("ALLOWED_EMAIL_DOMAINS", "") or "").split(",")
@@ -37,7 +39,7 @@ ROLE_LABELS = {
     ROLE_ADMIN_MASTER: "Admin Master",
     ROLE_ADMIN: "Administrador",
     ROLE_OPERADOR: "Operador",
-    ROLE_CONSULTA: "Consulta",
+    ROLE_PROMOTOR: "Promotor",
 }
 
 _ADMIN_PERMS = {
@@ -52,6 +54,7 @@ _ADMIN_PERMS = {
     "solicitar_correccion",
     "solicitar_correccion_cliente",
     "gestionar_credito",
+    "editar_cliente"
 }
 
 ROLE_PERMISSIONS = {
@@ -63,8 +66,12 @@ ROLE_PERMISSIONS = {
         "ver_inventario",
         "solicitar_correccion",
         "solicitar_correccion_cliente",
+        "editar_cliente"
     },
-    ROLE_CONSULTA: {"ver_dashboard", "ver_inventario"},
+    ROLE_PROMOTOR: {"ver_dashboard", 
+                    "ver_inventario",
+                    "operadorregistrador",
+                    },
 }
 
 CORRECCION_FIELDS = {
@@ -89,6 +96,14 @@ CLIENTE_CORRECCION_FIELDS = {
     "poblacion": "Poblacion",
 }
 
+EDITABLE_FIELDS_OPERADOR = [
+    'lista_precios',
+    'tipo_cuenta',
+    'poblacion',
+    'estado',
+    'zona'
+]
+
 
 def _normalize_excel_header(value):
     import unicodedata
@@ -104,6 +119,61 @@ def _normalize_excel_header(value):
         .replace("-", "_")
         .replace("/", "_")
     )
+
+def editar_cliente(request, cliente_id):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "editar_cliente"):
+        return _reject_unauthorized(request)
+
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    role = _get_role(request)
+    user = _get_current_user(request)
+
+    # Seguridad: operador solo edita sus clientes
+    if role == ROLE_OPERADOR and cliente.operador != user:
+        return HttpResponseForbidden("No tienes permiso para editar este cliente.")
+
+    if request.method == 'POST':
+        if role == ROLE_OPERADOR:
+            if cliente.edicion_operador_usada:
+                messages.error(request, "Ya usaste tu única edición permitida para este cliente.")
+                return redirect('clientes_list')
+
+            for field in EDITABLE_FIELDS_OPERADOR:
+                if field in request.POST:
+                    setattr(cliente, field, (request.POST.get(field) or "").strip())
+
+            cliente.edicion_operador_usada = True
+            cliente.save(update_fields=EDITABLE_FIELDS_OPERADOR + ['edicion_operador_usada', 'actualizado_en'])
+            messages.success(request, f"Cliente {cliente.sap} actualizado correctamente (edición única usada).")
+            return redirect('clientes_list')
+
+        if role in [ROLE_ADMIN, ROLE_ADMIN_MASTER]:
+            # Admin / Admin Master pueden editar libremente solo campos de negocio permitidos aquí
+            admin_editable_fields = [
+                'lista_precios', 'tipo_cuenta', 'poblacion', 'estado', 'zona',
+                'nombre', 'direccion', 'latitud', 'longitud'
+            ]
+            touched = []
+            for field in admin_editable_fields:
+                if field in request.POST:
+                    setattr(cliente, field, (request.POST.get(field) or "").strip())
+                    touched.append(field)
+
+            if touched:
+                cliente.save(update_fields=touched + ['actualizado_en'])
+                messages.success(request, f"Cliente {cliente.sap} actualizado correctamente.")
+            else:
+                messages.info(request, "No se detectaron cambios para guardar.")
+            return redirect('clientes_list')
+
+    return render(request, 'Vehiculos/editar_cliente.html', {
+        'cliente': cliente,
+        'rol': role,
+        'editable_fields_operador': EDITABLE_FIELDS_OPERADOR,
+        'edicion_operador_usada': cliente.edicion_operador_usada,
+    })
 
 
 def _canonicalize_import_header(normalized_header):
@@ -189,7 +259,7 @@ def _is_logged_in(request):
 
 def _get_role(request):
     role = request.session.get("rol")
-    return role if role in ROLE_LABELS else ROLE_CONSULTA
+    return role if role in ROLE_LABELS else ROLE_PROMOTOR
 
 
 def _get_role_for_user(user):
@@ -201,9 +271,9 @@ def _get_role_for_user(user):
         return ROLE_ADMIN
     if user.groups.filter(name=ROLE_OPERADOR).exists():
         return ROLE_OPERADOR
-    if user.groups.filter(name=ROLE_CONSULTA).exists():
-        return ROLE_CONSULTA
-    return ROLE_CONSULTA
+    if user.groups.filter(name=ROLE_PROMOTOR).exists():
+        return ROLE_PROMOTOR
+    return ROLE_PROMOTOR
 
 
 def _get_current_user(request):
@@ -243,7 +313,12 @@ def _role_to_prefijo(role):
         return PerfilUsuario.PREFIJO_ADMINISTRADOR
     if role == ROLE_OPERADOR:
         return PerfilUsuario.PREFIJO_OPERADOR
-    return PerfilUsuario.PREFIJO_CONSULTA
+    if role == ROLE_PROMOTOR:
+        return PerfilUsuario.PREFIJO_PROMOTOR
+
+    return PerfilUsuario.PREFIJO_PROMOTOR
+
+
 
 
 def _generar_numero_empleado(role):
@@ -342,14 +417,22 @@ def _has_permission(request, permission):
 
 def _scoped_clientes_queryset(request):
     role = _get_role(request)
-    if role != ROLE_OPERADOR:
-        return Cliente.objects.all()
-
     user = _get_current_user(request)
-    if user is None:
-        return Cliente.objects.none()
-    return Cliente.objects.filter(operador=user)
 
+    if role == ROLE_OPERADOR:
+        if user is None:
+            return Cliente.objects.none()
+        return Cliente.objects.filter(operador=user)
+
+    if role == ROLE_PROMOTOR:
+        if user is None:
+            return Cliente.objects.none()
+        perfil = PerfilUsuario.objects.filter(user=user).first()
+        if not perfil or not perfil.operador_asignado:
+            return Cliente.objects.none()
+        return Cliente.objects.filter(operador=perfil.operador_asignado)
+
+    return Cliente.objects.all()
 
 def _reject_unauthorized(request):
     messages.error(request, "Tu rol no tiene permiso para esta accion.")
@@ -545,6 +628,14 @@ def usuarios_view(request):
                     user.is_staff = False
                     user.is_superuser = False
                 user.save()
+
+                operador_asignado = None
+                if role == ROLE_PROMOTOR:
+                    operador_id = request.POST.get('operador_asignado')
+                    operador_asignado = User.objects.filter(id=operador_id).first() if operador_id else None
+                    if operador_asignado is None:
+                        raise ValueError("Debes asignar un operador al promotor.")
+
                 PerfilUsuario.objects.create(
                     user=user,
                     numero_interno=_generar_numero_empleado(role),
@@ -552,6 +643,7 @@ def usuarios_view(request):
                     rfc_pdf=rfc_pdf,
                     ine_pdf=ine_pdf,
                     comprobante_domicilio_pdf=comprobante_pdf,
+                    operador_asignado=operador_asignado,
                 )
             messages.success(request, f'Cuenta {email} creada correctamente.')
             return redirect('usuarios')
@@ -808,30 +900,48 @@ def operadorregistrador_view(request):
     if not _has_permission(request, "operadorregistrador"):
         return _reject_unauthorized(request)
 
+    rol = _get_role(request)  # 👈 usa tu helper, no session directo
+
     def build_context(values=None):
         return {
             'form_values': values or {},
+            'rol': rol,  # 👈 IMPORTANTÍSIMO para el template
         }
 
     if request.method == 'POST':
         post = request.POST
         values = {key: (post.get(key) or '').strip() for key in CLIENTE_FIELD_LABELS}
 
-        required = ['fecha_registro', 'sap', 'nombre', 'tipo_cuenta',
-                    'latitud', 'longitud', 'direccion', 'zona', 'estado', 'poblacion']
+        # 🔒 BLOQUEO BACKEND PARA PROMOTOR
+        if rol == ROLE_PROMOTOR:
+            values['tipo_cuenta'] = Cliente.TIPO_PROSPECTO
+            values['lista_precios'] = 'DEFAULT'
+            values['zona'] = ''
+            values['estado'] = ''
+            values['poblacion'] = ''
+
+        # ✅ CAMPOS OBLIGATORIOS DINÁMICOS
+        if rol == ROLE_PROMOTOR:
+            required = ['fecha_registro', 'sap', 'nombre', 'latitud', 'longitud', 'direccion']
+        else:
+            required = ['fecha_registro', 'sap', 'nombre', 'tipo_cuenta',
+                        'latitud', 'longitud', 'direccion', 'zona', 'estado', 'poblacion']
+
         missing = [field for field in required if not values.get(field)]
         if missing:
             labels = [CLIENTE_FIELD_LABELS[field] for field in missing]
             messages.error(request, f'Completa los campos obligatorios: {", ".join(labels)}.')
             return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        if values['tipo_cuenta'] not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
-            messages.error(request, 'Selecciona un tipo de cuenta valido (Directo o Prospecto).')
-            return render(request, 'Vehiculos/operador.html', build_context(values))
+        # 🔒 VALIDACIÓN SOLO PARA NO PROMOTOR
+        if rol != ROLE_PROMOTOR:
+            if values['tipo_cuenta'] not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
+                messages.error(request, 'Selecciona un tipo de cuenta valido.')
+                return render(request, 'Vehiculos/operador.html', build_context(values))
 
         sap = values['sap'].upper()
         if Cliente.objects.filter(sap=sap).exists():
-            messages.error(request, f'Ya existe un cliente con el codigo SAP "{sap}".')
+            messages.error(request, 'Ya existe un cliente con el codigo SAP "{sap}".')
             return render(request, 'Vehiculos/operador.html', build_context(values))
 
         fecha = parse_date(values['fecha_registro'])
@@ -846,6 +956,15 @@ def operadorregistrador_view(request):
             messages.error(request, 'Latitud y longitud deben ser numeros.')
             return render(request, 'Vehiculos/operador.html', build_context(values))
 
+        usuario_actual = _get_current_user(request)
+        operador_destino = usuario_actual
+        if rol == ROLE_PROMOTOR:
+            perfil = PerfilUsuario.objects.filter(user=usuario_actual).first()
+            operador_destino = perfil.operador_asignado if perfil else None
+            if operador_destino is None:
+                messages.error(request, 'Tu cuenta de promotor no tiene operador asignado.')
+                return render(request, 'Vehiculos/operador.html', build_context(values))
+
         cliente = Cliente.objects.create(
             sap=sap,
             nombre=values['nombre'],
@@ -858,7 +977,7 @@ def operadorregistrador_view(request):
             estado=values['estado'].upper(),
             poblacion=values['poblacion'].upper(),
             fecha_registro=fecha,
-            operador=_get_current_user(request),
+            operador=operador_destino,
         )
 
         messages.success(request, f'Cliente {cliente.sap} - {cliente.nombre} registrado correctamente.')

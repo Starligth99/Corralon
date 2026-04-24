@@ -45,6 +45,7 @@ class Cliente(models.Model):
     modificar_condicion_pago = models.BooleanField(default=False)
     dias_para_fecha_entrega = models.PositiveIntegerField(default=0)
     orden_compra_automatico = models.BooleanField(default=False)
+    edicion_operador_usada = models.BooleanField(default=False)
 
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -60,6 +61,7 @@ class PerfilUsuario(models.Model):
     PREFIJO_ADMIN_MASTER = "AMS"
     PREFIJO_ADMINISTRADOR = "ADM"
     PREFIJO_OPERADOR = "OPE"
+    PREFIJO_PROMOTOR = "PRO"
     PREFIJO_CONSULTA = "CON"
 
     user = models.OneToOneField(
@@ -79,6 +81,13 @@ class PerfilUsuario(models.Model):
     )
     direccion = models.CharField(max_length=180, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
+    operador_asignado = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="promotores_asignados",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

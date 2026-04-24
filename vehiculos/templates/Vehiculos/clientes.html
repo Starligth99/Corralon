@@ -277,6 +277,17 @@
                   </div>
                 </div>
                 
+                <div>
+                    <iframe
+                     id="mapEmbedFrame"
+                     class="w-100 rounded"
+                     src="https://www.google.com/maps?q={{ form_values.latitud|default:'19.4326' }},{{ form_values.longitud|default:'-99.1332' }}&output=embed"
+                     height="320"
+                     style="border:0;"
+                     loading="lazy">
+                   </iframe>
+                </div>
+                
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Lista de precios</div>
                   <div class="cliente-field-value">{{ c.lista_precios|default:"-" }}</div>
@@ -338,7 +349,17 @@
                   </form>
                   {% endif %}
                 </div>
-              </div>
+                {% if rol == 'operador' %}
+                <div class="col-12 mt-2 d-flex gap-2 flex-wrap">
+                  <a
+                    href="{% url 'editar_cliente' c.id %}"
+                    class="btn btn-sm btn-warning"
+                    onclick="return confirm('¿Seguro que quieres editar este cliente? Esta acción solo se permite una vez.');"
+                  >
+                    Editar (1 sola vez)
+                  </a>
+                </div>
+                {% endif %}
 
 
 <!-- ----------------------ESTO ES EL PANEL DE CREDITO OSEA EL DE ABAJITO-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->

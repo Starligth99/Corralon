@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editar cliente | Sistema de Clientes</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #c62828;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
+      --text-main: #1f2937;
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Editar cliente</span>
+      </a>
+      <a href="{% url 'clientes_list' %}" class="btn btn-outline-light btn-sm">Volver a clientes</a>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="mb-4">
+        <h1 class="h4 mb-1">Edición de cliente</h1>
+        <p class="text-secondary mb-0">
+          {% if rol == 'operador' %}
+            Puedes editar estos campos solo una vez.
+          {% else %}
+            Edición administrativa del cliente.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="alert alert-secondary py-2 mb-4">
+        <strong>Cliente:</strong> {{ cliente.sap }} - {{ cliente.nombre }}
+      </div>
+
+      {% if rol == 'operador' and edicion_operador_usada %}
+      <div class="alert alert-warning">
+        Ya usaste tu única edición permitida para este cliente.
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'editar_cliente' cliente.id %}">
+        {% csrf_token %}
+        <div class="row g-3">
+          {% if rol == 'operador' %}
+          <div class="col-md-4">
+            <label class="form-label">Lista de precios</label>
+            <input type="text" class="form-control" name="lista_precios" value="{{ cliente.lista_precios|default:'' }}" {% if edicion_operador_usada %}disabled{% endif %}>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Tipo de cuenta</label>
+            <select class="form-select" name="tipo_cuenta" {% if edicion_operador_usada %}disabled{% endif %}>
+              <option value="DIRECTO" {% if cliente.tipo_cuenta == 'DIRECTO' %}selected{% endif %}>Directo</option>
+              <option value="PROSPECTO" {% if cliente.tipo_cuenta == 'PROSPECTO' %}selected{% endif %}>Prospecto</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Población</label>
+            <input type="text" class="form-control" name="poblacion" value="{{ cliente.poblacion|default:'' }}" {% if edicion_operador_usada %}disabled{% endif %}>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Estado</label>
+            <input type="text" class="form-control" name="estado" value="{{ cliente.estado|default:'' }}" {% if edicion_operador_usada %}disabled{% endif %}>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Zona</label>
+            <input type="text" class="form-control" name="zona" value="{{ cliente.zona|default:'' }}" {% if edicion_operador_usada %}disabled{% endif %}>
+          </div>
+          {% else %}
+          <div class="col-md-6">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="nombre" value="{{ cliente.nombre|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" name="direccion" value="{{ cliente.direccion|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Lista de precios</label>
+            <input type="text" class="form-control" name="lista_precios" value="{{ cliente.lista_precios|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Tipo de cuenta</label>
+            <select class="form-select" name="tipo_cuenta">
+              <option value="DIRECTO" {% if cliente.tipo_cuenta == 'DIRECTO' %}selected{% endif %}>Directo</option>
+              <option value="PROSPECTO" {% if cliente.tipo_cuenta == 'PROSPECTO' %}selected{% endif %}>Prospecto</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Población</label>
+            <input type="text" class="form-control" name="poblacion" value="{{ cliente.poblacion|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Estado</label>
+            <input type="text" class="form-control" name="estado" value="{{ cliente.estado|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Zona</label>
+            <input type="text" class="form-control" name="zona" value="{{ cliente.zona|default:'' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Latitud</label>
+            <input type="text" class="form-control" name="latitud" value="{{ cliente.latitud|default:'' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Longitud</label>
+            <input type="text" class="form-control" name="longitud" value="{{ cliente.longitud|default:'' }}">
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-primary" {% if rol == 'operador' and edicion_operador_usada %}disabled{% endif %}>
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+</body>
+</html>
