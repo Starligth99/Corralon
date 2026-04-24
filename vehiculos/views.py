@@ -986,6 +986,31 @@ def operadorregistrador_view(request):
     return render(request, 'Vehiculos/operador.html', build_context())
 
 
+def geolocalizacion_view(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
+        return _reject_unauthorized(request)
+
+    sap_query = (request.GET.get('sap') or '').strip()
+    clientes_qs = _scoped_clientes_queryset(request).select_related('operador')
+    cliente = clientes_qs.filter(sap__iexact=sap_query).first() if sap_query else None
+
+    if sap_query and not cliente:
+        messages.error(request, f'No se encontró cliente con SAP "{sap_query}".')
+
+    return render(
+        request,
+        'Vehiculos/geolocalizacion.html',
+        {
+            'sap_query': sap_query,
+            'cliente': cliente,
+            'rol': _get_role(request),
+            'rol_label': ROLE_LABELS[_get_role(request)],
+        },
+    )
+
+
 def clientes_list_view(request):
     if not _is_logged_in(request):
         return redirect('login')
