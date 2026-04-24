@@ -358,9 +358,33 @@
                   >
                     Editar (1 sola vez)
                   </a>
+                  <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#mapModal{{ c.id }}">
+                    Localizacion
+                  </button>
+                </div>
+                </div>
+
+                <!-- Modal Localizacion -->
+                <div class="modal fade" id="mapModal{{ c.id }}" tabindex="-1">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Localización {{ c.sap }} - {{ c.nombre }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body p-0">
+                        {% if c.latitud and c.longitud %}
+                        <iframe class="w-100 h-100" style="height: 400px; border:0;" src="https://www.google.com/maps?q={{ c.latitud }},{{ c.longitud }}&output=embed" loading="lazy"></iframe>
+                        {% else %}
+                        <div class="p-4 text-center text-muted">
+                          Sin coordenadas registradas.
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 {% endif %}
-
 
 <!-- ----------------------ESTO ES EL PANEL DE CREDITO OSEA EL DE ABAJITO-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
