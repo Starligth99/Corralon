@@ -275,6 +275,7 @@
                   <label class="form-label">Poblacion</label>
                   <input type="text" class="form-control text-uppercase" id="Zona" name="Poblacion" placeholder="Example" maxlength="15" required>
                 </div>
+                {% if rol != 'promotor' %}
                 <div class="col-md-4">
                   <label class="form-label">Tipo de cuenta</label>
                   <select class="form-select" name="tipo_cuenta" required>
@@ -283,6 +284,24 @@
                     <option>Prespecto</option>
                   </select>
                 </div>
+<<<<<<< Updated upstream
+=======
+                {% endif %}
+
+                <div class="col-md-8">
+                  <label class="form-label">Nombre del lugar</label>
+                  <input type="text" class="form-control" name="nombre" maxlength="120" value="{{ form_values.nombre|default:'' }}" required>
+                </div>
+                {% if rol != 'promotor' %}
+                <div class="col-md-4">
+                  <label class="form-label">Lista de precios</label>
+                  <input type="text" class="form-control text-uppercase" name="lista_precios" maxlength="40" value="{{ form_values.lista_precios|default:'' }}" placeholder="BAJIO" list="listaPreciosOpts">
+                  <datalist id="listaPreciosOpts">
+                    <option value="BAJIO"></option>
+                  </datalist>
+                </div>
+                {% endif %}
+>>>>>>> Stashed changes
               </div>
             </section>
 
@@ -297,10 +316,28 @@
                   <label class="form-label">Longitud</label>
                   <input type="text" class="form-control" name="modelo" maxlength="60" required>
                 </div>
+<<<<<<< Updated upstream
                 <!-- <div class="col-md-4">
                   <label class="form-label">Edad</label>
                   <input type="number" class="form-control" name="anio" min="1950" max="2035" required>
+=======
+                 <div class="col-12">
+                   <label class="form-label d-block">Vista previa (Google Maps)</label>
+                   <iframe
+                     id="mapEmbedFrame"
+                     class="w-100 rounded"
+                     src="https://www.google.com/maps?q={{ form_values.latitud|default:'19.4326' }},{{ form_values.longitud|default:'-99.1332' }}&output=embed"
+                     height="320"
+                     style="border:0;"
+                     loading="lazy">
+                   </iframe>
+                 </div>
+                <div class="col-md-6">
+                  <label class="form-label">Direccion</label>
+                  <input type="text" class="form-control" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required>
+>>>>>>> Stashed changes
                 </div>
+                {% if rol != 'promotor' %}
                 <div class="col-md-4">
                   <label class="form-label">Color</label>
                   <input type="text" class="form-control" name="color" maxlength="40" required>
@@ -320,6 +357,7 @@
                   </select>
                 </div> -->
               </div>
+              {% endif %}
             </section>
 
             <!-- <section class="step-panel" data-step-panel="2">
@@ -451,6 +489,7 @@
       };
 
       function updateSummary() {
+<<<<<<< Updated upstream
         Object.keys(summaryTargets).forEach((id) => {
           const el = document.getElementById(id);
           el.textContent = summaryTargets[id]();
@@ -459,6 +498,38 @@
 
       function updateMotivoCount() {
         motivoCount.textContent = motivo.value.length;
+=======
+        setSummary("sumSap", val("sap").toUpperCase());
+        setSummary("sumFecha", val("fecha_registro"));
+        setSummary("sumNombre", val("nombre"));
+        setSummary("sumTipo", val("tipo_cuenta"));
+        setSummary("sumLista", val("lista_precios").toUpperCase());
+        const lat = val("latitud");
+        const lng = val("longitud");
+        setSummary("sumLatLng", lat && lng ? lat + ", " + lng : "-");
+        setSummary("sumDireccion", val("direccion"));
+        updateMapEmbed();
+      }
+
+      function parseCoord(raw) {
+        const cleaned = (raw || "").toString().trim().replace(",", ".");
+        if (!cleaned) return null;
+        const num = Number.parseFloat(cleaned);
+        return Number.isFinite(num) ? num : null;
+      }
+
+      function updateMapEmbed() {
+        const frame = document.getElementById("mapEmbedFrame");
+        if (!frame) return;
+
+        const latNum = parseCoord(val("latitud"));
+        const lngNum = parseCoord(val("longitud"));
+
+        const lat = latNum ?? 19.4326;
+        const lng = lngNum ?? -99.1332;
+        const q = encodeURIComponent(lat + "," + lng);
+        frame.src = "https://www.google.com/maps?q=" + q + "&output=embed";
+>>>>>>> Stashed changes
       }
 
       function setStep(index) {

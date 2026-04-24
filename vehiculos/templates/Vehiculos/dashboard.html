@@ -292,22 +292,31 @@
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
           <p class="kpi-label">Clientes ingresados</p>
+<<<<<<< Updated upstream
           <p class="kpi-value text-primary-custom" id="vehiculos">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
+=======
+          <p class="kpi-value text-primary-custom" id="Clientes">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Clientes total registrado</p>
+>>>>>>> Stashed changes
         </article>
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
+<<<<<<< Updated upstream
           <p class="kpi-label">Pendientes</p>
+=======
+          <p class="kpi-label">Clientes prospectos</p>
+>>>>>>> Stashed changes
           <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Clientes Prospectos</p>
         </article>
       </div>
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
           <p class="kpi-label">Clientes De Alta</p>
           <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Clientes Directos</p>
         </article>
       </div>
       <div class="col-md-3">
@@ -317,6 +326,70 @@
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
         </article>
       </div>
+    </section>
+
+    <section>
+      <nav class="action-nav row g-3 mb-4">
+        <span class="action-title">Acciones Permitidos</span>
+        <div class="action-links">
+           {% if can_operador %}
+          <a class="action-link" href="{% url 'operador' %}">
+            <span class="action-badge">R</span>
+            Registrar cliente
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">R2</span>
+            Registrar cliente
+          </span>
+          {% endif %}
+          {% if can_clientes %}
+          <a class="action-link" href="{% url 'clientes_list' %}">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </span>
+          {% endif %}
+          {% if can_historial %}
+          <a class="action-link" href="{% url 'historial' %}">
+            <span class="action-badge">H</span>
+            Mi historial
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">H</span>
+            Mi historial
+          </span>
+          {% endif %}
+          {% if can_depositos %}
+          <a class="action-link" href="{% url 'depositos' %}">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </span>
+          {% endif %}
+          {% if can_correcciones %}
+          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
+            <span class="action-badge">C</span>
+            Correcciones (clientes)
+          </a>
+          {% endif %}
+          {% if can_usuarios %}
+          <a class="action-link" href="{% url 'usuarios' %}">
+            <span class="action-badge">U</span>
+            Gestion de usuarios
+          </a>
+          {% endif %}
+        </div>
+      </nav>
     </section>
 
     <section class="row g-3 mb-4">
@@ -390,6 +463,7 @@
         </article>
       </div>
     </section>
+<<<<<<< Updated upstream
 
     <section>
       <nav class="action-nav">
@@ -457,6 +531,8 @@
         </div>
       </nav>
     </section>
+=======
+>>>>>>> Stashed changes
   </main>
 
   <footer class="text-center py-3 text-secondary small">

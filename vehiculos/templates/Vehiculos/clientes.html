@@ -1,0 +1,520 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis clientes</title>
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #c62828;
+      --brand-900: #7f1d1d;
+      --brand-700: #c62828;
+      --accent-1: #ef6c00;
+      --accent-2: #fbc02d;
+      --bg-soft: #e5e7eb;
+      --line: #ffe0b2;
+      --text-main: #1f2937;
+      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
+      --font-sans: "Sora", "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Sora", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
+        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
+        var(--bg-soft);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    .topbar {
+      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
+      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
+    }
+
+    .brand-mark {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
+    }
+
+    h1, h2, h3, .navbar-brand {
+      font-family: var(--font-display);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .cliente-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+      background: #ffffff;
+      transition: box-shadow 150ms ease;
+    }
+
+    .cliente-card:hover {
+      box-shadow: 0 6px 18px rgba(198, 40, 40, 0.15);
+    }
+
+    .cliente-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      background: linear-gradient(90deg, #fff0cc 0%, #fff8e1 100%);
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .cliente-header:hover {
+      background: linear-gradient(90deg, #ffe082 0%, #fff0cc 100%);
+    }
+
+    .cliente-sap {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--brand-900);
+      letter-spacing: 0.02em;
+    }
+
+    .cliente-sap-badge {
+      display: inline-block;
+      background: var(--brand-700);
+      color: #fff;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 0.5rem;
+    }
+
+    .cliente-caret {
+      transition: transform 200ms ease;
+    }
+
+    .cliente-header[aria-expanded="true"] .cliente-caret {
+      transform: rotate(180deg);
+    }
+
+    .cliente-body {
+      padding: 1rem 1.2rem 1.2rem;
+      border-top: 1px dashed var(--line);
+      background: #fffdf5;
+    }
+
+    .cliente-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .cliente-field {
+      margin-bottom: 0;
+      min-width: 0;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    @media (max-width: 991.98px) {
+      .span-8, .span-6, .span-4 { grid-column: span 12; }
+    }
+
+    .map-wrap {
+      border: 1px solid #f3e2b4;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .map-iframe {
+      width: 100%;
+      height: 260px;
+      border: 0;
+      display: block;
+    }
+
+    .cliente-field-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+    }
+
+    .cliente-field-value {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .credito-panel {
+      margin-top: 1.25rem;
+      padding: 1rem 1.1rem 1.1rem;
+      border: 1px solid #fbc02d;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fffdf5 0%, #fff3c4 100%);
+    }
+
+    .credito-panel h3 {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--brand-900);
+      margin-bottom: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .credito-panel .form-check {
+      padding: 0.4rem 0 0.4rem 1.75rem;
+      border-bottom: 1px dashed #fde68a;
+    }
+
+    .credito-panel .form-check:last-child {
+      border-bottom: none;
+    }
+
+    .credito-panel label {
+      font-size: 0.82rem;
+      color: #374151;
+    }
+
+    .credito-panel .form-control {
+      max-width: 160px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #6b7280;
+    }
+
+    .search-input {
+      border-radius: 999px;
+      padding-left: 1.1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d32f2f, var(--primary));
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #b71c1c, #8e0000);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
+        <span>Mis clientes</span>
+      </a>
+      <div class="d-flex gap-2">
+        {% if can_registrar_cliente %}
+        <a href="{% url 'operador' %}" class="btn btn-light btn-sm">+ Nuevo cliente</a>
+        {% endif %}
+        {% if can_importar_clientes %}
+        <a href="{% url 'importar_clientes_excel' %}" class="btn btn-warning btn-sm">Importar Excel</a>
+        {% endif %}
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-lg-5">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface p-4 p-lg-5">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="h4 mb-1">Clientes registrados</h1>
+          <p class="text-secondary mb-0">
+            {% if rol == 'operador' %}
+              Aqui estan los clientes que tu registraste.
+            {% else %}
+              Total: {{ total_clientes }} cliente{{ total_clientes|pluralize:"s" }}.
+            {% endif %}
+          </p>
+        </div>
+        <form method="get" class="d-flex gap-2" role="search">
+          <input type="search" name="q" value="{{ search }}" class="form-control search-input" placeholder="Buscar por codigo SAP..." aria-label="Buscar por SAP">
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+      </div>
+
+      {% if clientes %}
+      <div class="accordion" id="clientesAccordion">
+        {% for c in clientes %}
+        <div class="cliente-card">
+          <button class="cliente-header" type="button" data-bs-toggle="collapse" data-bs-target="#cliente-{{ forloop.counter }}" aria-expanded="false" aria-controls="cliente-{{ forloop.counter }}">
+            <span>
+              <span class="cliente-sap-badge">SAP</span>
+              <span class="cliente-sap">{{ c.sap }}</span>
+              <span class="text-muted ms-2">{{ c.nombre }}</span>
+            </span>
+            <span class="cliente-caret">&#9662;</span>
+          </button>
+          <div id="cliente-{{ forloop.counter }}" class="collapse" data-bs-parent="#clientesAccordion">
+            <div class="cliente-body">
+              <div class="cliente-grid">
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Codigo SAP (ID)</div>
+                  <div class="cliente-field-value">{{ c.sap }}</div>
+                </div>
+                <div class="cliente-field span-8">
+                  <div class="cliente-field-label">Nombre</div>
+                  <div class="cliente-field-value">{{ c.nombre }}</div>
+                </div>
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Tipo de cuenta</div>
+                  <div class="cliente-field-value">{{ c.get_tipo_cuenta_display }}</div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Latitud / Longitud</div>
+                  <div class="cliente-field-value">
+                    {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}
+                  </div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Lista de precios</div>
+                  <div class="cliente-field-value">{{ c.lista_precios|default:"-" }}</div>
+                </div>
+
+                <div class="cliente-field span-8">
+                  <div class="cliente-field-label">Direccion</div>
+                  <div class="cliente-field-value">{{ c.direccion|default:"-" }}</div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Zona</div>
+                  <div class="cliente-field-value">{{ c.zona|default:"-" }}</div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Estado</div>
+                  <div class="cliente-field-value">{{ c.estado|default:"-" }}</div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Poblacion</div>
+                  <div class="cliente-field-value">{{ c.poblacion|default:"-" }}</div>
+                </div>
+
+                <div class="cliente-field span-4">
+                  <div class="cliente-field-label">Fecha de registro</div>
+                  <div class="cliente-field-value">{{ c.fecha_registro|date:"d M Y" }}</div>
+                </div>
+
+                <div class="cliente-field span-8">
+                  <div class="cliente-field-label">Registrado por</div>
+                  <div class="cliente-field-value">{% if c.operador %}{{ c.operador.get_username }}{% else %}-{% endif %}</div>
+                </div>
+
+                <div class="cliente-field span-12">
+                  <div class="cliente-field-label mb-2">Ubicación en mapa</div>
+                  {% if c.latitud and c.longitud %}
+                  <div class="map-wrap">
+                    <iframe
+                      class="map-iframe"
+                      src="https://www.google.com/maps?q={{ c.latitud }},{{ c.longitud }}&output=embed"
+                      loading="lazy"
+                      referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                  </div>
+{% else %}
+                  <div class="text-muted small">Sin coordenadas para mostrar mapa.</div>
+                  {% endif %}
+                </div>
+
+                <div class="cliente-field span-12 mt-1 d-flex gap-2 flex-wrap">
+                  {% if can_solicitar_correccion_cliente %}
+                  <a href="{% url 'solicitar_correccion_cliente' %}?sap={{ c.sap|urlencode }}" class="btn btn-sm btn-outline-primary">
+                    Solicitar correccion
+                  </a>
+                  {% endif %}
+                  {% if can_gestionar_correcciones_clientes %}
+                  <a href="{% url 'solicitudes_correccion_clientes' %}" class="btn btn-sm btn-outline-secondary">
+                    Ver solicitudes
+                  </a>
+                  {% endif %}
+                  {% if can_borrar_clientes %}
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_cliente">
+                    <input type="hidden" name="cliente_id" value="{{ c.id }}">
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('¿Seguro que quieres eliminar este cliente? Esta acción no se puede deshacer.');"
+                    >
+                      Eliminar cliente
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+                {% if rol == 'operador' %}
+                <div class="cliente-field span-12 mt-1 d-flex gap-2 flex-wrap">
+                  <a
+                    href="{% url 'editar_cliente' c.id %}"
+                    class="btn btn-sm btn-warning"
+                    onclick="return confirm('¿Seguro que quieres editar este cliente? Esta acción solo se permite una vez.');"
+                  >
+                    Editar (1 sola vez)
+                  </a>
+                </div>
+                {% endif %}
+
+
+<!-- ----------------------ESTO ES EL PANEL DE CREDITO OSEA EL DE ABAJITO-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+
+              {% if can_editar_credito %}
+              <section class="credito-panel">
+                <h3>Panel de credito (Admin / Admin Master)</h3>
+                <form method="post" action="{% url 'editar_credito' c.id %}">
+                  {% csrf_token %}
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="dias_maximos_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias maximos de entrega</label>
+                      <input type="number" min="0" step="1" name="dias_maximos_entrega" id="dias_maximos_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_maximos_entrega }}">
+                    </div>
+                    <!-- <div class="col-md-4">
+                      <label for="holgura_dto_pp-{{ c.id }}" class="form-label small fw-semibold">Holgura Dto PP</label>
+                      <input type="number" min="0" step="0.01" name="holgura_dto_pp" id="holgura_dto_pp-{{ c.id }}" class="form-control form-control-sm" value="{{ c.holgura_dto_pp }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label for="dias_para_fecha_entrega-{{ c.id }}" class="form-label small fw-semibold">Dias para fecha de entrega</label>
+                      <input type="number" min="0" step="1" name="dias_para_fecha_entrega" id="dias_para_fecha_entrega-{{ c.id }}" class="form-control form-control-sm" value="{{ c.dias_para_fecha_entrega }}">
+                    </div> -->
+                  </div>
+
+                  <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="pedido_excede_limite_credito" id="pedido_excede_limite_credito-{{ c.id }}" {% if c.pedido_excede_limite_credito %}checked{% endif %}>
+                        <label class="form-check-label" for="pedido_excede_limite_credito-{{ c.id }}">&iquest;Pedido puede exceder limite de credito?</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloquear_cliente_factura_vencida" id="bloquear_cliente_factura_vencida-{{ c.id }}" {% if c.bloquear_cliente_factura_vencida %}checked{% endif %}>
+                        <label class="form-check-label" for="bloquear_cliente_factura_vencida-{{ c.id }}">Bloquear cliente por factura vencida</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_venta_documento_pendiente" id="bloqueo_venta_documento_pendiente-{{ c.id }}" {% if c.bloqueo_venta_documento_pendiente %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_venta_documento_pendiente-{{ c.id }}">Bloqueo venta por documento pendiente</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="orden_compra_adquirida" id="orden_compra_adquirida-{{ c.id }}" {% if c.orden_compra_adquirida %}checked{% endif %}>
+                        <label class="form-check-label" for="orden_compra_adquirida-{{ c.id }}">Orden de compra adquirida</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permitir_devolucion" id="permitir_devolucion-{{ c.id }}" {% if c.permitir_devolucion %}checked{% endif %}>
+                        <label class="form-check-label" for="permitir_devolucion-{{ c.id }}">Permitir devolucion</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_venta" id="bloqueo_venta-{{ c.id }}" {% if c.bloqueo_venta %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_venta-{{ c.id }}">Bloqueo de venta</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bloqueo_cheques_pendientes" id="bloqueo_cheques_pendientes-{{ c.id }}" {% if c.bloqueo_cheques_pendientes %}checked{% endif %}>
+                        <label class="form-check-label" for="bloqueo_cheques_pendientes-{{ c.id }}">Bloqueo de cheques pendientes</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tomar_inventario" id="tomar_inventario-{{ c.id }}" {% if c.tomar_inventario %}checked{% endif %}>
+                        <label class="form-check-label" for="tomar_inventario-{{ c.id }}">&iquest;Tomar inventario?</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="modificar_condicion_pago" id="modificar_condicion_pago-{{ c.id }}" {% if c.modificar_condicion_pago %}checked{% endif %}>
+                        <label class="form-check-label" for="modificar_condicion_pago-{{ c.id }}">Modificar la condicion de pago</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="orden_compra_automatico" id="orden_compra_automatico-{{ c.id }}" {% if c.orden_compra_automatico %}checked{% endif %}>
+                        <label class="form-check-label" for="orden_compra_automatico-{{ c.id }}">Orden de compra automatico (Auto Venta)</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary btn-sm">Guardar panel de credito</button>
+                  </div>
+                </form>
+              </section>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        {% if search %}
+          <p>No se encontraron clientes con SAP que contenga "<strong>{{ search }}</strong>".</p>
+          <a href="{% url 'clientes_list' %}" class="btn btn-outline-primary btn-sm">Ver todos</a>
+        {% else %}
+          <p>Aun no hay clientes registrados.</p>
+          {% if can_registrar_cliente %}
+          <a href="{% url 'operador' %}" class="btn btn-primary">Registrar el primer cliente</a>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+    </section>
+  </main>
+
+<!-- ------------------------------------------------------------------------------------------------------------------------------------------ -->
+
+
+
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+  <script>
+    // Evitar que el formulario de búsqueda se envíe al presionar Enter en el campo de búsqueda
+    document.querySelector('.search-input').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+      }
+    });
+  </script>
+  <script>
+    // Mantener el estado de los acordeones abiertos después de una acción
+    document.addEventListener('DOMContentLoaded', function() {
+      const hash = window.location.hash;
+      if (hash) {
+        const targetCollapse = document.querySelector(hash);
+        if (targetCollapse) {
+          const collapseInstance = new bootstrap.Collapse(targetCollapse, { toggle: true });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
