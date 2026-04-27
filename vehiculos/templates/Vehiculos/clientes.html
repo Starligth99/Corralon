@@ -432,7 +432,7 @@
                   {% endif %}
                 </div>
                 
-                {% if rol == 'operador' or rol == 'admin_master' %}
+                {% if rol in 'operador, administrador, admin_master' %}
                 <div class="col-12 mt-2 d-flex gap-2 flex-wrap">
                   <a
                     href="{% url 'editar_cliente' c.id %}"
@@ -447,7 +447,8 @@
                 </div>
                 {% endif %}
                 
-              </div> {% if rol == 'operador' or rol == 'admin_master' %}
+              </div> 
+              {% if rol in 'operador, administrador, admin_master' %}
               <div class="modal fade" id="mapModal{{ c.id }}" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
