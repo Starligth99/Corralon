@@ -288,6 +288,19 @@
                    </iframe>
                 </div>
 
+      <div class="mb-3">
+          <label>Dirección</label>
+          <div class="input-group">
+              <input type="text" id="id_direccion" name="direccion" class="form-control">
+              <button type="button" class="btn btn-dark" onclick="localizarUsuario()">
+                  📍 Localizar
+              </button>
+          </div>
+      </div>
+
+      <input type="hidden" id="id_latitud" name="latitud">
+      <input type="hidden" id="id_longitud" name="longitud">
+
                 {% if rol != 'promotor' %}
                 <div class="col-md-4">
                   <label class="form-label">Zona</label>
@@ -453,6 +466,79 @@ document.addEventListener("DOMContentLoaded", function() {
     lngInput.addEventListener('change', autocompletarDireccion);
   });
 </script>
+
+<script>
+
+  function localizarUsuario() {
+    // Verificar si el navegador soporta geolocalización
+    if (navigator.geolocation) {
+        // Configuramos alta precisión para mejores resultados
+        const opciones = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        };
+
+        navigator.geolocation.getCurrentPosition(obtenerDireccion, gestionarError, opciones);
+    } else {
+        alert("Tu navegador no soporta geolocalización.");
+    }
+}
+
+function localizarUsuario() {
+    console.log("Iniciando búsqueda de ubicación...");
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (posicion) => {
+                const lat = posicion.coords.latitude;
+                const lng = posicion.coords.longitude;
+
+                // 1. Llenamos los campos de coordenadas de inmediato
+                document.getElementById("id_latitud").value = lat;
+                document.getElementById("id_longitud").value = lng;
+
+                console.log(`Coordenadas: ${lat}, ${lng}`);
+
+                // 2. Buscamos la dirección usando OpenStreetMap (GRATIS)
+                obtenerDireccionGratis(lat, lng);
+            },
+            (error) => {
+                alert("Error al obtener ubicación. Asegúrate de dar permiso.");
+            },
+            { enableHighAccuracy: true }
+        );
+    } else {
+        alert("Tu navegador no soporta GPS.");
+    }
+}
+
+async function obtenerDireccionGratis(lat, lng) {
+    try {
+        // Consultamos a Nominatim (OpenStreetMap)
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+
+        if (data.display_name) {
+            const direccion = data.display_name;
+            console.log("Dirección encontrada:", direccion);
+
+            // 3. Llenamos el campo de dirección
+            document.getElementById("id_direccion").value = direccion;
+            
+            alert("¡Ubicación cargada con éxito!");
+        } else {
+            alert("No se encontró una dirección exacta, pero las coordenadas ya se guardaron.");
+        }
+    } catch (error) {
+        console.error("Error en la búsqueda de dirección:", error);
+        alert("Hubo un problema al conectar con el servidor de direcciones.");
+    }
+}
+
+</script>
+
+
   <script>
     (function () {
       const form = document.getElementById("registroForm");
@@ -550,3 +636,4 @@ document.addEventListener("DOMContentLoaded", function() {
   </script>
 </body>
 </html>
+
