@@ -59,8 +59,15 @@ _allowed_hosts = _env_list("ALLOWED_HOSTS")
 _render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if _render_host:
     _allowed_hosts.append(_render_host)
+_railway_host = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+if _railway_host:
+    _allowed_hosts.append(_railway_host)
 if not _allowed_hosts:
-    _allowed_hosts = ["corralon-final.onrender.com"]
+    _allowed_hosts = [
+        "gonac-clientes-production.up.railway.app",
+        "localhost",
+        "127.0.0.1"
+        ]
 ALLOWED_HOSTS = _allowed_hosts
 if DEBUG:
     # Allow local development hosts when DEBUG is enabled
