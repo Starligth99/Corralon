@@ -370,6 +370,8 @@
     const btnLocalizar = document.getElementById("btnLocalizar");
     const iframeMapa = document.getElementById("mapEmbedFrame");
 
+    const googleMapsApiKey = "{{ google_maps_api_key|default:''|escapejs }}";
+
     // Función para actualizar el mapa
     function actualizarMapa(lat, lng) {
       if (iframeMapa && lat && lng) {
@@ -377,33 +379,71 @@
       }
     }
 
-    // Función para obtener la dirección exacta desde OpenStreetMap
+    function buildGoogleAddress(components) {
+      const find = (type) => components.find((item) => item.types.includes(type))?.long_name || null;
+      const streetNumber = find('street_number');
+      const route = find('route');
+      const premise = find('premise');
+      const subpremise = find('subpremise');
+      const neighborhood = find('neighborhood') || find('sublocality') || find('sublocality_level_1');
+      const locality = find('locality') || find('postal_town');
+      const adminArea = find('administrative_area_level_1');
+      const postalCode = find('postal_code');
+      const country = find('country');
+
+      const parts = [];
+      if (premise) parts.push(premise);
+      if (streetNumber && route) parts.push(`${streetNumber} ${route}`);
+      else if (route) parts.push(route);
+      if (subpremise) parts.push(subpremise);
+      if (neighborhood) parts.push(neighborhood);
+      if (locality) parts.push(locality);
+      if (adminArea) parts.push(adminArea);
+      if (postalCode) parts.push(postalCode);
+      if (country) parts.push(country);
+      return parts.filter(Boolean).join(', ');
+    }
+
     async function obtenerDireccion(lat, lng) {
       try {
         dirInput.value = "Buscando dirección...";
-        const response = await fetch(
+
+        if (googleMapsApiKey) {
+          const googleUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&result_type=street_address|premise|subpremise|postal_code&language=es&key=${googleMapsApiKey}`;
+          const response = await fetch(googleUrl);
+          const data = await response.json();
+
+          if (data.status === 'OK' && Array.isArray(data.results) && data.results.length) {
+            const best = data.results.find((item) =>
+              item.types.includes('street_address') ||
+              item.types.includes('premise') ||
+              item.types.includes('subpremise')
+            ) || data.results[0];
+            const address = buildGoogleAddress(best.address_components || []);
+            dirInput.value = address || best.formatted_address || "Dirección no encontrada";
+            return;
+          }
+
+          console.warn('Google Geocoding no devolvió resultado exacto:', data.status, data.error_message);
+        }
+
+        const osmResponse = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=es`
         );
-        const data = await response.json();
-
-        if (data && data.address) {
-          const address = data.address;
-          const parts = [];
-
-          if (address.house_number) parts.push(address.house_number);
-          if (address.road) parts.push(address.road);
-          if (address.neighbourhood) parts.push(address.neighbourhood);
-          if (address.suburb) parts.push(address.suburb);
-          if (address.city) parts.push(address.city);
-          if (address.state) parts.push(address.state);
-          if (address.postcode) parts.push(address.postcode);
-          if (address.country) parts.push(address.country);
-
-          dirInput.value = parts.length ? parts.join(", ") : data.display_name || "Dirección no encontrada";
-        } else if (data && data.display_name) {
-          dirInput.value = data.display_name;
+        const osmData = await osmResponse.json();
+        if (osmData && osmData.address) {
+          const address = [];
+          if (osmData.address.house_number) address.push(osmData.address.house_number);
+          if (osmData.address.road) address.push(osmData.address.road);
+          if (osmData.address.neighbourhood) address.push(osmData.address.neighbourhood);
+          if (osmData.address.suburb) address.push(osmData.address.suburb);
+          if (osmData.address.city) address.push(osmData.address.city);
+          if (osmData.address.state) address.push(osmData.address.state);
+          if (osmData.address.postcode) address.push(osmData.address.postcode);
+          if (osmData.address.country) address.push(osmData.address.country);
+          dirInput.value = address.length ? address.join(', ') : osmData.display_name || "Dirección no encontrada";
         } else {
-          dirInput.value = "Dirección no encontrada";
+          dirInput.value = osmData.display_name || "Dirección no encontrada";
         }
       } catch (error) {
         console.error("Error al obtener dirección:", error);

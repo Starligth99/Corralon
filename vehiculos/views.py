@@ -965,7 +965,8 @@ def operadorregistrador_view(request):
     def build_context(values=None):
         return {
             'form_values': values or {},
-            'rol': rol, 
+            'rol': rol,
+            'google_maps_api_key': os.getenv('GOOGLE_MAPS_API_KEY', '').strip(),
         }
 
     if request.method == 'POST':
