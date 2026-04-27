@@ -247,6 +247,16 @@
                 {% endfor %}
               </select>
             </div>
+
+              <select name="operador_asignado">
+              <option value="">Selecciona operador</option>
+              {% for op in operadores %}
+                <option value="{{ op.id }}">
+                {{ op.username }}
+                </option>
+              {% endfor %}
+            </select>
+
             <button type="submit" class="btn btn-primary">Crear cuenta</button>
           </form>
         </section>

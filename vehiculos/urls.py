@@ -8,6 +8,7 @@ urlpatterns = [
     path('vehiculos/registrar/', views.registrar_vehiculo, name='registrar_vehiculo'),
     path('vehiculos/operador_registrador', views.operadorregistrador_view, name='operador'),
     path('clientes/', views.clientes_list_view, name='clientes_list'),
+    path('clientes/borrar-masivo/', views.borrar_masivo_clientes, name='borrar_masivo_clientes'),
     path('clientes/geolocalizacion/', views.geolocalizacion_view, name='geolocalizacion'),
     path('vehiculos/clientes/<int:cliente_id>/', views.editar_cliente, name='editar_cliente'),
     path('clientes/importar/', views.importar_clientes_excel, name='importar_clientes_excel'),

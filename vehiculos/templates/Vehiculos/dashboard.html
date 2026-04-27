@@ -292,6 +292,7 @@
       </div>
     </section>
 
+    
     <section class="row g-3 mb-4">
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
@@ -300,9 +301,11 @@
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
         </article>
       </div>
+      
+      {% if rol != 'promotor' %}
       <div class="col-md-3">
         <article class="kpi-card p-3 h-100">
-          <p class="kpi-label">Clientes rospectos</p>
+          <p class="kpi-label">Clientes prospectos</p>
           <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
         </article>
@@ -321,18 +324,11 @@
           <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
         </article>
       </div>
+      {% endif %}
     </section>
 
     <section class="row g-3 mb-4">
-      <div class="col-lg-4">
-        <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Lista de Precios</h2>
-          <div class="chart-wrap chart-wrap--donut">
-            <canvas id="estadoChart"></canvas>
-          </div>
-        </article>
-      </div>
-      <div class="col-lg-8">
+      <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-8{% endif %}">
         <article class="panel-card p-3 h-100">
           <h2 class="h6 mb-3">Ingresos mensuales (ultimos 6 meses)</h2>
           <div class="chart-wrap">
@@ -340,9 +336,21 @@
           </div>
         </article>
       </div>
-    </section>
 
+      {% if rol != 'promotor' %}
+      <div class="col-lg-4">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Tipos de Precios</h2>
+          <div class="chart-wrap chart-wrap--donut">
+            <canvas id="estadoChart"></canvas>
+          </div>
+        </article>
+      </div>
+      {% endif %}
+    </section>
+    
     <section class="row g-3 mb-4">
+      {% if rol != 'promotor' %}
       <div class="col-lg-6">
         <article class="panel-card p-3 h-100">
           <h2 class="h6 mb-3">Distribucion por tipo de Cliente</h2>
@@ -351,7 +359,9 @@
           </div>
         </article>
       </div>
-      <div class="col-lg-6">
+      {% endif %}
+
+      <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-6{% endif %}">
         <article class="panel-card p-3 h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Actividad reciente</h2>
@@ -372,9 +382,7 @@
                 <tr>
                   <td class="fw-semibold">{{ c.sap }}</td>
                   <td>{{ c.nombre }}</td>
-                  <td>
-                    {{ c.estado|default:"-" }}
-                  </td>
+                  <td>{{ c.estado|default:"-" }}</td>
                   <td>{{ c.fecha_registro|date:'d/m/Y' }}</td>
                 </tr>
                 {% empty %}

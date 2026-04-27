@@ -226,11 +226,11 @@
                   <label class="form-label">Fecha de registro</label>
                   <input type="date" class="form-control" name="fecha_registro" value="{{ form_values.fecha_registro|default:'' }}" required>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Codigo SAP (ID)</label>
-                  <input type="text" class="form-control text-uppercase" id="sapInput" name="sap" maxlength="30" value="{{ form_values.sap|default:'' }}" placeholder="Ej. 123456" required>
-                  <div class="form-text">Identificador unico del cliente. No se puede repetir.</div>
-                </div>
+                  <div class="mb-3">
+                      <label class="form-label">Código SAP</label>
+                      <input type="text" class="form-control" placeholder="Se generará automáticamente al guardar" disabled readonly>
+                  </div>
+                {% if rol != 'promotor'%}
                 <div class="col-md-4">
                   <label class="form-label">Tipo de cuenta</label>
                   <select class="form-select" name="tipo_cuenta" required>
@@ -239,11 +239,13 @@
                     <option value="PROSPECTO" {% if form_values.tipo_cuenta == "PROSPECTO" %}selected{% endif %}>Prospecto</option>
                   </select>
                 </div>
+                {% endif %} 
 
                 <div class="col-md-8">
                   <label class="form-label">Nombre del lugar</label>
                   <input type="text" class="form-control" name="nombre" maxlength="120" value="{{ form_values.nombre|default:'' }}" required>
                 </div>
+                {% if rol != 'promotor'%}
                 <div class="col-md-4">
                   <label class="form-label">Lista de precios</label>
                   <input type="text" class="form-control text-uppercase" name="lista_precios" maxlength="40" value="{{ form_values.lista_precios|default:'' }}" placeholder="BAJIO" list="listaPreciosOpts">
@@ -251,6 +253,8 @@
                     <option value="BAJIO"></option>
                   </datalist>
                 </div>
+                {% endif %}
+                
               </div>
             </section>
 
@@ -260,15 +264,31 @@
                 <div class="col-md-3">
                   <label class="form-label">Latitud</label>
                   <input type="number" step="any" class="form-control" name="latitud" value="{{ form_values.latitud|default:'' }}" placeholder="19.432608" required>
+                {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}                
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Longitud</label>
                   <input type="number" step="any" class="form-control" name="longitud" value="{{ form_values.longitud|default:'' }}" placeholder="-99.133209" required>
+                {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}
+
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Direccion</label>
-                  <input type="text" class="form-control" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required>
+                  <input type="text" class="form-control" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required readonly>
                 </div>
+                
+                <div>
+                    <iframe
+                     id="mapEmbedFrame"
+                     class="w-100 rounded"
+                     src="https://www.google.com/maps?q={{ form_values.latitud|default:'19.4326' }},{{ form_values.longitud|default:'-99.1332' }}&output=embed"
+                     height="320"
+                     style="border:0;"
+                     loading="lazy">
+                   </iframe>
+                </div>
+
+                {% if rol != 'promotor' %}
                 <div class="col-md-4">
                   <label class="form-label">Zona</label>
                   <input type="text" class="form-control text-uppercase" name="zona" maxlength="60" value="{{ form_values.zona|default:'' }}" required>
@@ -281,6 +301,7 @@
                   <label class="form-label">Poblacion</label>
                   <input type="text" class="form-control text-uppercase" name="poblacion" maxlength="60" value="{{ form_values.poblacion|default:'' }}" required>
                 </div>
+                {% endif %}
               </div>
             </section>
 
@@ -295,7 +316,7 @@
         </section>
       </div>
 
-      <div class="col-lg-4">
+<div class="col-lg-4">
         <aside class="surface p-4 sticky-top" style="top: 1rem;">
           <h2 class="h6 mb-3">Resumen en vivo</h2>
           <div class="summary-item">
@@ -310,6 +331,8 @@
             <div class="summary-label">Nombre del lugar</div>
             <div id="sumNombre" class="summary-value">-</div>
           </div>
+          
+          {% if rol != 'promotor' %}
           <div class="summary-item">
             <div class="summary-label">Tipo de cuenta</div>
             <div id="sumTipo" class="summary-value">-</div>
@@ -318,6 +341,7 @@
             <div class="summary-label">Lista de precios</div>
             <div id="sumLista" class="summary-value">-</div>
           </div>
+          {% endif %}
           <div class="summary-item">
             <div class="summary-label">Latitud / Longitud</div>
             <div id="sumLatLng" class="summary-value">-</div>
@@ -333,6 +357,102 @@
 
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const latInput = document.querySelector('input[name="latitud"]');
+    const lngInput = document.querySelector('input[name="longitud"]');
+    const dirInput = document.querySelector('input[name="direccion"]');
+    const iframeMapa = document.getElementById('mapa-dinamico');
+
+    function actualizarMapaYDireccion() {
+        const lat = latInput.value.trim();
+        const lng = lngInput.value.trim();
+
+        // Validamos que ambos tengan datos para actuar
+        if (lat !== "" && lng !== "") {
+            
+            // --- PARTE 1: ACTUALIZAR MAPA ---
+            // Usamos la URL de inserción de Google Maps (gratuita)
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+            iframeMapa.src = mapUrl;
+
+            // --- PARTE 2: AUTOCOMPLETAR DIRECCIÓN (Lo que ya teníamos) ---
+            dirInput.value = "Buscando dirección...";
+            const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+
+            fetch(geoUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        dirInput.value = data.display_name;
+                    } else {
+                        dirInput.value = "Dirección no encontrada";
+                    }
+                })
+                .catch(() => {
+                    dirInput.value = "Error al conectar con el servidor de mapas";
+                });
+        }
+    }
+
+    // Escuchamos cuando el usuario termina de escribir o pega los datos
+    latInput.addEventListener('change', actualizarMapaYDireccion);
+    lngInput.addEventListener('change', actualizarMapaYDireccion);
+    
+    // OPCIONAL: Si quieres que sea REALMENTE rápido (mientras escribe), 
+    // puedes usar 'input' en lugar de 'change', pero 'change' es más estable.
+});
+</script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // 1. Seleccionamos los inputs de latitud, longitud y dirección por su atributo "name"
+    const latInput = document.querySelector('input[name="latitud"]');
+    const lngInput = document.querySelector('input[name="longitud"]');
+    const dirInput = document.querySelector('input[name="direccion"]');
+
+    // Si alguno no existe en la página, detenemos el script para evitar errores
+    if (!latInput || !lngInput || !dirInput) return;
+
+    // 2. Función mágica que traduce coordenadas a dirección
+    function autocompletarDireccion() {
+      const lat = latInput.value.trim();
+      const lng = lngInput.value.trim();
+
+      // Solo buscamos si ambos campos tienen información
+      if (lat !== "" && lng !== "") {
+        
+        // Agregamos un texto de "Cargando..." para que el usuario sepa que está trabajando
+        dirInput.value = "Buscando dirección...";
+
+        // Usamos la API gratuita de OpenStreetMap
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.display_name) {
+              // 3. Escribimos la dirección encontrada en el campo
+              // display_name trae todo completo: Calle, Colonia, Ciudad, CP, País
+              dirInput.value = data.display_name;
+            } else {
+              dirInput.value = "No se encontró dirección para estas coordenadas";
+            }
+          })
+          .catch(error => {
+            console.error("Error al obtener la dirección:", error);
+            dirInput.value = "";
+          });
+      }
+    }
+
+    // 4. Le decimos a los campos que avisen cuando el usuario termine de escribir o pegar
+    // 'change' se activa cuando el usuario escribe y hace clic afuera del campo
+    latInput.addEventListener('change', autocompletarDireccion);
+    lngInput.addEventListener('change', autocompletarDireccion);
+  });
+</script>
   <script>
     (function () {
       const form = document.getElementById("registroForm");

@@ -14,6 +14,9 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseForbidden
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.contrib.auth import get_user_model
 
 from .models import (
     Cliente,
@@ -66,7 +69,7 @@ ROLE_PERMISSIONS = {
         "ver_inventario",
         "solicitar_correccion",
         "solicitar_correccion_cliente",
-        "editar_cliente"
+        "editar_cliente",
     },
     ROLE_PROMOTOR: {"ver_dashboard", 
                     "ver_inventario",
@@ -341,6 +344,27 @@ def _generar_numero_empleado(role):
             return candidate
     raise ValueError("No se pudo generar un numero de empleado unico.")
 
+def generar_codigo_sap():
+    last = (
+        Cliente.objects
+        .filter(codigo_sap__startswith="SAP-")
+        .order_by("-codigo_sap")
+        .first()
+    )
+
+    last_num = 0
+    if last and last.codigo_sap:
+        try:
+            last_num = int(last.codigo_sap.split("-")[1])
+        except:
+            last_num = 0
+
+    for num in range(last_num + 1, last_num + 100000):
+        codigo = f"SAP-{num:05d}"
+        if not Cliente.objects.filter(codigo_sap=codigo).exists():
+            return codigo
+
+    raise ValueError("No se pudo generar un código SAP único")
 
 def _validate_pdf(file_obj, label):
     if not file_obj:
@@ -410,7 +434,6 @@ def _get_folio_sugerido(request):
     request.session["folio_sugerido"] = folio
     return folio
 
-
 def _has_permission(request, permission):
     return permission in ROLE_PERMISSIONS.get(_get_role(request), set())
 
@@ -438,6 +461,27 @@ def _reject_unauthorized(request):
     messages.error(request, "Tu rol no tiene permiso para esta accion.")
     return redirect("dashboard")
 
+def _generar_codigo_sap():
+    # Usamos values_list para extraer SOLO el texto del SAP.
+    # Así evitamos leer toda la fila y evitamos que SQLite explote con los decimales corruptos antiguos.
+    last_sap = Cliente.objects.filter(sap__startswith="SAP-").order_by("-sap").values_list("sap", flat=True).first()
+    
+    last_num = 0
+    
+    if last_sap and "-" in last_sap:
+        try:
+            # Extraemos la parte numérica (ej. de "SAP-00015" sacamos "15")
+            last_num = int(last_sap.split("-", 1)[1])
+        except ValueError:
+            last_num = 0
+
+    # Buscamos el siguiente número libre (sumando 1)
+    for candidate_num in range(last_num + 1, last_num + 100000):
+        candidate = f"SAP-{candidate_num:05d}"
+        if not Cliente.objects.filter(sap=candidate).exists():
+            return candidate
+            
+    raise ValueError("No se pudo generar un código SAP único.")
 
 def login_view(request):
     error = None
@@ -630,11 +674,22 @@ def usuarios_view(request):
                 user.save()
 
                 operador_asignado = None
+
                 if role == ROLE_PROMOTOR:
                     operador_id = request.POST.get('operador_asignado')
-                    operador_asignado = User.objects.filter(id=operador_id).first() if operador_id else None
+
+                    if not operador_id:
+                        messages.error(request, "Selecciona un operador.")
+                        return redirect('usuarios')
+
+                    operador_asignado = User.objects.filter(
+                        id=operador_id,
+                        groups__name=ROLE_OPERADOR
+                    ).first()
+
                     if operador_asignado is None:
-                        raise ValueError("Debes asignar un operador al promotor.")
+                        messages.error(request, "El operador seleccionado no es válido.")
+                        return redirect('usuarios')
 
                 PerfilUsuario.objects.create(
                     user=user,
@@ -705,12 +760,16 @@ def usuarios_view(request):
             }
         )
 
+
+    operadores = User.objects.filter(groups__name=ROLE_OPERADOR)
+
     return render(
         request,
         'Vehiculos/usuarios.html',
         {
             'usuarios': usuarios,
             'role_options': [(key, ROLE_LABELS[key]) for key in ROLE_LABELS],
+            'operadores' : operadores
         },
     )
 
@@ -893,6 +952,7 @@ CLIENTE_FIELD_LABELS = {
     'poblacion': 'Poblacion',
 }
 
+from decimal import Decimal # 👈 Agregamos esto para manejar bien los números en base de datos
 
 def operadorregistrador_view(request):
     if not _is_logged_in(request):
@@ -900,17 +960,20 @@ def operadorregistrador_view(request):
     if not _has_permission(request, "operadorregistrador"):
         return _reject_unauthorized(request)
 
-    rol = _get_role(request)  # 👈 usa tu helper, no session directo
+    rol = _get_role(request) 
 
     def build_context(values=None):
         return {
             'form_values': values or {},
-            'rol': rol,  # 👈 IMPORTANTÍSIMO para el template
+            'rol': rol, 
         }
 
     if request.method == 'POST':
         post = request.POST
         values = {key: (post.get(key) or '').strip() for key in CLIENTE_FIELD_LABELS}
+
+        # 🚀 AQUÍ GENERAMOS EL SAP AUTOMÁTICAMENTE
+        values['sap'] = _generar_codigo_sap()
 
         # 🔒 BLOQUEO BACKEND PARA PROMOTOR
         if rol == ROLE_PROMOTOR:
@@ -920,11 +983,11 @@ def operadorregistrador_view(request):
             values['estado'] = ''
             values['poblacion'] = ''
 
-        # ✅ CAMPOS OBLIGATORIOS DINÁMICOS
+        # ✅ CAMPOS OBLIGATORIOS DINÁMICOS (Quitamos 'sap' porque ya lo genera el sistema)
         if rol == ROLE_PROMOTOR:
-            required = ['fecha_registro', 'sap', 'nombre', 'latitud', 'longitud', 'direccion']
+            required = ['fecha_registro', 'nombre', 'latitud', 'longitud']
         else:
-            required = ['fecha_registro', 'sap', 'nombre', 'tipo_cuenta',
+            required = ['fecha_registro', 'nombre', 'tipo_cuenta', 
                         'latitud', 'longitud', 'direccion', 'zona', 'estado', 'poblacion']
 
         missing = [field for field in required if not values.get(field)]
@@ -939,10 +1002,8 @@ def operadorregistrador_view(request):
                 messages.error(request, 'Selecciona un tipo de cuenta valido.')
                 return render(request, 'Vehiculos/operador.html', build_context(values))
 
+        # Tomamos el SAP que generó el sistema
         sap = values['sap'].upper()
-        if Cliente.objects.filter(sap=sap).exists():
-            messages.error(request, 'Ya existe un cliente con el codigo SAP "{sap}".')
-            return render(request, 'Vehiculos/operador.html', build_context(values))
 
         fecha = parse_date(values['fecha_registro'])
         if fecha is None:
@@ -1011,50 +1072,63 @@ def geolocalizacion_view(request):
     )
 
 
+
 def clientes_list_view(request):
     if not _is_logged_in(request):
         return redirect('login')
+    
+    # Permisos básicos
     if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
         return _reject_unauthorized(request)
 
     role = _get_role(request)
     user = _get_current_user(request)
-
     can_borrar_clientes = _has_permission(request, "gestionar_usuarios")
-    if request.method == "POST":
-        action = (request.POST.get("action") or "").strip()
-        if action == "delete_cliente":
-            if not can_borrar_clientes:
-                return _reject_unauthorized(request)
 
-            cliente_id = request.POST.get("cliente_id")
-            cliente = Cliente.objects.filter(id=cliente_id).first()
-            if not cliente:
-                messages.error(request, "Cliente no encontrado.")
-                return redirect("clientes_list")
-
-            sap = cliente.sap
-            nombre = cliente.nombre
-            cliente.delete()
-            messages.success(request, f'Cliente {sap} - {nombre} eliminado correctamente.')
-            return redirect("clientes_list")
-
-        messages.error(request, "Accion invalida.")
-        return redirect("clientes_list")
-
+    # 1. Base del QuerySet
     query = Cliente.objects.select_related('operador').order_by('-fecha_registro', '-id')
+    
+    # Seguridad: Si es operador, solo ve lo suyo
     if role == ROLE_OPERADOR and user is not None:
         query = query.filter(operador=user)
 
+    # --- 🚀 LÓGICA DE FILTRADO FUNCIONAL ---
+    
+    # Recogemos los datos del formulario (el 'name' del HTML)
     search = (request.GET.get('q') or '').strip()
-    if search:
-        query = query.filter(sap__icontains=search)
+    operador_id = request.GET.get('operador_filtro')
+    tipo_filtro = request.GET.get('tipo_filtro')
 
-    clientes = list(query)
+    # Filtro 1: Buscador (SAP o Nombre)
+    if search:
+        query = query.filter(Q(sap__icontains=search) | Q(nombre__icontains=search))
+
+    # Filtro 2: Por Operador (Solo para Admins)
+    if operador_id:
+        query = query.filter(operador_id=operador_id)
+
+    # Filtro 3: Por Tipo de Cuenta
+    if tipo_filtro:
+        query = query.filter(tipo_cuenta=tipo_filtro)
+
+    # --- 👤 OBTENER LISTA DE USUARIOS PARA EL DROPDOWN ---
+    # Necesitamos esto para que el select de "Registrado por" no esté vacío
+    User = get_user_model()
+    operadores_lista = User.objects.filter(
+        groups__name__in=[ROLE_OPERADOR, ROLE_ADMIN, ROLE_ADMIN_MASTER]
+    ).distinct()
+
+    # 2. Aplicar el Paginador
+    paginator = Paginator(query, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'clientes': clientes,
+        'page_obj': page_obj,
         'search': search,
+        'operador_id_actual': operador_id, # Para que el select mantenga lo seleccionado
+        'tipo_actual': tipo_filtro,       # Para que el select mantenga lo seleccionado
+        'operadores_lista': operadores_lista, # 👈 AQUÍ enviamos la lista de usuarios
         'rol': role,
         'rol_label': ROLE_LABELS[role],
         'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
@@ -1063,133 +1137,87 @@ def clientes_list_view(request):
         'can_solicitar_correccion_cliente': _has_permission(request, "solicitar_correccion_cliente"),
         'can_gestionar_correcciones_clientes': _has_permission(request, "gestionar_correcciones_clientes"),
         'can_borrar_clientes': can_borrar_clientes,
-        'credito_fields_numericos': CREDITO_FIELDS_NUMERICOS,
-        'credito_fields_booleanos': CREDITO_FIELDS_BOOLEANOS,
-        'total_clientes': len(clientes),
+        'total_clientes': paginator.count,
     }
     return render(request, 'Vehiculos/clientes.html', context)
-
 
 def importar_clientes_excel(request):
     if not _is_logged_in(request):
         return redirect("login")
 
-    # Permitir importar a quien pueda registrar clientes o administrar usuarios.
     if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
         return _reject_unauthorized(request)
 
     if request.method != "POST":
-        return render(
-            request,
-            "Vehiculos/importar-clientes.html",
-            {
-                "required_columns": [
-                    "Código SAP",
-                    "Nombre",
-                    "Tipo Cuenta",
-                    "Dirección",
-                    "Zona",
-                    "Estado",
-                    "Población",
-                    "Latitud",
-                    "Longitud",
-                    "Lista de Precios",
-                ],
-                "optional_columns": [
-                    "Fecha de registro (opcional: si no viene, se usa hoy)",
-                ],
-            },
-        )
+        return render(request, "Vehiculos/importar-clientes.html", {
+            "required_columns": ["Nombre", "Tipo Cuenta", "Dirección", "Zona", "Estado", "Población", "Latitud", "Longitud", "Lista de Precios"],
+            "optional_columns": ["Fecha de registro"],
+        })
 
     archivo = request.FILES.get("excel")
     if not archivo:
-        messages.error(request, "Selecciona un archivo .xlsx o .csv para importar.")
+        messages.error(request, "Selecciona un archivo .xlsx o .csv.")
         return redirect("importar_clientes_excel")
 
-    name = (getattr(archivo, "name", "") or "").lower()
-    if not (name.endswith(".xlsx") or name.endswith(".csv")):
-        messages.error(request, "El archivo debe ser .xlsx (Excel) o .csv.")
-        return redirect("importar_clientes_excel")
-
+    # --- 1. LÓGICA PARA LEER EL ARCHIVO (Define 'rows') ---
     rows = []
+    name = archivo.name.lower()
+    
     if name.endswith(".csv"):
         import csv
-        from io import BytesIO, TextIOWrapper
-
-        raw_bytes = archivo.read()
-        encoding_used = None
-        for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
-            try:
-                raw_bytes.decode(encoding)
-                encoding_used = encoding
-                break
-            except Exception:
-                encoding_used = None
-        if encoding_used is None:
-            messages.error(request, "No se pudo leer el CSV (codificacion desconocida).")
-            return redirect("importar_clientes_excel")
-
-        bio = BytesIO(raw_bytes)
-        # csv module requiere newline="" para manejar saltos de linea correctamente
-        with TextIOWrapper(bio, encoding=encoding_used, newline="") as text_stream:
-            sample = text_stream.read(2048)
-            text_stream.seek(0)
-            try:
-                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-            except Exception:
-                dialect = csv.excel
-            reader = csv.reader(text_stream, dialect)
+        from io import TextIOWrapper
+        encoding = 'utf-8-sig' # Soporta caracteres especiales de Excel
+        try:
+            text_stream = TextIOWrapper(archivo, encoding=encoding)
+            reader = csv.reader(text_stream)
             rows = list(reader)
+        except:
+            messages.error(request, "Error al leer el CSV. Intenta guardarlo como UTF-8.")
+            return redirect("importar_clientes_excel")
     else:
         try:
             from openpyxl import load_workbook
-        except Exception:
-            messages.error(
-                request,
-                "Para .xlsx necesitas openpyxl. Si no puedes instalarlo, exporta el Excel a CSV y sube el .csv.",
-            )
-            return redirect("importar_clientes_excel")
-
-        try:
             wb = load_workbook(archivo, data_only=True)
-        except Exception:
-            messages.error(request, "No se pudo leer el Excel. Verifica que no este dañado.")
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+        except Exception as e:
+            messages.error(request, f"Error al leer Excel: {e}")
             return redirect("importar_clientes_excel")
 
-        ws = wb.active
-        rows = list(ws.iter_rows(values_only=True))
     if not rows:
-        messages.error(request, "El Excel esta vacio.")
+        messages.error(request, "El archivo está vacío.")
         return redirect("importar_clientes_excel")
 
+    # --- 2. PROCESAR CABECERAS (Define 'header_to_index') ---
     header_row = rows[0]
     raw_headers = [_normalize_excel_header(cell) for cell in header_row]
     canonical_headers = [_canonicalize_import_header(h) for h in raw_headers]
     header_to_index = {h: idx for idx, h in enumerate(canonical_headers) if h}
 
-    required = [
-        "sap",
-        "nombre",
-        "tipo_cuenta",
-        "direccion",
-        "zona",
-        "estado",
-        "poblacion",
-        "latitud",
-        "longitud",
-        "lista_precios",
-    ]
-    missing = [col for col in required if col not in header_to_index]
-    if missing:
-        messages.error(
-            request,
-            "Faltan columnas obligatorias. Deben venir exactamente estas columnas: "
-            "Código SAP, Nombre, Tipo Cuenta, Dirección, Zona, Estado, Población, Latitud, Longitud, Lista de Precios.",
-        )
-        return redirect("importar_clientes_excel")
+    # --- 3. PREPARAR SECUENCIA SAP ---
+    last_sap = Cliente.objects.filter(sap__startswith="SAP-").order_by("-sap").values_list("sap", flat=True).first()
+    last_num = 0
+    if last_sap and "-" in last_sap:
+        try:
+            last_num = int(last_sap.split("-", 1)[1])
+        except ValueError:
+            last_num = 0
+    
+    next_seq_num = last_num + 1
 
+    # --- 4. FUNCIÓN AUXILIAR (Define 'to_float') ---
+    def to_float(value):
+        if value is None or value == "":
+            return 0.0
+        try:
+            # Limpia comas si vienen en formato europeo/latino
+            text = str(value).strip().replace(",", ".")
+            return float(text)
+        except:
+            return 0.0
+
+    # --- 5. IMPORTACIÓN MASIVA ---
     created = 0
-    skipped = 0
     errores = []
     current_user = _get_current_user(request)
     today = timezone.localdate()
@@ -1201,91 +1229,45 @@ def importar_clientes_excel(request):
 
             def cell_value(col):
                 idx = header_to_index.get(col)
-                if idx is None or idx >= len(row):
-                    return None
-                return row[idx]
+                return row[idx] if idx is not None and idx < len(row) else None
 
-            sap_raw = cell_value("sap")
-            nombre_raw = cell_value("nombre")
-            tipo_raw = cell_value("tipo_cuenta")
+            # Generamos el SAP de la secuencia
+            sap_final = f"SAP-{next_seq_num:05d}"
+            
+            nombre = str(cell_value("nombre") or "").strip()
+            if not nombre:
+                continue # Saltamos filas sin nombre
 
-            def normalize_code(value):
-                if value is None:
-                    return ""
-                if isinstance(value, float) and value.is_integer():
-                    value = int(value)
-                return str(value).strip()
+            tipo_raw = str(cell_value("tipo_cuenta") or "").strip().upper()
+            tipo = Cliente.TIPO_DIRECTO if tipo_raw.startswith("DIR") else Cliente.TIPO_PROSPECTO
 
-            sap = normalize_code(sap_raw).upper()
-            nombre = (str(nombre_raw).strip() if nombre_raw is not None else "")
-            tipo = (str(tipo_raw).strip().upper() if tipo_raw is not None else "")
-
-            if tipo.startswith("DIR"):
-                tipo = Cliente.TIPO_DIRECTO
-            elif tipo.startswith("PRO"):
-                tipo = Cliente.TIPO_PROSPECTO
-
-            fecha_raw = cell_value("fecha_registro")
-            fecha = _parse_excel_date(fecha_raw) if fecha_raw not in (None, "") else today
-
-            if not sap or not nombre or not tipo:
-                errores.append(f"Fila {row_num}: falta Código SAP / Nombre / Tipo Cuenta.")
-                continue
-
-            if tipo not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
-                errores.append(
-                    f"Fila {row_num}: tipo_cuenta invalido ({tipo}). Usa DIRECTO o PROSPECTO.",
+            try:
+                Cliente.objects.create(
+                    sap=sap_final,
+                    nombre=nombre,
+                    tipo_cuenta=tipo,
+                    lista_precios=str(cell_value("lista_precios") or "DEFAULT").strip().upper(),
+                    latitud=to_float(cell_value("latitud")),
+                    longitud=to_float(cell_value("longitud")),
+                    direccion=str(cell_value("direccion") or "").strip(),
+                    zona=str(cell_value("zona") or "").strip().upper(),
+                    estado=str(cell_value("estado") or "").strip().upper(),
+                    poblacion=str(cell_value("poblacion") or "").strip().upper(),
+                    fecha_registro=_parse_excel_date(cell_value("fecha_registro")) or today,
+                    operador=current_user,
                 )
-                continue
-
-            if Cliente.objects.filter(sap=sap).exists():
-                skipped += 1
-                continue
-
-            lista_precios = cell_value("lista_precios")
-            latitud = cell_value("latitud")
-            longitud = cell_value("longitud")
-
-            def to_float(value):
-                if value is None or value == "":
-                    return None
-                try:
-                    text = str(value).strip()
-                    if "," in text and "." not in text:
-                        text = text.replace(",", ".")
-                    return float(text)
-                except Exception:
-                    return None
-
-            cliente = Cliente.objects.create(
-                sap=sap,
-                nombre=nombre,
-                tipo_cuenta=tipo,
-                lista_precios=(str(lista_precios).strip().upper() if lista_precios not in (None, "") else ""),
-                latitud=to_float(latitud),
-                longitud=to_float(longitud),
-                direccion=(str(cell_value("direccion")).strip() if cell_value("direccion") not in (None, "") else ""),
-                zona=(str(cell_value("zona")).strip().upper() if cell_value("zona") not in (None, "") else ""),
-                estado=(str(cell_value("estado")).strip().upper() if cell_value("estado") not in (None, "") else ""),
-                poblacion=(str(cell_value("poblacion")).strip().upper() if cell_value("poblacion") not in (None, "") else ""),
-                fecha_registro=fecha,
-                operador=current_user,
-            )
-            created += 1
+                created += 1
+                next_seq_num += 1 # Solo sumamos si se creó con éxito
+            except Exception as e:
+                errores.append(f"Fila {row_num}: {str(e)}")
 
     if created:
-        messages.success(request, f"Importacion completa: {created} cliente(s) creados.")
-    if skipped:
-        messages.info(request, f"Omitidos por SAP duplicado: {skipped}.")
+        messages.success(request, f"¡Importación exitosa! Se crearon {created} clientes de SAP.")
     if errores:
-        # Limitar para no saturar la UI
-        for msg in errores[:10]:
-            messages.error(request, msg)
-        if len(errores) > 10:
-            messages.error(request, f"Y {len(errores) - 10} error(es) mas.")
+        for err in errores[:5]: # Mostramos solo los primeros 5 errores para no saturar
+            messages.error(request, err)
 
     return redirect("clientes_list")
-
 
 CREDITO_FIELDS_NUMERICOS = [
     ('dias_maximos_entrega', 'Dias maximos de entrega', 'int'),
@@ -1366,6 +1348,7 @@ def historial_view(request):
         return redirect('login')
     if not _has_permission(request, "operadorregistrador"):
         return _reject_unauthorized(request)
+    
 
     user = _get_current_user(request)
     if user is None:
@@ -1793,3 +1776,31 @@ def solicitudes_correccion_clientes(request):
             'solicitudes': solicitudes,
         },
     )
+def _normalize_excel_header(header):
+    if header is None:
+        return ""
+    import unicodedata
+    s = str(header).strip().lower()
+    s = "".join(
+        c for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
+    )
+    return s.replace(" ", "_").replace(".", "")
+
+def borrar_masivo_clientes(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, "gestionar_usuarios"):
+        return _reject_unauthorized(request)
+
+    if request.method == 'POST':
+        ids_raw = request.POST.get('ids', '')
+        if ids_raw:
+            id_list = ids_raw.split(',')
+            # Borrado eficiente en una sola consulta
+            cantidad, _ = Cliente.objects.filter(id__in=id_list).delete()
+            messages.success(request, f'Se eliminaron {cantidad} registros correctamente.')
+        else:
+            messages.warning(request, 'No se seleccionaron clientes para eliminar.')
+            
+    return redirect('clientes_list')
