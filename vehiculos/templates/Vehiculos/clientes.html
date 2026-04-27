@@ -678,5 +678,52 @@ function confirmarBorradoMasivo() {
 }
   </script>
 
+  <script>
+    function desglosarDireccionInventario(lat, lng) {
+    const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+
+    fetch(geoUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.address) {
+                const a = data.address;
+
+                // --- MAPEO DE CAMPOS PARA EL INVENTARIO ---
+                // Aquí usa los ID o Name que tengas en tu vista de inventario
+                
+                // Calle
+                const calle = document.querySelector('input[name="inv_calle"]') || document.getElementById('id_calle_inv');
+                if (calle) calle.value = a.road || "";
+
+                // Colonia
+                const colonia = document.querySelector('input[name="inv_colonia"]') || document.getElementById('id_colonia_inv');
+                if (colonia) colonia.value = a.neighbourhood || a.suburb || a.quarter || "";
+
+                // Municipio / Ciudad
+                const municipio = document.querySelector('input[name="inv_municipio"]') || document.getElementById('id_municipio_inv');
+                if (municipio) municipio.value = a.city || a.town || a.village || "";
+
+                // Código Postal
+                const cp = document.querySelector('input[name="inv_cp"]') || document.getElementById('id_cp_inv');
+                if (cp) cp.value = a.postcode || "";
+
+                // Estado
+                const estado = document.querySelector('input[name="inv_estado"]') || document.getElementById('id_estado_inv');
+                if (estado) estado.value = a.state || "";
+
+                // Dirección completa (opcional, para un campo de texto largo)
+                const dirCompleta = document.querySelector('input[name="inv_direccion_completa"]');
+                if (dirCompleta) dirCompleta.value = data.display_name || "";
+
+                // Si tienes un resumen en vivo en el inventario, actualízalo aquí
+                if (typeof actualizarResumenLive === "function") {
+                    actualizarResumenLive();
+                }
+            }
+        })
+        .catch(error => console.error("Error en inventario:", error));
+}
+  </script>
+
 </body>
 </html>

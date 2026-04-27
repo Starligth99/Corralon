@@ -336,232 +336,198 @@
       </div>
 
 <div class="col-lg-4">
-        <aside class="surface p-4 sticky-top" style="top: 1rem;">
-          <h2 class="h6 mb-3">Resumen en vivo</h2>
-          <div class="summary-item">
-            <div class="summary-label">Codigo SAP</div>
-            <div id="sumSap" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Fecha de registro</div>
-            <div id="sumFecha" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Nombre del lugar</div>
-            <div id="sumNombre" class="summary-value">-</div>
-          </div>
-          
-          {% if rol != 'promotor' %}
-          <div class="summary-item">
-            <div class="summary-label">Tipo de cuenta</div>
-            <div id="sumTipo" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Lista de precios</div>
-            <div id="sumLista" class="summary-value">-</div>
-          </div>
-          {% endif %}
-          <div class="summary-item">
-            <div class="summary-label">Latitud / Longitud</div>
-            <div id="sumLatLng" class="summary-value">-</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Direccion</div>
-            <div id="sumDireccion" class="summary-value">-</div>
-          </div>
-        </aside>
-      </div>
+  <aside class="surface p-4 sticky-top" style="top: 1rem;">
+    <h2 class="h6 mb-3 text-primary"><i class="bi bi-eye"></i> Resumen en vivo</h2>
+    
+    <div class="summary-item">
+      <div class="summary-label">Codigo SAP</div>
+      <div id="sumSap" class="summary-value">-</div>
     </div>
+    <div class="summary-item">
+      <div class="summary-label">Fecha de registro</div>
+      <div id="sumFecha" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Nombre del lugar</div>
+      <div id="sumNombre" class="summary-value">-</div>
+    </div>
+    
+    {% if rol != 'promotor' %}
+    <div class="summary-item">
+      <div class="summary-label">Tipo de cuenta</div>
+      <div id="sumTipo" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Lista de precios</div>
+      <div id="sumLista" class="summary-value">-</div>
+    </div>
+    {% endif %}
+
+    <hr class="my-3 opacity-25"> <div class="summary-item">
+      <div class="summary-label">Latitud / Longitud</div>
+      <div id="sumLatLng" class="summary-value text-muted small">-</div>
+    </div>
+    
+    <div class="summary-item">
+      <div class="summary-label">Calle</div>
+      <div id="sumCalle" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Colonia</div>
+      <div id="sumColonia" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Municipio</div>
+      <div id="sumMunicipio" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Código Postal</div>
+      <div id="sumCP" class="summary-value">-</div>
+    </div>
+
+    <div class="summary-item mt-2">
+      <div class="summary-label">Dirección Completa</div>
+      <div id="sumDireccion" class="summary-value small font-italic">-</div>
+    </div>
+  </aside>
+</div>
   </main>
 
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
 
-  <script>
-  // ============ SISTEMA DE GEOLOCALIZACIÓN Y DIRECCIONES ===========
-  document.addEventListener("DOMContentLoaded", function() {
-    const latInput = document.getElementById("id_latitud");
-    const lngInput = document.getElementById("id_longitud");
-    const dirInput = document.getElementById("id_direccion");
-    const calleInput = document.getElementById("id_calle");
-    const coloniaInput = document.getElementById("id_colonia");
-    const municipioInput = document.getElementById("id_municipio");
-    const codigoPostalInput = document.getElementById("id_codigo_postal");
-    const btnLocalizar = document.getElementById("btnLocalizar");
-    const iframeMapa = document.getElementById("mapEmbedFrame");
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Buscamos los elementos (con respaldo por si Django cambia el ID)
+    const getEl = (id) => document.getElementById(id) || document.getElementsByName(id.replace('id_', ''))[0];
 
-    const googleMapsApiKey = "{{ google_maps_api_key|default:''|escapejs }}";
+    const latInput = getEl("id_latitud");
+    const lngInput = getEl("id_longitud");
+    const dirInput = getEl("id_direccion");
+    const calleInput = getEl("id_calle");
+    const coloniaInput = getEl("id_colonia");
+    const municipioInput = getEl("id_municipio");
+    const cpInput = getEl("id_codigo_postal");
+    const btnLocalizar = getEl("btnLocalizar");
+    const iframeMapa = getEl("mapEmbedFrame");
 
-    // Función para actualizar el mapa
     function actualizarMapa(lat, lng) {
-      if (iframeMapa && lat && lng) {
-        iframeMapa.src = `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
-      }
+        if (iframeMapa && lat && lng) {
+            // Corregido el error de la URL del iframe
+            iframeMapa.src = `https://maps.google.com/maps?q=${lat},${lng}&output=embed`;
+        }
     }
 
-    function setAddressComponents(calle, colonia, municipio, codigoPostal) {
-      if (calleInput) calleInput.value = calle || "";
-      if (coloniaInput) coloniaInput.value = colonia || "";
-      if (municipioInput) municipioInput.value = municipio || "";
-      if (codigoPostalInput) codigoPostalInput.value = codigoPostal || "";
-    }
-
-    function findComponent(components, type) {
-      return components.find((item) => item.types.includes(type))?.long_name || null;
-    }
-
-    function buildGoogleAddress(components) {
-      const streetNumber = findComponent(components, 'street_number');
-      const route = findComponent(components, 'route');
-      const premise = findComponent(components, 'premise');
-      const subpremise = findComponent(components, 'subpremise');
-      const neighborhood = findComponent(components, 'neighborhood') || findComponent(components, 'sublocality') || findComponent(components, 'sublocality_level_1');
-      const locality = findComponent(components, 'locality') || findComponent(components, 'postal_town');
-      const adminArea = findComponent(components, 'administrative_area_level_1');
-      const postalCode = findComponent(components, 'postal_code');
-      const country = findComponent(components, 'country');
-
-      const parts = [];
-      if (premise) parts.push(premise);
-      if (streetNumber && route) parts.push(`${streetNumber} ${route}`);
-      else if (route) parts.push(route);
-      if (subpremise) parts.push(subpremise);
-      if (neighborhood) parts.push(neighborhood);
-      if (locality) parts.push(locality);
-      if (adminArea) parts.push(adminArea);
-      if (postalCode) parts.push(postalCode);
-      if (country) parts.push(country);
-      return parts.filter(Boolean).join(', ');
+    function setAddressComponents(calle, colonia, muni, cp) {
+        if (calleInput) calleInput.value = calle || "";
+        if (coloniaInput) coloniaInput.value = colonia || "";
+        if (municipioInput) municipioInput.value = muni || "";
+        if (cpInput) cpInput.value = cp || "";
     }
 
     async function obtenerDireccion(lat, lng) {
-      try {
-        dirInput.value = "Buscando dirección...";
+        try {
+            if (dirInput) dirInput.value = "Buscando dirección...";
+            console.log(`Buscando datos para: ${lat}, ${lng}`);
 
-        if (googleMapsApiKey) {
-          const googleUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&result_type=street_address|premise|subpremise|postal_code&language=es&key=${googleMapsApiKey}`;
-          const response = await fetch(googleUrl);
-          const data = await response.json();
-
-          if (data.status === 'OK' && Array.isArray(data.results) && data.results.length) {
-            const best = data.results.find((item) =>
-              item.types.includes('street_address') ||
-              item.types.includes('premise') ||
-              item.types.includes('subpremise')
-            ) || data.results[0];
-            const address = buildGoogleAddress(best.address_components || []);
-            dirInput.value = address || best.formatted_address || "Dirección no encontrada";
-            setAddressComponents(
-              [
-                findComponent(best.address_components || [], 'route'),
-                findComponent(best.address_components || [], 'street_number')
-              ].filter(Boolean).join(' '),
-              findComponent(best.address_components || [], 'neighborhood') || findComponent(best.address_components || [], 'sublocality') || findComponent(best.address_components || [], 'sublocality_level_1') || "",
-              findComponent(best.address_components || [], 'administrative_area_level_2') || findComponent(best.address_components || [], 'locality') || findComponent(best.address_components || [], 'postal_town') || "",
-              findComponent(best.address_components || [], 'postal_code') || ""
+            // Usamos Nominatim (OpenStreetMap) de forma más robusta
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=es`
             );
-            return;
-          }
+            const data = await response.json();
+            
+            console.log("Datos recibidos de la API:", data.address);
 
-          console.warn('Google Geocoding no devolvió resultado exacto:', data.status, data.error_message);
-        }
+            if (data && data.address) {
+                const addr = data.address;
+                
+                // Mapeo inteligente para México
+                const calle = [addr.road, addr.house_number].filter(Boolean).join(' ');
+                const colonia = addr.neighbourhood || addr.suburb || addr.residential || "";
+                const municipio = addr.city || addr.town || addr.village || addr.county || "";
+                const cp = addr.postcode || "";
 
-        const osmResponse = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=es`
-        );
-        const osmData = await osmResponse.json();
-        if (osmData && osmData.address) {
-          const address = [];
-          if (osmData.address.house_number) address.push(osmData.address.house_number);
-          if (osmData.address.road) address.push(osmData.address.road);
-          if (osmData.address.neighbourhood) address.push(osmData.address.neighbourhood);
-          if (osmData.address.suburb) address.push(osmData.address.suburb);
-          if (osmData.address.city) address.push(osmData.address.city);
-          if (osmData.address.state) address.push(osmData.address.state);
-          if (osmData.address.postcode) address.push(osmData.address.postcode);
-          if (osmData.address.country) address.push(osmData.address.country);
-          dirInput.value = address.length ? address.join(', ') : osmData.display_name || "Dirección no encontrada";
-          setAddressComponents(
-            [osmData.address.road, osmData.address.house_number].filter(Boolean).join(' '),
-            osmData.address.neighbourhood || osmData.address.suburb || "",
-            osmData.address.city || osmData.address.town || osmData.address.village || osmData.address.county || "",
-            osmData.address.postcode || ""
-          );
-        } else {
-          dirInput.value = osmData.display_name || "Dirección no encontrada";
-          setAddressComponents("", "", "", "");
+                // Llenamos la dirección completa
+                if (dirInput) dirInput.value = data.display_name;
+
+                // Llenamos los campos individuales
+                setAddressComponents(calle, colonia, municipio, cp);
+            }
+        } catch (error) {
+            console.error("Error en la API de dirección:", error);
+            if (dirInput) dirInput.value = "Error al obtener dirección.";
+        } finally {
+            // Siempre reactivamos el botón pase lo que pase
+            btnLocalizar.disabled = false;
+            btnLocalizar.innerHTML = '<span>📍 Localizar de nuevo</span>';
         }
-      } catch (error) {
-        console.error("Error al obtener dirección:", error);
-        dirInput.value = "Error al conectar con el servidor";
-        setAddressComponents("", "", "", "");
-      }
     }
 
-    // Función para localizar al usuario
     function localizarUsuario() {
-      if (!navigator.geolocation) {
-        alert("Tu navegador no soporta geolocalización.");
-        return;
-      }
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta geolocalización.");
+            return;
+        }
 
-      btnLocalizar.disabled = true;
-      btnLocalizar.textContent = "📍 Localizando...";
+        btnLocalizar.disabled = true;
+        btnLocalizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Buscando...';
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
 
-          // Llenar los campos
-          latInput.value = lat;
-          lngInput.value = lng;
+                if (latInput) latInput.value = lat;
+                if (lngInput) lngInput.value = lng;
 
-          // Hacer readonly después de localizar
-          latInput.readOnly = true;
-          lngInput.readOnly = true;
-          dirInput.readOnly = true;
-
-          // Obtener dirección
-          obtenerDireccion(lat, lng);
-
-          // Actualizar mapa
-          actualizarMapa(lat, lng);
-
-          // Bloquear el botón después de una sola localización
-          btnLocalizar.disabled = true;
-          btnLocalizar.textContent = "🔒 Ubicación fijada";
-
-          // Mensaje de éxito
-          alert("¡Ubicación cargada correctamente!");
-        },
-        (error) => {
-          console.error("Error de geolocalización:", error);
-          alert("Error al obtener ubicación. Asegúrate de dar permisos en tu navegador.");
-          btnLocalizar.disabled = false;
-          btnLocalizar.textContent = "📍 Localizar";
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+                actualizarMapa(lat, lng);
+                obtenerDireccion(lat, lng);
+            },
+            (error) => {
+                alert("Error: No se pudo obtener tu ubicación. Revisa los permisos.");
+                btnLocalizar.disabled = false;
+                btnLocalizar.innerHTML = '<span>📍 Reintentar</span>';
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     }
 
-    // Event listener para el botón
-    btnLocalizar.addEventListener("click", localizarUsuario);
-
-    // Si ya hay coordenadas cargadas, bloquear la ubicación
-    if (latInput.value && lngInput.value) {
-      latInput.readOnly = true;
-      lngInput.readOnly = true;
-      dirInput.readOnly = true;
-      btnLocalizar.disabled = true;
-      btnLocalizar.textContent = "🔒 Ubicación fijada";
+    if (btnLocalizar) {
+        btnLocalizar.addEventListener("click", localizarUsuario);
     }
-  });
-  </script>
+});
 
+    function actualizarTodo() {
+    const lat = latInput.value.trim();
+    const lng = lngInput.value.trim();
 
-  <script>
-    // ============ WIZARD DEL FORMULARIO ===========
+    if (lat !== "" && lng !== "") {
+        // --- ACTUALIZACIÓN PARA PIN EXACTO ---
+        if (iframeMapa) {
+            // Usamos la URL de búsqueda (q) que fuerza el marcador rojo
+            // z=16 es el zoom, iwloc= permite o quita la ventanita blanca
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed&iwloc=near`;
+            iframeMapa.src = mapUrl;
+        }
+
+        // El resto de tu lógica para la dirección (Nominatim) sigue igual...
+        dirInput.value = "Buscando dirección...";
+        const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+
+        fetch(geoUrl)
+            .then(response => response.json())
+            .then(data => {
+                dirInput.value = data.display_name || "Dirección no encontrada";
+            })
+            .catch(() => {
+                dirInput.value = "Error al conectar con el servidor";
+            });
+    }
+}
+</script>
+
+<script>
+    // ============ WIZARD DEL FORMULARIO CON RESUMEN COMPLETO ===========
     (function () {
       const form = document.getElementById("registroForm");
       const panels = Array.from(document.querySelectorAll("[data-step-panel]"));
@@ -585,16 +551,27 @@
         if (el) el.textContent = text || "-";
       }
 
+      // --- ESTA ES LA FUNCIÓN QUE ACTUALIZA TU VISTA PREVIA ---
       function updateSummary() {
         setSummary("sumSap", val("sap").toUpperCase());
         setSummary("sumFecha", val("fecha_registro"));
         setSummary("sumNombre", val("nombre"));
         setSummary("sumTipo", val("tipo_cuenta"));
         setSummary("sumLista", val("lista_precios").toUpperCase());
+        
+        // Coordenadas
         const lat = val("latitud");
         const lng = val("longitud");
         setSummary("sumLatLng", lat && lng ? lat + ", " + lng : "-");
+        
+        // Dirección General
         setSummary("sumDireccion", val("direccion"));
+
+        // NUEVOS CAMPOS PARA EL RESUMEN EN VIVO
+        setSummary("sumCalle", val("calle"));
+        setSummary("sumColonia", val("colonia"));
+        setSummary("sumMunicipio", val("municipio"));
+        setSummary("sumCP", val("codigo_postal"));
       }
 
       function setStep(index) {
@@ -614,6 +591,8 @@
         btnNext.classList.toggle("d-none", isLast);
         btnSubmit.classList.toggle("d-none", !isLast);
       }
+
+      // ... (El resto de tus funciones de validación y eventos se mantienen igual) ...
 
       function validateStep(index) {
         const activePanel = panels[index];
@@ -642,20 +621,20 @@
         setStep(0);
       });
 
+      // Importante: Escucha cambios para actualizar el resumen
       form.addEventListener("input", updateSummary);
+      
       form.addEventListener("submit", function (event) {
         if (!form.checkValidity()) {
           event.preventDefault();
-          event.stopPropagation();
           form.reportValidity();
-          return;
         }
       });
 
       updateSummary();
       setStep(0);
     })();
-  </script>
+</script>
 </body>
 </html>
 
