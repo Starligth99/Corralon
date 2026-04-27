@@ -263,21 +263,24 @@
               <div class="row g-3">
                 <div class="col-md-3">
                   <label class="form-label">Latitud</label>
-                  <input type="number" step="any" class="form-control" name="latitud" value="{{ form_values.latitud|default:'' }}" placeholder="19.432608" required>
-                {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}                
+                  <input type="number" step="any" class="form-control" id="id_latitud" name="latitud" value="{{ form_values.latitud|default:'' }}" placeholder="19.432608" required readonly>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Longitud</label>
-                  <input type="number" step="any" class="form-control" name="longitud" value="{{ form_values.longitud|default:'' }}" placeholder="-99.133209" required>
-                {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}
-
+                  <input type="number" step="any" class="form-control" id="id_longitud" name="longitud" value="{{ form_values.longitud|default:'' }}" placeholder="-99.133209" required readonly>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label">Direccion</label>
-                  <input type="text" class="form-control" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required readonly>
+                  <input type="text" class="form-control" id="id_direccion" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required readonly>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">&nbsp;</label>
+                  <button type="button" class="btn btn-dark w-100" id="btnLocalizar">
+                    📍 Localizar
+                  </button>
                 </div>
                 
-                <div>
+                <div class="col-12">
                     <iframe
                      id="mapEmbedFrame"
                      class="w-100 rounded"
@@ -287,19 +290,6 @@
                      loading="lazy">
                    </iframe>
                 </div>
-
-      <div class="mb-3">
-          <label>Dirección</label>
-          <div class="input-group">
-              <input type="text" id="id_direccion" name="direccion" class="form-control">
-              <button type="button" class="btn btn-dark" onclick="localizarUsuario()">
-                  📍 Localizar
-              </button>
-          </div>
-      </div>
-
-      <input type="hidden" id="id_latitud" name="latitud">
-      <input type="hidden" id="id_longitud" name="longitud">
 
                 {% if rol != 'promotor' %}
                 <div class="col-md-4">
@@ -371,175 +361,104 @@
   <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const latInput = document.querySelector('input[name="latitud"]');
-    const lngInput = document.querySelector('input[name="longitud"]');
-    const dirInput = document.querySelector('input[name="direccion"]');
-    const iframeMapa = document.getElementById('mapa-dinamico');
-
-    function actualizarMapaYDireccion() {
-        const lat = latInput.value.trim();
-        const lng = lngInput.value.trim();
-
-        // Validamos que ambos tengan datos para actuar
-        if (lat !== "" && lng !== "") {
-            
-            // --- PARTE 1: ACTUALIZAR MAPA ---
-            // Usamos la URL de inserción de Google Maps (gratuita)
-            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-            iframeMapa.src = mapUrl;
-
-            // --- PARTE 2: AUTOCOMPLETAR DIRECCIÓN (Lo que ya teníamos) ---
-            dirInput.value = "Buscando dirección...";
-            const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
-
-            fetch(geoUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.display_name) {
-                        dirInput.value = data.display_name;
-                    } else {
-                        dirInput.value = "Dirección no encontrada";
-                    }
-                })
-                .catch(() => {
-                    dirInput.value = "Error al conectar con el servidor de mapas";
-                });
-        }
-    }
-
-    // Escuchamos cuando el usuario termina de escribir o pega los datos
-    latInput.addEventListener('change', actualizarMapaYDireccion);
-    lngInput.addEventListener('change', actualizarMapaYDireccion);
-    
-    // OPCIONAL: Si quieres que sea REALMENTE rápido (mientras escribe), 
-    // puedes usar 'input' en lugar de 'change', pero 'change' es más estable.
-});
-</script>
-
   <script>
+  // ============ SISTEMA DE GEOLOCALIZACIÓN Y DIRECCIONES ===========
   document.addEventListener("DOMContentLoaded", function() {
-    // 1. Seleccionamos los inputs de latitud, longitud y dirección por su atributo "name"
-    const latInput = document.querySelector('input[name="latitud"]');
-    const lngInput = document.querySelector('input[name="longitud"]');
-    const dirInput = document.querySelector('input[name="direccion"]');
+    const latInput = document.getElementById("id_latitud");
+    const lngInput = document.getElementById("id_longitud");
+    const dirInput = document.getElementById("id_direccion");
+    const btnLocalizar = document.getElementById("btnLocalizar");
+    const iframeMapa = document.getElementById("mapEmbedFrame");
 
-    // Si alguno no existe en la página, detenemos el script para evitar errores
-    if (!latInput || !lngInput || !dirInput) return;
-
-    // 2. Función mágica que traduce coordenadas a dirección
-    function autocompletarDireccion() {
-      const lat = latInput.value.trim();
-      const lng = lngInput.value.trim();
-
-      // Solo buscamos si ambos campos tienen información
-      if (lat !== "" && lng !== "") {
-        
-        // Agregamos un texto de "Cargando..." para que el usuario sepa que está trabajando
-        dirInput.value = "Buscando dirección...";
-
-        // Usamos la API gratuita de OpenStreetMap
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
-
-        fetch(url)
-          .then(response => response.json())
-          .then(data => {
-            if (data && data.display_name) {
-              // 3. Escribimos la dirección encontrada en el campo
-              // display_name trae todo completo: Calle, Colonia, Ciudad, CP, País
-              dirInput.value = data.display_name;
-            } else {
-              dirInput.value = "No se encontró dirección para estas coordenadas";
-            }
-          })
-          .catch(error => {
-            console.error("Error al obtener la dirección:", error);
-            dirInput.value = "";
-          });
+    // Función para actualizar el mapa
+    function actualizarMapa(lat, lng) {
+      if (iframeMapa && lat && lng) {
+        iframeMapa.src = `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
       }
     }
 
-    // 4. Le decimos a los campos que avisen cuando el usuario termine de escribir o pegar
-    // 'change' se activa cuando el usuario escribe y hace clic afuera del campo
-    latInput.addEventListener('change', autocompletarDireccion);
-    lngInput.addEventListener('change', autocompletarDireccion);
-  });
-</script>
-
-<script>
-
-  function localizarUsuario() {
-    // Verificar si el navegador soporta geolocalización
-    if (navigator.geolocation) {
-        // Configuramos alta precisión para mejores resultados
-        const opciones = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-        };
-
-        navigator.geolocation.getCurrentPosition(obtenerDireccion, gestionarError, opciones);
-    } else {
-        alert("Tu navegador no soporta geolocalización.");
-    }
-}
-
-function localizarUsuario() {
-    console.log("Iniciando búsqueda de ubicación...");
-    
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (posicion) => {
-                const lat = posicion.coords.latitude;
-                const lng = posicion.coords.longitude;
-
-                // 1. Llenamos los campos de coordenadas de inmediato
-                document.getElementById("id_latitud").value = lat;
-                document.getElementById("id_longitud").value = lng;
-
-                console.log(`Coordenadas: ${lat}, ${lng}`);
-
-                // 2. Buscamos la dirección usando OpenStreetMap (GRATIS)
-                obtenerDireccionGratis(lat, lng);
-            },
-            (error) => {
-                alert("Error al obtener ubicación. Asegúrate de dar permiso.");
-            },
-            { enableHighAccuracy: true }
+    // Función para obtener la dirección desde OpenStreetMap
+    async function obtenerDireccion(lat, lng) {
+      try {
+        dirInput.value = "Buscando dirección...";
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
         );
-    } else {
-        alert("Tu navegador no soporta GPS.");
-    }
-}
-
-async function obtenerDireccionGratis(lat, lng) {
-    try {
-        // Consultamos a Nominatim (OpenStreetMap)
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
         const data = await response.json();
 
         if (data.display_name) {
-            const direccion = data.display_name;
-            console.log("Dirección encontrada:", direccion);
-
-            // 3. Llenamos el campo de dirección
-            document.getElementById("id_direccion").value = direccion;
-            
-            alert("¡Ubicación cargada con éxito!");
+          dirInput.value = data.display_name;
         } else {
-            alert("No se encontró una dirección exacta, pero las coordenadas ya se guardaron.");
+          dirInput.value = "Dirección no encontrada";
         }
-    } catch (error) {
-        console.error("Error en la búsqueda de dirección:", error);
-        alert("Hubo un problema al conectar con el servidor de direcciones.");
+      } catch (error) {
+        console.error("Error al obtener dirección:", error);
+        dirInput.value = "Error al conectar con el servidor";
+      }
     }
-}
 
-</script>
+    // Función para localizar al usuario
+    function localizarUsuario() {
+      if (!navigator.geolocation) {
+        alert("Tu navegador no soporta geolocalización.");
+        return;
+      }
+
+      btnLocalizar.disabled = true;
+      btnLocalizar.textContent = "📍 Localizando...";
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          // Llenar los campos
+          latInput.value = lat;
+          lngInput.value = lng;
+
+          // Hacer readonly después de localizar
+          latInput.readOnly = true;
+          lngInput.readOnly = true;
+          dirInput.readOnly = true;
+
+          // Obtener dirección
+          obtenerDireccion(lat, lng);
+
+          // Actualizar mapa
+          actualizarMapa(lat, lng);
+
+          // Restaurar botón
+          btnLocalizar.disabled = false;
+          btnLocalizar.textContent = "📍 Localizar";
+
+          // Mensaje de éxito
+          alert("¡Ubicación cargada correctamente!");
+        },
+        (error) => {
+          console.error("Error de geolocalización:", error);
+          alert("Error al obtener ubicación. Asegúrate de dar permisos en tu navegador.");
+          btnLocalizar.disabled = false;
+          btnLocalizar.textContent = "📍 Localizar";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    // Event listener para el botón
+    btnLocalizar.addEventListener("click", localizarUsuario);
+
+    // Si ya hay coordenadas cargadas, hacer readonly los campos
+    if (latInput.value && lngInput.value) {
+      latInput.readOnly = true;
+      lngInput.readOnly = true;
+      dirInput.readOnly = true;
+    }
+  });
+  </script>
 
 
   <script>
+    // ============ WIZARD DEL FORMULARIO ===========
     (function () {
       const form = document.getElementById("registroForm");
       const panels = Array.from(document.querySelectorAll("[data-step-panel]"));
