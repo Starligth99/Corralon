@@ -273,7 +273,23 @@
                   <label class="form-label">Direccion</label>
                   <input type="text" class="form-control" id="id_direccion" name="direccion" maxlength="180" value="{{ form_values.direccion|default:'' }}" required readonly>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
+                  <label class="form-label">Calle</label>
+                  <input type="text" class="form-control" id="id_calle" name="calle" maxlength="120" value="{{ form_values.calle|default:'' }}" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Colonia</label>
+                  <input type="text" class="form-control" id="id_colonia" name="colonia" maxlength="80" value="{{ form_values.colonia|default:'' }}" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Municipio</label>
+                  <input type="text" class="form-control" id="id_municipio" name="municipio" maxlength="60" value="{{ form_values.municipio|default:'' }}" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Código postal</label>
+                  <input type="text" class="form-control" id="id_codigo_postal" name="codigo_postal" maxlength="20" value="{{ form_values.codigo_postal|default:'' }}" readonly>
+                </div>
+                <div class="col-md-4">
                   <label class="form-label">&nbsp;</label>
                   <button type="button" class="btn btn-dark w-100" id="btnLocalizar">
                     📍 Localizar
@@ -367,6 +383,10 @@
     const latInput = document.getElementById("id_latitud");
     const lngInput = document.getElementById("id_longitud");
     const dirInput = document.getElementById("id_direccion");
+    const calleInput = document.getElementById("id_calle");
+    const coloniaInput = document.getElementById("id_colonia");
+    const municipioInput = document.getElementById("id_municipio");
+    const codigoPostalInput = document.getElementById("id_codigo_postal");
     const btnLocalizar = document.getElementById("btnLocalizar");
     const iframeMapa = document.getElementById("mapEmbedFrame");
 
@@ -379,17 +399,27 @@
       }
     }
 
+    function setAddressComponents(calle, colonia, municipio, codigoPostal) {
+      if (calleInput) calleInput.value = calle || "";
+      if (coloniaInput) coloniaInput.value = colonia || "";
+      if (municipioInput) municipioInput.value = municipio || "";
+      if (codigoPostalInput) codigoPostalInput.value = codigoPostal || "";
+    }
+
+    function findComponent(components, type) {
+      return components.find((item) => item.types.includes(type))?.long_name || null;
+    }
+
     function buildGoogleAddress(components) {
-      const find = (type) => components.find((item) => item.types.includes(type))?.long_name || null;
-      const streetNumber = find('street_number');
-      const route = find('route');
-      const premise = find('premise');
-      const subpremise = find('subpremise');
-      const neighborhood = find('neighborhood') || find('sublocality') || find('sublocality_level_1');
-      const locality = find('locality') || find('postal_town');
-      const adminArea = find('administrative_area_level_1');
-      const postalCode = find('postal_code');
-      const country = find('country');
+      const streetNumber = findComponent(components, 'street_number');
+      const route = findComponent(components, 'route');
+      const premise = findComponent(components, 'premise');
+      const subpremise = findComponent(components, 'subpremise');
+      const neighborhood = findComponent(components, 'neighborhood') || findComponent(components, 'sublocality') || findComponent(components, 'sublocality_level_1');
+      const locality = findComponent(components, 'locality') || findComponent(components, 'postal_town');
+      const adminArea = findComponent(components, 'administrative_area_level_1');
+      const postalCode = findComponent(components, 'postal_code');
+      const country = findComponent(components, 'country');
 
       const parts = [];
       if (premise) parts.push(premise);
@@ -421,6 +451,15 @@
             ) || data.results[0];
             const address = buildGoogleAddress(best.address_components || []);
             dirInput.value = address || best.formatted_address || "Dirección no encontrada";
+            setAddressComponents(
+              [
+                findComponent(best.address_components || [], 'route'),
+                findComponent(best.address_components || [], 'street_number')
+              ].filter(Boolean).join(' '),
+              findComponent(best.address_components || [], 'neighborhood') || findComponent(best.address_components || [], 'sublocality') || findComponent(best.address_components || [], 'sublocality_level_1') || "",
+              findComponent(best.address_components || [], 'administrative_area_level_2') || findComponent(best.address_components || [], 'locality') || findComponent(best.address_components || [], 'postal_town') || "",
+              findComponent(best.address_components || [], 'postal_code') || ""
+            );
             return;
           }
 
@@ -442,12 +481,20 @@
           if (osmData.address.postcode) address.push(osmData.address.postcode);
           if (osmData.address.country) address.push(osmData.address.country);
           dirInput.value = address.length ? address.join(', ') : osmData.display_name || "Dirección no encontrada";
+          setAddressComponents(
+            [osmData.address.road, osmData.address.house_number].filter(Boolean).join(' '),
+            osmData.address.neighbourhood || osmData.address.suburb || "",
+            osmData.address.city || osmData.address.town || osmData.address.village || osmData.address.county || "",
+            osmData.address.postcode || ""
+          );
         } else {
           dirInput.value = osmData.display_name || "Dirección no encontrada";
+          setAddressComponents("", "", "", "");
         }
       } catch (error) {
         console.error("Error al obtener dirección:", error);
         dirInput.value = "Error al conectar con el servidor";
+        setAddressComponents("", "", "", "");
       }
     }
 
@@ -481,9 +528,9 @@
           // Actualizar mapa
           actualizarMapa(lat, lng);
 
-          // Restaurar botón
-          btnLocalizar.disabled = false;
-          btnLocalizar.textContent = "📍 Localizar";
+          // Bloquear el botón después de una sola localización
+          btnLocalizar.disabled = true;
+          btnLocalizar.textContent = "🔒 Ubicación fijada";
 
           // Mensaje de éxito
           alert("¡Ubicación cargada correctamente!");
@@ -501,11 +548,13 @@
     // Event listener para el botón
     btnLocalizar.addEventListener("click", localizarUsuario);
 
-    // Si ya hay coordenadas cargadas, hacer readonly los campos
+    // Si ya hay coordenadas cargadas, bloquear la ubicación
     if (latInput.value && lngInput.value) {
       latInput.readOnly = true;
       lngInput.readOnly = true;
       dirInput.readOnly = true;
+      btnLocalizar.disabled = true;
+      btnLocalizar.textContent = "🔒 Ubicación fijada";
     }
   });
   </script>
