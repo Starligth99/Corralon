@@ -134,8 +134,8 @@ USE_DATABASE_URL = _env_bool("USE_DATABASE_URL", default=False)
 # Use DATABASE_URL automatically only on Render (RENDER_EXTERNAL_HOSTNAME is set).
 # For local dev, default to SQLite unless USE_DATABASE_URL=1 is explicitly set.
 if _database_url and (_render_host or USE_DATABASE_URL):
-    DATABASES = {
-        'default': dj_database_url.parse(_database_url, conn_max_age=600),
+    DATABASES = {   
+        'default': dj_database_url.parse(_database_url, conn_max_age=0),
     }
 else:
     DATABASES = {
