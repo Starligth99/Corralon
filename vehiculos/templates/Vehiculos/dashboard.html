@@ -431,7 +431,7 @@
             Mis clientes
           </span>
           {% endif %}
-          {% if rol == 'administrador' or rol == 'admin_maestro' or rol == 'operador' %}
+          {% if rol == 'administrador' or rol == 'admin_master' or rol == 'operador' %}
               {# Este bloque ahora es visible para Admin, Master y Operador #}
               {% if can_historial %}
                   <a class="action-link" href="{% url 'historial' %}">
