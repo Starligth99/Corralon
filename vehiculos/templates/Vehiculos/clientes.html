@@ -273,14 +273,17 @@
                                 </div>
                                 {% endif %}
 
-                                <div class="mb-4">
-                                    <label class="form-label small fw-bold text-muted">Estado de Cuenta</label>
-                                    <select name="tipo_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
-                                        <option value="">Cualquier tipo</option>
-                                        <option value="DIRECTO" {% if tipo_actual == 'DIRECTO' %}selected{% endif %}>DIRECTO</option>
-                                        <option value="PROSPECTO" {% if tipo_actual == 'PROSPECTO' %}selected{% endif %}>PROSPECTO</option>
-                                    </select>
-                                </div>
+                                {% if rol != 'promotor' %} 
+    <div class="mb-4">
+        <label class="form-label small fw-bold text-muted">Estado de Cuenta</label>
+        <select name="tipo_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
+            <option value="">Cualquier tipo</option>
+            <option value="DIRECTO" {% if tipo_actual == 'DIRECTO' %}selected{% endif %}>DIRECTO</option>
+            <option value="PROSPECTO" {% if tipo_actual == 'PROSPECTO' %}selected{% endif %}>PROSPECTO</option>
+        </select>
+    </div>
+{% endif %}
+
 
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm py-2" style="border-radius: 10px;">
@@ -316,18 +319,20 @@
   </div>
 </div>
 
-    {% if page_obj %}
-
-      <div class="d-flex align-items-center mb-3 bg-light p-2 rounded shadow-sm">
-    <div class="form-check me-3">
-        <input class="form-check-input" type="checkbox" id="selectAll">
-        <label class="form-check-label small" for="selectAll">Seleccionar todos</label>
+   {% if page_obj %}
+  {# Solo mostramos herramientas de borrado a los jefes #}
+  {% if rol == 'admin' or rol == 'admin_maestro' %}
+    <div class="d-flex align-items-center mb-3 bg-light p-2 rounded shadow-sm">
+      <div class="form-check me-3">
+          <input class="form-check-input" type="checkbox" id="selectAll">
+          <label class="form-check-label small" for="selectAll">Seleccionar todos</label>
+      </div>
+      
+      <button type="button" id="btnBorrarMasivo" class="btn btn-danger btn-sm d-none" onclick="confirmarBorradoMasivo()">
+          <i class="bi bi-trash"></i> Eliminar seleccionados (<span id="selectedCount">0</span>)
+      </button>
     </div>
-    
-    <button type="button" id="btnBorrarMasivo" class="btn btn-danger btn-sm d-none" onclick="confirmarBorradoMasivo()">
-        <i class="bi bi-trash"></i> Eliminar seleccionados (<span id="selectedCount">0</span>)
-    </button>
-</div>
+  {% endif %}
 
       <div class="accordion" id="clientesAccordion">
         {% for c in page_obj %}

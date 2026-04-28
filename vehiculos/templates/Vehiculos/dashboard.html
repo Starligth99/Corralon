@@ -431,16 +431,19 @@
             Mis clientes
           </span>
           {% endif %}
-          {% if can_historial %}
-          <a class="action-link" href="{% url 'historial' %}">
-            <span class="action-badge">H</span>
-            Mi historial
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">H</span>
-            Mi historial
-          </span>
+          {% if rol == 'administrador' or rol == 'admin_maestro' or rol == 'operador' %}
+              {# Este bloque ahora es visible para Admin, Master y Operador #}
+              {% if can_historial %}
+                  <a class="action-link" href="{% url 'historial' %}">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </a>
+              {% else %}
+                  <span class="action-link disabled">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </span>
+              {% endif %}
           {% endif %}
           <!-- {% if can_depositos %}
           <a class="action-link" href="{% url 'depositos' %}">
@@ -468,6 +471,32 @@
         </div>
       </nav>
     </section>
+
+    <div class="card mt-4 shadow-sm border-0">
+  <div class="card-body">
+    <h5 class="card-title h6"><i class="bi bi-book"></i> Centro de Ayuda</h5>
+    <p class="small text-muted">Descarga tu guía de usuario según tu nivel de acceso:</p>
+    
+    {% if rol == 'promotor' %}
+      <a href="{% static 'manuales/guia_promotor.pdf' %}" class="btn btn-sm btn-outline-info w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual del Promotor
+      </a>
+    {% elif rol == 'administrador' or rol == 'admin_master' %}
+      <a href="{% static 'manuales/guia_administrador.pdf' %}" class="btn btn-sm btn-outline-primary w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual de Administración
+      </a>
+      {% elif rol == 'operador'%}
+      <a href="{% static 'manuales/guia_operador.pdf' %}" class="btn btn-sm btn-outline-secondary w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual del Operador
+      </a>
+    {% else %}
+      <a href="{% static 'manuales/guia_general.pdf' %}" class="btn btn-sm btn-outline-secondary w-100" download>
+        <i class="bi bi-download"></i> Guía Rápida
+      </a>
+    {% endif %}
+  </div>
+</div>
+
   </main>
 
   <footer class="text-center py-3 text-secondary small">
