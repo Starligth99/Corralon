@@ -275,19 +275,19 @@
                                           placeholder="Ej: SAP-0001..." style="border-radius: 10px;">
                                 </div>
 
-                                {% if rol != 'promotor' %}
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Registrado por</label>
-                                    <select name="operador_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
-                                        <option value="">Todos los usuarios</option>
-                                        {% for op in operadores_lista %}
-                                            <option value="{{ op.id }}" {% if operador_id_actual == op.id|stringformat:"s" %}selected{% endif %}>
-                                                {{ op.username }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                {% endif %}
+                      {% if rol == 'admin' or rol == 'admin_maestro' or request.user.is_superuser %}
+                          <div class="mb-3">
+                              <label class="form-label small fw-bold text-muted">Registrado por</label>
+                              <select name="operador_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
+                                  <option value="">Todos los usuarios</option>
+                                  {% for op in operadores_lista %}
+                                      <option value="{{ op.id }}" {% if operador_id_actual == op.id|stringformat:"s" %}selected{% endif %}>
+                                          {{ op.username }}
+                                      </option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                      {% endif %}
 
                                 {% if rol != 'promotor' %} 
     <div class="mb-4">
