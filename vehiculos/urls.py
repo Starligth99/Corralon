@@ -25,4 +25,5 @@ urlpatterns = [
     path('clientes/correcciones/solicitar/', views.solicitar_correccion_cliente, name='solicitar_correccion_cliente'),
     path('clientes/correcciones/', views.solicitudes_correccion_clientes, name='solicitudes_correccion_clientes'),
     path('logout/', views.logout_view, name='logout'),
+    path('clientes/exportar/', views.exportar_clientes_csv, name='exportar_clientes_csv'),
 ]

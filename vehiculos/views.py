@@ -1,6 +1,9 @@
 ﻿from datetime import date
 import random
 import os
+import csv
+from django.http import HttpResponse
+from .models import Cliente
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
@@ -17,6 +20,7 @@ from django.http import HttpResponseForbidden
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+
 
 from .models import (
     Cliente,
@@ -1813,3 +1817,71 @@ def borrar_masivo_clientes(request):
             messages.warning(request, 'No se seleccionaron clientes para eliminar.')
             
     return redirect('clientes_list')
+
+
+
+def exportar_clientes_csv(request):
+    # 1. DETECCIÓN AGRESIVA DE ROL
+    # Si eres superusuario (el que creaste en la terminal) o staff, ERES ADMIN.
+    es_admin_maestro = request.user.is_superuser or request.user.is_staff
+    
+    # También revisamos la sesión por si acaso
+    rol_sesion = request.session.get('rol', '').lower()
+    if 'admin' in rol_sesion:
+        es_admin_maestro = True
+
+    print(f"--- DEBUG EXPORTACIÓN ---")
+    print(f"Usuario: {request.user.username}")
+    print(f"¿Es Admin detectado?: {es_admin_maestro}")
+
+    # 2. FILTRADO DE DATOS
+    if es_admin_maestro:
+        # Si eres admin, no importa quién lo registró, te trae los 3, 100 o 1000 que existan
+        queryset = Cliente.objects.all()
+        print(f"Acción: Exportando TODO el inventario")
+    else:
+        # Si no eres admin, solo lo que tú picaste
+        queryset = Cliente.objects.filter(operador=request.user)
+        print(f"Acción: Exportando solo registros de {request.user.username}")
+
+    print(f"Registros encontrados: {queryset.count()}")
+    print(f"--------------------------")
+
+    # 3. GENERACIÓN DEL ARCHIVO
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="Respaldo_Clientes_Total.csv"'
+    response.write(u'\ufeff'.encode('utf8'))
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'SAP ID', 'NOMBRE', 'TIPO CUENTA', 'LATITUD', 'LONGITUD', 
+        'LISTA PRECIOS', 'CALLE', 'COLONIA', 'POBLACIÓN', 'MUNICIPIO', 
+        'ESTADO', 'CP', 'ZONA', 'FECHA REGISTRO', 'REGISTRADO POR'
+    ])
+
+    for c in queryset:
+        # Buscamos el nombre del operador que lo registró originalmente
+        responsable = "Sistema"
+        if c.operador:
+            # Intentamos traer su nombre real, si no, su email o username
+            responsable = f"{c.operador.first_name} {c.operador.last_name}".strip() or c.operador.email or c.operador.username
+
+        writer.writerow([
+            c.sap,
+            c.nombre,
+            c.tipo_cuenta,
+            c.latitud,
+            c.longitud,
+            c.lista_precios,
+            getattr(c, 'calle', '-'),
+            getattr(c, 'colonia', '-'),
+            getattr(c, 'poblacion', '-'),
+            getattr(c, 'municipio', '-'),
+            getattr(c, 'estado', '-'),
+            getattr(c, 'codigo_postal', '-'),
+            getattr(c, 'zona', '-'),
+            c.fecha_registro.strftime('%d/%m/%Y') if c.fecha_registro else '-',
+            responsable
+        ])
+
+    return response
