@@ -25,13 +25,13 @@ class Command(BaseCommand):
             groups[role] = group
 
         defaults = {
-            "ADMIN_MASTER_EMAIL": "adminmaster@gonac.com",
+            "ADMIN_MASTER_EMAIL": "adminmaster@usuario.com",
             "ADMIN_MASTER_PASSWORD": "12345",
-            "ADMIN_EMAIL": "miguelromeroalcantara@gonac.com",
+            "ADMIN_EMAIL": "miguelromeroalcantara@usuario.com",
             "ADMIN_PASSWORD": "12345",
-            "OPERADOR_EMAIL": "gamalielalexis@gonac.com",
+            "OPERADOR_EMAIL": "gamalielalexis@usuario.com",
             "OPERADOR_PASSWORD": "12345",
-            "CONSULTA_EMAIL": "camilalunatepox@gonac.com",
+            "CONSULTA_EMAIL": "camilalunatepox@usuario.com",
             "CONSULTA_PASSWORD": "12345",
         }
 

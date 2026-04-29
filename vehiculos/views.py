@@ -645,7 +645,7 @@ def usuarios_view(request):
                 return redirect('usuarios')
 
             if not _email_allowed(email):
-                messages.error(request, 'Solo se permiten correos con dominio @gonac.com.')
+                messages.error(request, 'Solo se permiten correos con dominio @usuario.com.')
                 return redirect('usuarios')
 
             if User.objects.filter(username=email).exists():
@@ -703,6 +703,7 @@ def usuarios_view(request):
                     ine_pdf=ine_pdf,
                     comprobante_domicilio_pdf=comprobante_pdf,
                     operador_asignado=operador_asignado,
+                    contrasena_temporal=password,
                 )
             messages.success(request, f'Cuenta {email} creada correctamente.')
             return redirect('usuarios')
@@ -720,7 +721,7 @@ def usuarios_view(request):
 
             target_email = _normalize_email(target.email or target.username)
             if not _email_allowed(target_email):
-                messages.error(request, 'Solo puedes eliminar cuentas con dominio @gonac.com.')
+                messages.error(request, 'Solo puedes eliminar cuentas con dominio @usuario.com.')
                 return redirect('usuarios')
 
             target.delete()
@@ -752,6 +753,7 @@ def usuarios_view(request):
                 'email': display_email,
                 'nombre_completo': (perfil.nombre_completo if perfil else (user.first_name or '')).strip(),
                 'numero_empleado': perfil.numero_interno if perfil else '',
+                'password': perfil.contrasena_temporal if perfil else '',
                 'docs_ok': bool(
                     perfil
                     and perfil.rfc_pdf

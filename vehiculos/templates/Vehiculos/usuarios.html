@@ -205,7 +205,7 @@
       <div class="col-lg-5">
         <section class="surface p-4 p-lg-5">
           <h1 class="h5 mb-2">Agregar cuenta</h1>
-          <p class="text-secondary mb-4">Solo se permiten correos @gonac.com.</p>
+          <p class="text-secondary mb-4">Solo se permiten correos @usuario.com.</p>
           <form method="post" action="{% url 'usuarios' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
@@ -220,7 +220,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Correo institucional</label>
-              <input type="email" class="form-control" name="email" placeholder="usuario@gonac.com" required autocomplete="off">
+              <input type="email" class="form-control" name="email" placeholder="usuario@usuario.com" required autocomplete="off">
             </div>
             <div class="mb-3">
               <label class="form-label">Contraseña temporal</label>
@@ -275,6 +275,7 @@
                    <th>No. empleado</th>
                    <th>Nombre</th>
                    <th>Correo</th>
+                   <th>Contraseña</th>
                    <th>Rol</th>
                    <th>Documentos</th>
                    <th>Acciones</th>
@@ -286,6 +287,7 @@
                    <td class="fw-semibold">{{ usuario.numero_empleado|default:"-" }}</td>
                    <td>{{ usuario.nombre_completo|default:"-" }}</td>
                    <td class="fw-semibold">{{ usuario.email }}</td>
+                   <td><code class="bg-light px-2 py-1 rounded">{{ usuario.password|default:"-" }}</code></td>
                    <td>{{ usuario.role_label }}</td>
                    <td>
                      {% if usuario.docs_ok %}

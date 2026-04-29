@@ -300,6 +300,73 @@
       </div>
     </section>
 
+        <section>
+      <nav class="action-nav row-gl-3 mb-4">
+        <span class="action-title">Acciones Permitidos</span>
+        <div class="action-links">
+           {% if can_operador %}
+          <a class="action-link" href="{% url 'operador' %}">
+            <span class="action-badge">R</span>
+            Registrar cliente
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">R2</span>
+            Registrar cliente
+          </span>
+          {% endif %}
+          {% if can_clientes %}
+          <a class="action-link" href="{% url 'clientes_list' %}">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </span>
+          {% endif %}
+          {% if rol == 'administrador' or rol == 'admin_master' or rol == 'operador' %}
+              {# Este bloque ahora es visible para Admin, Master y Operador #}
+              {% if can_historial %}
+                  <a class="action-link" href="{% url 'historial' %}">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </a>
+              {% else %}
+                  <span class="action-link disabled">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </span>
+              {% endif %}
+          {% endif %}
+          <!-- {% if can_depositos %}
+          <a class="action-link" href="{% url 'depositos' %}">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </span>
+          {% endif %} -->
+          {% if can_correcciones %}
+          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
+            <span class="action-badge">C</span>
+            Correcciones (clientes)
+          </a>
+          {% endif %}
+          {% if can_usuarios %}
+          <a class="action-link" href="{% url 'usuarios' %}">
+            <span class="action-badge">U</span>
+            Gestion de usuarios
+          </a>
+          {% endif %}
+        </div>
+      </nav>
+    </section>
+
     
     <section class="row g-3 mb-4">
       <div class="col-md-3">
@@ -405,72 +472,6 @@
       </div>
     </section>
 
-    <section>
-      <nav class="action-nav">
-        <span class="action-title">Acciones Permitidos</span>
-        <div class="action-links">
-           {% if can_operador %}
-          <a class="action-link" href="{% url 'operador' %}">
-            <span class="action-badge">R</span>
-            Registrar cliente
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">R2</span>
-            Registrar cliente
-          </span>
-          {% endif %}
-          {% if can_clientes %}
-          <a class="action-link" href="{% url 'clientes_list' %}">
-            <span class="action-badge">C</span>
-            Mis clientes
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">C</span>
-            Mis clientes
-          </span>
-          {% endif %}
-          {% if rol == 'administrador' or rol == 'admin_master' or rol == 'operador' %}
-              {# Este bloque ahora es visible para Admin, Master y Operador #}
-              {% if can_historial %}
-                  <a class="action-link" href="{% url 'historial' %}">
-                      <span class="action-badge">H</span>
-                      Mi historial
-                  </a>
-              {% else %}
-                  <span class="action-link disabled">
-                      <span class="action-badge">H</span>
-                      Mi historial
-                  </span>
-              {% endif %}
-          {% endif %}
-          <!-- {% if can_depositos %}
-          <a class="action-link" href="{% url 'depositos' %}">
-            <span class="action-badge">D</span>
-            Gestion de Clientes
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">D</span>
-            Gestion de Clientes
-          </span>
-          {% endif %} -->
-          {% if can_correcciones %}
-          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
-            <span class="action-badge">C</span>
-            Correcciones (clientes)
-          </a>
-          {% endif %}
-          {% if can_usuarios %}
-          <a class="action-link" href="{% url 'usuarios' %}">
-            <span class="action-badge">U</span>
-            Gestion de usuarios
-          </a>
-          {% endif %}
-        </div>
-      </nav>
-    </section>
 
     <div class="card mt-4 shadow-sm border-0">
   <div class="card-body">
