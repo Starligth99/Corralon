@@ -449,15 +449,15 @@ def _scoped_clientes_queryset(request):
     if role == ROLE_OPERADOR:
         if user is None:
             return Cliente.objects.none()
-        return Cliente.objects.filter(operador=user)
+        return Cliente.objects.filter(
+            Q(operador=user) |
+            Q(operador__perfil__operador_asignado=user)
+        )
 
     if role == ROLE_PROMOTOR:
         if user is None:
             return Cliente.objects.none()
-        perfil = PerfilUsuario.objects.filter(user=user).first()
-        if not perfil or not perfil.operador_asignado:
-            return Cliente.objects.none()
-        return Cliente.objects.filter(operador=perfil.operador_asignado)
+        return Cliente.objects.filter(operador=user)
 
     return Cliente.objects.all()
 
@@ -1030,10 +1030,11 @@ def operadorregistrador_view(request):
         operador_destino = usuario_actual
         if rol == ROLE_PROMOTOR:
             perfil = PerfilUsuario.objects.filter(user=usuario_actual).first()
-            operador_destino = perfil.operador_asignado if perfil else None
-            if operador_destino is None:
+            if not perfil or not perfil.operador_asignado:
                 messages.error(request, 'Tu cuenta de promotor no tiene operador asignado.')
                 return render(request, 'Vehiculos/operador.html', build_context(values))
+            # Guardamos el cliente como creado por el promotor, no por el operador.
+            operador_destino = usuario_actual
 
         cliente = Cliente.objects.create(
             sap=sap,

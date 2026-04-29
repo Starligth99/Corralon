@@ -202,11 +202,18 @@
           <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div>
               <h1 class="h4 mb-1">Registro de cliente</h1>
-              <p class="text-secondary mb-0">Captura el codigo SAP y los datos del lugar. El SAP es el identificador unico del cliente.</p>
+              <p class="text-secondary mb-0">
+                {% if rol == 'promotor' %}
+                  Completa fecha y nombre, luego pulsa Localizar para capturar la ubicación.
+                {% else %}
+                  Captura el código SAP y los datos del lugar. El SAP es el identificador único del cliente.
+                {% endif %}
+              </p>
             </div>
             <button type="button" id="btnResetWizard" class="btn btn-outline-secondary btn-sm">Limpiar formulario</button>
           </div>
 
+          {% if rol != 'promotor' %}
           <div class="d-flex flex-wrap gap-2 mb-3" id="wizardSteps">
             <span class="wizard-step active" data-step-indicator="0">1. Datos del cliente</span>
             <span class="wizard-step" data-step-indicator="1">2. Ubicacion</span>
@@ -215,6 +222,7 @@
           <div class="progress mb-4" role="progressbar" aria-label="Progreso de captura" aria-valuemin="0" aria-valuemax="100">
             <div id="wizardProgress" class="progress-bar bg-success" style="width: 50%">50%</div>
           </div>
+          {% endif %}
 
           <form id="registroForm" method="post" action="{% url 'operador' %}" novalidate>
             {% csrf_token %}
@@ -226,11 +234,11 @@
                   <label class="form-label">Fecha de registro</label>
                   <input type="date" class="form-control" name="fecha_registro" value="{{ form_values.fecha_registro|default:'' }}" required>
                 </div>
-                  <div class="mb-3">
-                      <label class="form-label">Código SAP</label>
-                      <input type="text" class="form-control" placeholder="Se generará automáticamente al guardar" disabled readonly>
-                  </div>
-                {% if rol != 'promotor'%}
+                {% if rol != 'promotor' %}
+                <div class="mb-3">
+                  <label class="form-label">Código SAP</label>
+                  <input type="text" class="form-control" placeholder="Se generará automáticamente al guardar" disabled readonly>
+                </div>
                 <div class="col-md-4">
                   <label class="form-label">Tipo de cuenta</label>
                   <select class="form-select" name="tipo_cuenta" required>
@@ -258,9 +266,10 @@
               </div>
             </section>
 
-            <section class="step-panel" data-step-panel="1">
+            <section class="step-panel {% if rol == 'promotor' %}active{% endif %}" data-step-panel="1">
               <h2 class="h6 mb-3">Ubicacion</h2>
               <div class="row g-3">
+                {% if rol != 'promotor' %}
                 <div class="col-md-3">
                   <label class="form-label">Latitud</label>
                   <input type="number" step="any" class="form-control" id="id_latitud" name="latitud" value="{{ form_values.latitud|default:'' }}" placeholder="19.432608" required readonly>
@@ -289,13 +298,6 @@
                   <label class="form-label">Código postal</label>
                   <input type="text" class="form-control" id="id_codigo_postal" name="codigo_postal" maxlength="20" value="{{ form_values.codigo_postal|default:'' }}" readonly>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">&nbsp;</label>
-                  <button type="button" class="btn btn-dark w-100" id="btnLocalizar">
-                    📍 Localizar
-                  </button>
-                </div>
-                
                 <div class="col-12">
                     <iframe
                      id="mapEmbedFrame"
@@ -307,7 +309,6 @@
                    </iframe>
                 </div>
 
-                {% if rol != 'promotor' %}
                 <div class="col-md-4">
                   <label class="form-label">Zona</label>
                   <input type="text" class="form-control text-uppercase" name="zona" maxlength="60" value="{{ form_values.zona|default:'' }}" required>
@@ -320,10 +321,35 @@
                   <label class="form-label">Poblacion</label>
                   <input type="text" class="form-control text-uppercase" name="poblacion" maxlength="60" value="{{ form_values.poblacion|default:'' }}" required>
                 </div>
+                {% else %}
+                <input type="hidden" name="latitud" id="id_latitud" value="{{ form_values.latitud|default:'' }}" required>
+                <input type="hidden" name="longitud" id="id_longitud" value="{{ form_values.longitud|default:'' }}" required>
+                <input type="hidden" name="direccion" id="id_direccion" value="{{ form_values.direccion|default:'' }}" required>
+                <input type="hidden" name="calle" id="id_calle" value="{{ form_values.calle|default:'' }}">
+                <input type="hidden" name="colonia" id="id_colonia" value="{{ form_values.colonia|default:'' }}">
+                <input type="hidden" name="municipio" id="id_municipio" value="{{ form_values.municipio|default:'' }}">
+                <input type="hidden" name="codigo_postal" id="id_codigo_postal" value="{{ form_values.codigo_postal|default:'' }}">
+                <input type="hidden" name="zona" value="">
+                <input type="hidden" name="estado" value="">
+                <input type="hidden" name="poblacion" value="">
+                <div class="col-12">
+                  <p class="text-secondary small">Pulsa <strong>Localizar</strong> y autoriza la ubicación. El resto de datos se completan automáticamente.</p>
+                </div>
                 {% endif %}
+                <div class="col-md-4">
+                  <label class="form-label">&nbsp;</label>
+                  <button type="button" class="btn btn-dark w-100" id="btnLocalizar">
+                    📍 Localizar
+                  </button>
+                </div>
               </div>
             </section>
 
+            {% if rol == 'promotor' %}
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="submit" class="btn btn-success">Registrar cliente</button>
+            </div>
+            {% else %}
             <div class="d-flex flex-wrap justify-content-between gap-2 mt-4">
               <button type="button" id="btnPrev" class="btn btn-outline-secondary" disabled>Anterior</button>
               <div class="d-flex gap-2">
@@ -331,6 +357,7 @@
                 <button type="submit" id="btnSubmit" class="btn btn-success d-none">Registrar cliente</button>
               </div>
             </div>
+            {% endif %}
           </form>
         </section>
       </div>
@@ -339,10 +366,12 @@
   <aside class="surface p-4 sticky-top" style="top: 1rem;">
     <h2 class="h6 mb-3 text-primary"><i class="bi bi-eye"></i> Resumen en vivo</h2>
     
+    {% if rol != 'promotor' %}
     <div class="summary-item">
       <div class="summary-label">Codigo SAP</div>
       <div id="sumSap" class="summary-value">-</div>
     </div>
+    {% endif %}
     <div class="summary-item">
       <div class="summary-label">Fecha de registro</div>
       <div id="sumFecha" class="summary-value">-</div>
@@ -400,6 +429,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     // 1. Buscamos los elementos (con respaldo por si Django cambia el ID)
     const getEl = (id) => document.getElementById(id) || document.getElementsByName(id.replace('id_', ''))[0];
+    const isPromotor = "{{ rol }}" === "promotor";
 
     const latInput = getEl("id_latitud");
     const lngInput = getEl("id_longitud");
@@ -537,6 +567,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const btnNext = document.getElementById("btnNext");
       const btnSubmit = document.getElementById("btnSubmit");
       const btnReset = document.getElementById("btnResetWizard");
+      const isPromotor = "{{ rol }}" === "promotor";
 
       let currentStep = 0;
 
@@ -583,13 +614,15 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         const pct = Math.round(((currentStep + 1) / panels.length) * 100);
-        progress.style.width = pct + "%";
-        progress.textContent = pct + "%";
+        if (progress) {
+          progress.style.width = pct + "%";
+          progress.textContent = pct + "%";
+        }
 
-        btnPrev.disabled = currentStep === 0;
+        if (btnPrev) btnPrev.disabled = currentStep === 0;
         const isLast = currentStep === panels.length - 1;
-        btnNext.classList.toggle("d-none", isLast);
-        btnSubmit.classList.toggle("d-none", !isLast);
+        if (btnNext) btnNext.classList.toggle("d-none", isLast);
+        if (btnSubmit) btnSubmit.classList.toggle("d-none", !isLast);
       }
 
       // ... (El resto de tus funciones de validación y eventos se mantienen igual) ...
@@ -606,14 +639,20 @@ document.addEventListener("DOMContentLoaded", function() {
         return true;
       }
 
-      btnNext.addEventListener("click", function () {
-        if (!validateStep(currentStep)) return;
-        setStep(Math.min(currentStep + 1, panels.length - 1));
-      });
+      if (!isPromotor) {
+        if (btnNext) {
+          btnNext.addEventListener("click", function () {
+            if (!validateStep(currentStep)) return;
+            setStep(Math.min(currentStep + 1, panels.length - 1));
+          });
+        }
 
-      btnPrev.addEventListener("click", function () {
-        setStep(Math.max(currentStep - 1, 0));
-      });
+        if (btnPrev) {
+          btnPrev.addEventListener("click", function () {
+            setStep(Math.max(currentStep - 1, 0));
+          });
+        }
+      }
 
       btnReset.addEventListener("click", function () {
         form.reset();
@@ -632,7 +671,17 @@ document.addEventListener("DOMContentLoaded", function() {
       });
 
       updateSummary();
-      setStep(0);
+      if (!isPromotor) {
+        setStep(0);
+      } else {
+        // En vista de promotor, mostramos todo de una vez.
+        panels.forEach(panel => panel.classList.add("active"));
+        if (btnSubmit) btnSubmit.classList.remove("d-none");
+        if (btnNext) btnNext.classList.add("d-none");
+        if (btnPrev) btnPrev.classList.add("d-none");
+        if (progress) progress.closest('.progress')?.classList.add('d-none');
+        indicators.forEach(item => item.classList.add('d-none'));
+      }
     })();
 </script>
 </body>
