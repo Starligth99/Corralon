@@ -204,7 +204,6 @@
       <span>Mis clientes</span>
     </a>
 
-    
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
     <div>
         <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm border-0">
@@ -214,7 +213,9 @@
 
     <div class="d-flex align-items-center gap-2">
         <div class="btn-group shadow-sm" role="group">
-            {% if can_importar_clientes %}
+            
+            {# 1. IMPORTAR: Forzamos la vista para los jefes #}
+            {% if can_importar_clientes or rol == 'administrador' or rol == 'admin_master' or request.user.is_superuser %}
                 <a href="{% url 'importar_clientes_excel' %}" class="btn btn-warning btn-sm text-dark">
                     <i class="bi bi-file-earmark-arrow-up"></i> Importar
                 </a>
@@ -222,21 +223,20 @@
             
             <a href="{% url 'exportar_clientes_csv' %}" class="btn btn-success btn-sm">
                 <i class="bi bi-file-earmark-arrow-down"></i> 
-                {% if rol == 'admin' or rol == 'admin_maestro' %}Exportar Todo{% else %}Mis Registros{% endif %}
+                {% if rol == 'administrador' or rol == 'admin_master' %}Exportar Todo{% else %}Mis Registros{% endif %}
             </a>
         </div>
 
         <div class="vr mx-1 text-white opacity-25"></div>
 
-        {% if can_registrar_cliente %}
+        {# 2. NUEVO CLIENTE: Forzamos la vista para los jefes #}
+        {% if can_registrar_cliente or rol == 'administrador' or rol == 'admin_master' or request.user.is_superuser %}
             <a href="{% url 'operador' %}" class="btn btn-primary btn-sm px-3 shadow animate__animated animate__pulse animate__infinite">
                 <i class="bi bi-plus-circle"></i> Nuevo cliente
             </a>
         {% endif %}
     </div>
-</div>
-
-  
+</div>  
 
 </nav>
 
@@ -275,7 +275,7 @@
                                           placeholder="Ej: SAP-0001..." style="border-radius: 10px;">
                                 </div>
 
-                      {% if rol == 'admin' or rol == 'admin_maestro' or request.user.is_superuser %}
+                      {% if rol == 'administrador' or rol == 'admin_master' or request.user.is_superuser %}
                           <div class="mb-3">
                               <label class="form-label small fw-bold text-muted">Registrado por</label>
                               <select name="operador_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
@@ -337,7 +337,7 @@
 
    {% if page_obj %}
   {# Solo mostramos herramientas de borrado a los jefes #}
-  {% if rol == 'admin' or rol == 'admin_maestro' %}
+  {% if rol == 'administrador' or rol == 'admin_master' %}
     <div class="d-flex align-items-center mb-3 bg-light p-2 rounded shadow-sm">
       <div class="form-check me-3">
           <input class="form-check-input" type="checkbox" id="selectAll">
@@ -427,16 +427,22 @@
                 </div>
                 
                 <div class="col-12 mt-3 d-flex gap-2 flex-wrap">
-                  {% if can_solicitar_correccion_cliente %}
-                  <a href="{% url 'solicitar_correccion_cliente' %}?sap={{ c.sap|urlencode }}" class="btn btn-sm btn-outline-primary">
-                    Solicitar correccion
-                  </a>
-                  {% endif %}
-                  {% if can_gestionar_correcciones_clientes %}
-                  <a href="{% url 'solicitudes_correccion_clientes' %}" class="btn btn-sm btn-outline-secondary">
-                    Ver solicitudes
-                  </a>
-                  {% endif %}
+                    
+                    {# 1. Botón de Solicitar Corrección (Visible para el que tenga permiso o sea jefe) #}
+                    {% if can_solicitar_correccion_cliente or rol == 'administrador' or rol == 'admin_master' or request.user.is_superuser %}
+                        <a href="{% url 'solicitar_correccion_cliente' %}?sap={{ c.sap|urlencode }}" class="btn btn-sm btn-outline-primary">
+                            Solicitar correccion
+                        </a>
+                    {% endif %}
+
+                    {# 2. Botón de Ver Solicitudes (Visible para el que tenga permiso o sea jefe) #}
+                    {% if can_gestionar_correcciones_clientes or rol == 'administrador' or rol == 'admin_master' or request.user.is_superuser %}
+                        <a href="{% url 'solicitudes_correccion_clientes' %}" class="btn btn-sm btn-outline-secondary">
+                            Ver solicitudes
+                        </a>
+                    {% endif %}
+                    
+                </div>
                   {% if can_borrar_clientes %}
                   <form method="post" class="d-inline">
                     {% csrf_token %}

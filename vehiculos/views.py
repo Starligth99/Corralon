@@ -1090,48 +1090,37 @@ def clientes_list_view(request):
     if not _is_logged_in(request):
         return redirect('login')
     
-    # Permisos básicos
-    if not _has_permission(request, "operadorregistrador") and not _has_permission(request, "gestionar_usuarios"):
-        return _reject_unauthorized(request)
+    # 1. Usamos la función de seguridad que YA TIENES para filtrar por rol
+    # Esto soluciona que el PROMOTOR vea todo.
+    query = _scoped_clientes_queryset(request).select_related('operador').order_by('-fecha_registro', '-id')
 
     role = _get_role(request)
     user = _get_current_user(request)
+    
+    # 2. Permisos para el HTML
     can_borrar_clientes = _has_permission(request, "gestionar_usuarios")
 
-    # 1. Base del QuerySet
-    query = Cliente.objects.select_related('operador').order_by('-fecha_registro', '-id')
-    
-    # Seguridad: Si es operador, solo ve lo suyo
-    if role == ROLE_OPERADOR and user is not None:
-        query = query.filter(operador=user)
-
-    # --- 🚀 LÓGICA DE FILTRADO FUNCIONAL ---
-    
-    # Recogemos los datos del formulario (el 'name' del HTML)
+    # --- 🚀 FILTROS DE BÚSQUEDA ---
     search = (request.GET.get('q') or '').strip()
     operador_id = request.GET.get('operador_filtro')
     tipo_filtro = request.GET.get('tipo_filtro')
 
-    # Filtro 1: Buscador (SAP o Nombre)
     if search:
         query = query.filter(Q(sap__icontains=search) | Q(nombre__icontains=search))
-
-    # Filtro 2: Por Operador (Solo para Admins)
     if operador_id:
         query = query.filter(operador_id=operador_id)
-
-    # Filtro 3: Por Tipo de Cuenta
     if tipo_filtro:
         query = query.filter(tipo_cuenta=tipo_filtro)
 
-    # --- 👤 OBTENER LISTA DE USUARIOS PARA EL DROPDOWN ---
-    # Necesitamos esto para que el select de "Registrado por" no esté vacío
-    User = get_user_model()
-    operadores_lista = User.objects.filter(
-        groups__name__in=[ROLE_OPERADOR, ROLE_ADMIN, ROLE_ADMIN_MASTER]
-    ).distinct()
+    # --- 👤 LISTA DE USUARIOS PARA EL FILTRO (Solo para Jefes) ---
+    operadores_lista = None
+    if role in [ROLE_ADMIN, ROLE_ADMIN_MASTER]:
+        User = get_user_model()
+        operadores_lista = User.objects.filter(
+            groups__name__in=[ROLE_OPERADOR, ROLE_ADMIN, ROLE_ADMIN_MASTER]
+        ).distinct()
 
-    # 2. Aplicar el Paginador
+    # 3. Paginación
     paginator = Paginator(query, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -1139,20 +1128,16 @@ def clientes_list_view(request):
     context = {
         'page_obj': page_obj,
         'search': search,
-        'operador_id_actual': operador_id, # Para que el select mantenga lo seleccionado
-        'tipo_actual': tipo_filtro,       # Para que el select mantenga lo seleccionado
-        'operadores_lista': operadores_lista, # 👈 AQUÍ enviamos la lista de usuarios
-        'rol': role,
-        'rol_label': ROLE_LABELS[role],
-        'can_registrar_cliente': _has_permission(request, "operadorregistrador"),
-        'can_importar_clientes': _has_permission(request, "operadorregistrador") or _has_permission(request, "gestionar_usuarios"),
-        'can_editar_credito': _has_permission(request, "gestionar_credito"),
-        'can_solicitar_correccion_cliente': _has_permission(request, "solicitar_correccion_cliente"),
-        'can_gestionar_correcciones_clientes': _has_permission(request, "gestionar_correcciones_clientes"),
+        'operador_id_actual': operador_id,
+        'tipo_actual': tipo_filtro,
+        'operadores_lista': operadores_lista,
+        'rol': role,  # Enviará "administrador", "admin_master", etc.
+        'rol_label': ROLE_LABELS.get(role, role),
         'can_borrar_clientes': can_borrar_clientes,
         'total_clientes': paginator.count,
     }
     return render(request, 'Vehiculos/clientes.html', context)
+
 
 def importar_clientes_excel(request):
     if not _is_logged_in(request):
