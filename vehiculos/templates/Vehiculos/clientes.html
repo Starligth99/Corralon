@@ -385,6 +385,11 @@
                 </div>
                 
                 <div class="col-md-4 cliente-field">
+                  <div class="cliente-field-label">Código 6 dígitos</div>
+                  <div class="cliente-field-value">{{ c.numero_empleado|default:"-" }}</div>
+                </div>
+                
+                <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Latitud / Longitud</div>
                   <div class="cliente-field-value">
                     {% if c.latitud and c.longitud %}{{ c.latitud }}, {{ c.longitud }}{% else %}-{% endif %}

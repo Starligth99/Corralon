@@ -89,8 +89,15 @@
       </div>
 
       {% if cliente %}
-      <div class="alert alert-secondary py-2 mb-4">
-        <strong>Cliente:</strong> {{ cliente.sap }} - {{ cliente.nombre }}
+      <div class="alert alert-secondary py-3 mb-4">
+        <div class="row">
+          <div class="col-md-6">
+            <strong>Cliente:</strong> {{ cliente.sap }} - {{ cliente.nombre }}
+          </div>
+          <div class="col-md-6">
+            <strong>Código 6 dígitos:</strong> {{ cliente.numero_empleado|default:"-" }}
+          </div>
+        </div>
       </div>
       {% else %}
       <div class="alert alert-warning py-2 mb-4">

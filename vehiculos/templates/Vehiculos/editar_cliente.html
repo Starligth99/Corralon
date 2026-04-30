@@ -104,6 +104,11 @@
             <input type="text" class="form-control" name="lista_precios" value="{{ cliente.lista_precios|default:'' }}" {% if edicion_operador_usada %}disabled{% endif %}>
           </div>
           <div class="col-md-4">
+            <label class="form-label">Código 6 dígitos</label>
+            <input type="text" class="form-control" value="{{ cliente.numero_empleado|default:'' }}" readonly disabled>
+            <div class="form-text">Este campo no se puede modificar</div>
+          </div>
+          <div class="col-md-4">
             <label class="form-label">Tipo de cuenta</label>
             <select class="form-select" name="tipo_cuenta" {% if edicion_operador_usada %}disabled{% endif %}>
               <option value="DIRECTO" {% if cliente.tipo_cuenta == 'DIRECTO' %}selected{% endif %}>Directo</option>
@@ -126,6 +131,11 @@
           <div class="col-md-6">
             <label class="form-label">Nombre</label>
             <input type="text" class="form-control" name="nombre" value="{{ cliente.nombre|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Código 6 dígitos</label>
+            <input type="text" class="form-control" value="{{ cliente.numero_empleado|default:'' }}" readonly disabled>
+            <div class="form-text">Este campo no se puede modificar</div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Dirección</label>

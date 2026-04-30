@@ -119,6 +119,7 @@
           <thead class="table-light">
             <tr>
               <th>Codigo SAP</th>
+              <th>Código 6 dígitos</th>
               <th>Cliente</th>
               <th>Campo</th>
               <th>Valor correcto</th>
@@ -132,6 +133,7 @@
             {% for solicitud in solicitudes %}
             <tr>
               <td class="fw-semibold">{{ solicitud.cliente.sap }}</td>
+              <td>{{ solicitud.cliente.numero_empleado|default:"-" }}</td>
               <td>{{ solicitud.cliente.nombre }}</td>
               <td>{{ solicitud.campo_label }}</td>
               <td>{{ solicitud.valor_nuevo }}</td>
