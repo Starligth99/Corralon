@@ -635,14 +635,15 @@ def usuarios_view(request):
         if action == 'create':
             email = _normalize_email(request.POST.get('email'))
             password = request.POST.get('password') or ''
+            telefono = (request.POST.get('telefono') or '').strip()
             nombre_completo = (request.POST.get('nombre_completo') or '').strip()
             role = (request.POST.get('role') or '').strip()
             rfc_pdf = request.FILES.get('rfc_pdf')
             ine_pdf = request.FILES.get('ine_pdf')
             comprobante_pdf = request.FILES.get('comprobante_domicilio_pdf')
 
-            if not email or not password or not nombre_completo or role not in ROLE_LABELS:
-                messages.error(request, 'Completa nombre, correo, contraseña y rol para crear la cuenta.')
+            if not email or not password or not telefono or not nombre_completo or role not in ROLE_LABELS:
+                messages.error(request, 'Completa nombre, correo, teléfono, contraseña y rol para crear la cuenta.')
                 return redirect('usuarios')
 
             if not _email_allowed(email):
@@ -700,6 +701,7 @@ def usuarios_view(request):
                     user=user,
                     numero_interno=_generar_numero_empleado(role),
                     nombre_completo=nombre_completo,
+                    telefono=telefono,
                     rfc_pdf=rfc_pdf,
                     ine_pdf=ine_pdf,
                     comprobante_domicilio_pdf=comprobante_pdf,
@@ -754,6 +756,7 @@ def usuarios_view(request):
                 'email': display_email,
                 'nombre_completo': (perfil.nombre_completo if perfil else (user.first_name or '')).strip(),
                 'numero_empleado': perfil.numero_interno if perfil else '',
+                'telefono': perfil.telefono if perfil else '',
                 'password': perfil.contrasena_temporal if perfil else '',
                 'docs_ok': bool(
                     perfil

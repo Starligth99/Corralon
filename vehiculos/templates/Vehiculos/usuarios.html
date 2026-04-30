@@ -223,6 +223,10 @@
               <input type="email" class="form-control" name="email" placeholder="usuario@usuario.com" required autocomplete="off">
             </div>
             <div class="mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" name="telefono" placeholder="5512345678" required autocomplete="tel">
+            </div>
+            <div class="mb-3">
               <label class="form-label">Contraseña temporal</label>
               <input type="password" class="form-control" name="password" placeholder="Crea una contraseña" required autocomplete="new-password">
             </div>
@@ -274,6 +278,7 @@
                  <tr>
                    <th>No. empleado</th>
                    <th>Nombre</th>
+                   <th>Teléfono</th>
                    <th>Correo</th>
                    <th>Contraseña</th>
                    <th>Rol</th>
@@ -286,6 +291,7 @@
                  <tr>
                    <td class="fw-semibold">{{ usuario.numero_empleado|default:"-" }}</td>
                    <td>{{ usuario.nombre_completo|default:"-" }}</td>
+                   <td>{{ usuario.telefono|default:"-" }}</td>
                    <td class="fw-semibold">{{ usuario.email }}</td>
                    <td><code class="bg-light px-2 py-1 rounded">{{ usuario.password|default:"-" }}</code></td>
                    <td>{{ usuario.role_label }}</td>
