@@ -249,9 +249,13 @@
                 </div>
                 {% endif %} 
 
-                <div class="col-md-8">
+                <div class="col-md-5">
                   <label class="form-label">Nombre del lugar</label>
                   <input type="text" class="form-control" name="nombre" maxlength="120" value="{{ form_values.nombre|default:'' }}" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Código 6 dígitos</label>
+                  <input type="text" class="form-control" name="numero_empleado" maxlength="6" pattern="\d{6}" inputmode="numeric" value="{{ form_values.numero_empleado|default:'' }}" placeholder="123456" required autocomplete="off">
                 </div>
                 {% if rol != 'promotor'%}
                 <div class="col-md-4">
@@ -379,6 +383,10 @@
     <div class="summary-item">
       <div class="summary-label">Nombre del lugar</div>
       <div id="sumNombre" class="summary-value">-</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Código 6 dígitos</div>
+      <div id="sumNumeroEmpleado" class="summary-value">-</div>
     </div>
     
     {% if rol != 'promotor' %}
@@ -587,6 +595,7 @@ document.addEventListener("DOMContentLoaded", function() {
         setSummary("sumSap", val("sap").toUpperCase());
         setSummary("sumFecha", val("fecha_registro"));
         setSummary("sumNombre", val("nombre"));
+        setSummary("sumNumeroEmpleado", val("numero_empleado"));
         setSummary("sumTipo", val("tipo_cuenta"));
         setSummary("sumLista", val("lista_precios").toUpperCase());
         

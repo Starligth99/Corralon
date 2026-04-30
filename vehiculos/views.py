@@ -2,6 +2,7 @@
 import random
 import os
 import csv
+import re
 from django.http import HttpResponse
 from .models import Cliente
 
@@ -950,6 +951,7 @@ CLIENTE_FIELD_LABELS = {
     'nombre': 'Nombre del lugar',
     'tipo_cuenta': 'Tipo de cuenta',
     'lista_precios': 'Lista de precios',
+    'numero_empleado': 'Código 6 dígitos',
     'latitud': 'Latitud',
     'longitud': 'Longitud',
     'direccion': 'Direccion',
@@ -996,15 +998,23 @@ def operadorregistrador_view(request):
 
         # ✅ CAMPOS OBLIGATORIOS DINÁMICOS (Quitamos 'sap' porque ya lo genera el sistema)
         if rol == ROLE_PROMOTOR:
-            required = ['fecha_registro', 'nombre', 'latitud', 'longitud']
+            required = ['fecha_registro', 'nombre', 'numero_empleado', 'latitud', 'longitud']
         else:
-            required = ['fecha_registro', 'nombre', 'tipo_cuenta', 
+            required = ['fecha_registro', 'nombre', 'numero_empleado', 'tipo_cuenta', 
                         'latitud', 'longitud', 'direccion', 'zona', 'estado', 'poblacion']
 
         missing = [field for field in required if not values.get(field)]
         if missing:
             labels = [CLIENTE_FIELD_LABELS[field] for field in missing]
             messages.error(request, f'Completa los campos obligatorios: {", ".join(labels)}.')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
+
+        if not re.fullmatch(r"\d{6}", values['numero_empleado']):
+            messages.error(request, 'El código de 6 dígitos debe contener exactamente 6 números.')
+            return render(request, 'Vehiculos/operador.html', build_context(values))
+
+        if Cliente.objects.filter(numero_empleado=values['numero_empleado']).exists():
+            messages.error(request, 'El código de 6 dígitos ya está en uso. Elige uno diferente.')
             return render(request, 'Vehiculos/operador.html', build_context(values))
 
         # 🔒 VALIDACIÓN SOLO PARA NO PROMOTOR
@@ -1040,6 +1050,7 @@ def operadorregistrador_view(request):
 
         cliente = Cliente.objects.create(
             sap=sap,
+            numero_empleado=values['numero_empleado'],
             nombre=values['nombre'],
             tipo_cuenta=values['tipo_cuenta'],
             lista_precios=values['lista_precios'].upper(),
