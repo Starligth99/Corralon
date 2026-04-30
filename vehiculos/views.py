@@ -11,7 +11,7 @@ from django.contrib.auth import authenticate, get_user_model, login as auth_logi
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.db.utils import ProgrammingError
-from django.db.models import Count
+from django.db.models import Count, ProtectedError
 from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -727,8 +727,16 @@ def usuarios_view(request):
                 messages.error(request, 'Solo puedes eliminar cuentas con dominio @usuario.com.')
                 return redirect('usuarios')
 
-            target.delete()
-            messages.success(request, f'Cuenta {target_email} eliminada correctamente.')
+            try:
+                target.delete()
+                messages.success(request, f'Cuenta {target_email} eliminada correctamente.')
+            except ProtectedError:
+                clientes_count = Cliente.objects.filter(operador=target).count()
+                messages.error(
+                    request,
+                    f'No se puede eliminar la cuenta {target_email}. Tiene {clientes_count} cliente(s) asociado(s). '
+                    f'Por favor, reasigna los clientes a otro operador antes de eliminar esta cuenta.'
+                )
             return redirect('usuarios')
 
         messages.error(request, 'Accion invalida.')

@@ -31,7 +31,7 @@ class Cliente(models.Model):
     fecha_registro = models.DateField()
     operador = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="clientes_registrados",
         null=True,
         blank=True,
