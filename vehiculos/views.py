@@ -200,6 +200,9 @@ def _canonicalize_import_header(normalized_header):
     if header in ("nombre",):
         return "nombre"
 
+    if header in ("numero_empleado", "codigo_6_digitos", "codigo_6", "codigo_seis_digitos"):
+        return "numero_empleado"
+
     if header in ("direccion",):
         return "direccion"
 
@@ -1129,6 +1132,7 @@ def clientes_list_view(request):
     search = (request.GET.get('q') or '').strip()
     operador_id = request.GET.get('operador_filtro')
     tipo_filtro = request.GET.get('tipo_filtro')
+    numero_empleado_filtro = request.GET.get('numero_empleado_filtro')
 
     if search:
         query = query.filter(Q(sap__icontains=search) | Q(nombre__icontains=search))
@@ -1136,6 +1140,8 @@ def clientes_list_view(request):
         query = query.filter(operador_id=operador_id)
     if tipo_filtro:
         query = query.filter(tipo_cuenta=tipo_filtro)
+    if numero_empleado_filtro:
+        query = query.filter(numero_empleado=numero_empleado_filtro)
 
     # --- 👤 LISTA DE USUARIOS PARA EL FILTRO (Solo para Jefes) ---
     operadores_lista = None
@@ -1155,6 +1161,7 @@ def clientes_list_view(request):
         'search': search,
         'operador_id_actual': operador_id,
         'tipo_actual': tipo_filtro,
+        'numero_empleado_actual': numero_empleado_filtro,
         'operadores_lista': operadores_lista,
         'rol': role,  # Enviará "administrador", "admin_master", etc.
         'rol_label': ROLE_LABELS.get(role, role),
@@ -1173,7 +1180,7 @@ def importar_clientes_excel(request):
 
     if request.method != "POST":
         return render(request, "Vehiculos/importar-clientes.html", {
-            "required_columns": ["Nombre", "Tipo Cuenta", "Dirección", "Zona", "Estado", "Población", "Latitud", "Longitud", "Lista de Precios"],
+            "required_columns": ["Nombre", "Código 6 dígitos", "Tipo Cuenta", "Dirección", "Zona", "Estado", "Población", "Latitud", "Longitud", "Lista de Precios"],
             "optional_columns": ["Fecha de registro"],
         })
 
@@ -1258,8 +1265,19 @@ def importar_clientes_excel(request):
             sap_final = f"SAP-{next_seq_num:05d}"
             
             nombre = str(cell_value("nombre") or "").strip()
+            numero_empleado = str(cell_value("numero_empleado") or "").strip()
+            
             if not nombre:
                 continue # Saltamos filas sin nombre
+            if not numero_empleado:
+                errores.append(f"Fila {row_num}: Falta el código de 6 dígitos")
+                continue
+            if not re.fullmatch(r"\d{6}", numero_empleado):
+                errores.append(f"Fila {row_num}: El código de 6 dígitos debe contener exactamente 6 números")
+                continue
+            if Cliente.objects.filter(numero_empleado=numero_empleado).exists():
+                errores.append(f"Fila {row_num}: El código de 6 dígitos '{numero_empleado}' ya existe")
+                continue
 
             tipo_raw = str(cell_value("tipo_cuenta") or "").strip().upper()
             tipo = Cliente.TIPO_DIRECTO if tipo_raw.startswith("DIR") else Cliente.TIPO_PROSPECTO
@@ -1268,6 +1286,7 @@ def importar_clientes_excel(request):
                 Cliente.objects.create(
                     sap=sap_final,
                     nombre=nombre,
+                    numero_empleado=numero_empleado,
                     tipo_cuenta=tipo,
                     lista_precios=str(cell_value("lista_precios") or "DEFAULT").strip().upper(),
                     latitud=to_float(cell_value("latitud")),

@@ -300,6 +300,13 @@
     </div>
 {% endif %}
 
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Código 6 dígitos</label>
+                                    <input type="text" name="numero_empleado_filtro" value="{{ numero_empleado_actual }}" 
+                                          class="form-control form-control-sm border-2" 
+                                          placeholder="Ej: 123456" pattern="\d{6}" maxlength="6" style="border-radius: 10px;">
+                                </div>
+
 
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm py-2" style="border-radius: 10px;">
