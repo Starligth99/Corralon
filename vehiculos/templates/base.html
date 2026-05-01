@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sistema de Clientes | GONAC{% endblock %}</title>
+
+  <!-- Dependencias Globales -->
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+
+  <!-- NUESTRO ARCHIVO MAESTRO DE ESTILOS -->
+  <link rel="stylesheet" href="{% static 'css/gonac-theme.css' %}">
+
+  <!-- Bloque para inyectar CSS específico de cada página -->
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  
+  {% block topbar %}
+  <!-- Topbar Global -->
+  <nav class="topbar d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="GONAC" class="brand-mark bg-white p-1">
+      <h2 class="m-0 fw-bold text-white fs-4 font-display">Sistema de Clientes</h2>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3 gap-md-4">
+      <span class="text-white text-opacity-75 small d-none d-md-inline">Rol: <strong class="text-white">{{ rol_label|default:"Usuario" }}</strong></span>
+      
+      {% block topbar_actions %}
+      <!-- Aquí las vistas hijas pueden agregar botones extra -->
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill">Volver al dashboard</a>
+      {% endblock %}
+      
+      <!-- Botón Theme Toggle -->
+      <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </nav>
+  {% endblock %}
+
+  <!-- Contenedor Principal dinámico -->
+  <main class="container-fluid px-4" style="max-width: 1400px; margin: 0 auto;">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="text-center py-4 text-muted small mt-5" style="border-top: 1px solid var(--card-border);">
+    Sistema de Gestion de Clientes de Gonac &copy; {% now "Y" %}
+  </footer>
+  {% endblock %}
+
+  <!-- Scripts Globales -->
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  
+  <!-- NUESTRO SCRIPT MAESTRO (Modo Oscuro, etc.) -->
+  <script src="{% static 'js/gonac-core.js' %}"></script>
+
+  <!-- Bloque para inyectar Scripts específicos de cada página -->
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -356,3 +356,817 @@ public class AdvancedMarkersDemoActivity extends AppCompatActivity implements On
     }
 }
 // [END maps_android_sample_marker_advanced]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Sistema de Clientes</title>
+
+<!-- Dependencias -->
+<link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
+
+<style>
+  /* =========================================
+     1. TEMA CLARO (Basado en tu imagen)
+     ========================================= */
+  :root, [data-theme="light"] {
+    --primary: #d32f2f;
+    --accent-1: #ff0000;
+    --accent-2: #fbc02d;
+    
+    --bg-base: #f4f6f8;
+    --bg-radial-1: rgba(239, 108, 0, 0.08);
+    --bg-radial-2: rgba(198, 40, 40, 0.08);
+    
+    --card-bg: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
+    --card-border: #ffe0b2;
+    --card-shadow: 0 8px 24px rgba(198, 40, 40, 0.08);
+    --glass-blur: blur(0px);
+    
+    --topbar-bg: linear-gradient(110deg, #ff9100 0%, #fbc02d 55%, #ff0000 100%);
+    --topbar-shadow: 0 12px 32px rgba(198, 40, 40, 0.2);
+    
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --text-kpi-1: #d32f2f; /* Rojo para cifras grandes */
+    --text-kpi-2: #f57c00; /* Naranja para cifras grandes */
+    --text-glow: none;
+
+    --action-nav-bg: #ffffff;
+    --btn-action-bg: #ffffff;
+    --btn-action-border: rgba(198, 40, 40, 0.15);
+  }
+
+  /* =========================================
+     2. TEMA OSCURO (El diseño premium)
+     ========================================= */
+  [data-theme="dark"] {
+    --bg-base: #0f1115;
+    --bg-radial-1: rgba(239, 108, 0, 0.15);
+    --bg-radial-2: rgba(198, 40, 40, 0.15);
+    
+    --card-bg: rgba(20, 22, 28, 0.6);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --glass-blur: blur(12px);
+    
+    --topbar-bg: linear-gradient(110deg, rgba(15, 17, 21, 0.95) 0%, rgba(20, 22, 28, 0.98) 100%);
+    --topbar-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --text-kpi-1: #ff5252;
+    --text-kpi-2: #ffb74d;
+    --text-glow: 0 0 15px rgba(255, 255, 255, 0.15);
+
+    --action-nav-bg: rgba(20, 22, 28, 0.6);
+    --btn-action-bg: rgba(15, 17, 21, 0.6);
+    --btn-action-border: rgba(239, 108, 0, 0.3);
+  }
+
+  /* =========================================
+     3. ESTILOS GLOBALES 
+     ========================================= */
+  body {
+    background-color: var(--bg-base);
+    background-image: 
+      radial-gradient(circle at 12% 10%, var(--bg-radial-1), transparent 44%),
+      radial-gradient(circle at 85% 0%, var(--bg-radial-2), transparent 38%);
+    color: var(--text-main);
+    font-family: "Sora", sans-serif;
+    min-height: 100vh;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  h1, h2, h3, .font-display { font-family: "Space Grotesk", sans-serif; }
+  .text-main { color: var(--text-main) !important; }
+
+  /* Topbar */
+  .topbar {
+    background: var(--topbar-bg);
+    box-shadow: var(--topbar-shadow);
+    backdrop-filter: var(--glass-blur);
+    padding: 0.8rem 2rem;
+    transition: all 0.4s ease;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  /* Botón de Cambio de Tema */
+  .theme-toggle-btn {
+    background: var(--btn-action-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, var(--primary), #ef6c00);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  /* Tarjetas y Paneles */
+  .panel-card, .kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .kpi-card { padding: 1.25rem; height: 100%; }
+  .kpi-card:hover { transform: translateY(-3px); border-color: rgba(239, 108, 0, 0.5); }
+
+  /* Tipografía KPI */
+  .kpi-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .kpi-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-family: "Space Grotesk", sans-serif;
+    line-height: 1.2;
+    text-shadow: var(--text-glow);
+  }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Puntos de estado */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-red { background-color: #d32f2f; box-shadow: 0 0 8px rgba(211, 47, 47, 0.5); }
+  .dot-yellow { background-color: #fbc02d; box-shadow: 0 0 8px rgba(251, 192, 45, 0.5); }
+
+  /* Barra de acciones */
+  .action-nav {
+    background: var(--action-nav-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    transition: all 0.4s ease;
+  }
+  .action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  .action-link:hover { color: var(--primary); transform: translateY(-1px); }
+  
+  .action-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .bg-badge-red { background: linear-gradient(135deg, #d32f2f, #ff5252); }
+  .bg-badge-orange { background: linear-gradient(135deg, #e65100, #ff9800); }
+</style>
+
+<!-- HTML DEL SISTEMA -->
+<body>
+  
+  <!-- Topbar -->
+  <div class="topbar d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <!-- Asegúrate de poner la ruta correcta de tu logo -->
+      <div class="bg-white rounded p-1" style="width: 40px; height: 40px; display: grid; place-items: center;">
+        <span class="text-danger fw-bold fs-4">G</span> 
+      </div>
+      <h2 class="m-0 fw-bold text-white fs-4">Sistema de Clientes</h2>
+    </div>
+    
+    <div class="d-flex align-items-center gap-4">
+      <span class="text-white text-opacity-75 small">Rol: <strong class="text-white">Admin Master</strong></span>
+      <button class="btn btn-light btn-sm fw-bold px-3 rounded-pill" style="color: var(--primary);">Cerrar sesion</button>
+      
+      <!-- Botón Theme Toggle -->
+      <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="container-fluid p-4" style="max-width: 1400px; margin: 0 auto;">
+    
+    <!-- Panel Operativo (Header) -->
+    <div class="panel-card p-4 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h3 class="fw-bold text-main mb-1 fs-4">Panel de control operativo</h3>
+        <p class="text-muted mb-0 small">Vision en tiempo real del inventario, flujo y estado de liberaciones.</p>
+      </div>
+      <div class="text-end">
+        <p class="text-muted small mb-0">Ultima actualizacion</p>
+        <p class="fw-bold text-main mb-0 small">30/04/2026, 11:41 a.m.</p>
+      </div>
+    </div>
+
+    <!-- Barra de Acciones -->
+    <div class="action-nav mb-4">
+      <span class="fw-bold" style="color: #d32f2f;">Acciones Permitidas</span>
+      <div class="d-flex gap-4 flex-wrap ms-2">
+        <a href="#" class="action-link"><span class="action-badge bg-badge-red">R</span> Registrar cliente</a>
+        <a href="#" class="action-link"><span class="action-badge bg-badge-orange">C</span> Mis clientes</a>
+        <a href="#" class="action-link"><span class="action-badge bg-badge-orange">H</span> Mi historial</a>
+        <a href="#" class="action-link"><span class="action-badge bg-badge-red">C</span> Correcciones (clientes)</a>
+        <a href="#" class="action-link"><span class="action-badge bg-badge-orange">U</span> Gestion de usuarios</a>
+      </div>
+    </div>
+
+    <!-- 4 KPIs -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-label">CLIENTES INGRESADOS</div>
+          <div class="kpi-value" style="color: var(--text-kpi-1);">93</div>
+          <div class="kpi-sub"><span class="status-dot dot-red"></span> Inventario total registrado</div>
+        </div>
+      </div>
+      
+      <div class="col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-label">CLIENTES PROSPECTOS</div>
+          <div class="kpi-value" style="color: var(--text-kpi-1);">3</div>
+          <div class="kpi-sub"><span class="status-dot dot-red"></span> Esperan gestion administrativa</div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-label">CLIENTES DIRECTOS</div>
+          <div class="kpi-value" style="color: var(--text-kpi-2);">90</div>
+          <div class="kpi-sub"><span class="status-dot dot-yellow"></span> Casos cerrados correctamente</div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-label">TASA DE CLIENTES</div>
+          <div class="kpi-value" style="color: var(--text-kpi-2);">97%</div>
+          <div class="kpi-sub"><span class="status-dot dot-yellow"></span> Eficiencia sobre total ingresado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-4">
+      <div class="col-md-8">
+        <div class="panel-card p-4 h-100">
+          <h4 class="fs-6 fw-bold text-main mb-4 font-display">Ingresos mensuales (ultimos 6 meses)</h4>
+          <!-- Espacio para tu Chart.js -->
+          <div style="height: 250px; border-left: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);" class="position-relative">
+             <span class="text-muted small position-absolute top-50 start-50 translate-middle">Contenedor de Gráfico de Líneas</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="panel-card p-4 h-100">
+          <h4 class="fs-6 fw-bold text-main mb-4 font-display">Tipos de Precios</h4>
+          <!-- Espacio para tu Chart.js -->
+          <div style="height: 250px;" class="d-flex align-items-center justify-content-center">
+             <div style="width: 180px; height: 180px; border-radius: 50%; border: 30px solid var(--card-border); border-top-color: #d32f2f; border-right-color: #f57c00;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT PARA EL CAMBIO DE TEMA -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggleBtn = document.getElementById('themeToggle');
+      const icon = themeToggleBtn.querySelector('i');
+      const htmlElement = document.documentElement;
+
+      const currentTheme = localStorage.getItem('gonac-theme') || 'light';
+      htmlElement.setAttribute('data-theme', currentTheme);
+      updateIcon(currentTheme);
+
+      themeToggleBtn.addEventListener('click', () => {
+        let theme = htmlElement.getAttribute('data-theme');
+        let newTheme = theme === 'light' ? 'dark' : 'light';
+        
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('gonac-theme', newTheme); 
+        updateIcon(newTheme);
+      });
+
+      function updateIcon(theme) {
+        if (theme === 'dark') {
+          icon.className = 'fas fa-sun'; 
+        } else {
+          icon.className = 'fas fa-moon'; 
+        }
+      }
+    });
+  </script>
+</body>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark topbar py-3">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="GONAC" class="brand-mark">
+        <span>Sistema de Clientes</span>
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white-50 small">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
+        <a href="{% url 'logout' %}" class="btn btn-light btn-sm">Cerrar sesion</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-shell">
+    {% if messages %}
+    <section class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <section class="mb-4">
+      <div class="panel-card p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div>
+            <h1 class="h4 mb-1">Panel de control operativo</h1>
+            <p class="mb-0 text-secondary">Vision en tiempo real del inventario, flujo y estado de liberaciones.</p>
+          </div>
+          <div class="text-end">
+            <div class="small text-secondary">Ultima actualizacion</div>
+            <div id="lastUpdate" class="fw-semibold">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <section>
+      <nav class="action-nav row-gl-3 mb-4">
+        <span class="action-title">Acciones Permitidos</span>
+        <div class="action-links">
+           {% if can_operador %}
+          <a class="action-link" href="{% url 'operador' %}">
+            <span class="action-badge">R</span>
+            Registrar cliente
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">R2</span>
+            Registrar cliente
+          </span>
+          {% endif %}
+          {% if can_clientes %}
+          <a class="action-link" href="{% url 'clientes_list' %}">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">C</span>
+            Mis clientes
+          </span>
+          {% endif %}
+          {% if rol == 'administrador' or rol == 'admin_master' or rol == 'operador' %}
+              {# Este bloque ahora es visible para Admin, Master y Operador #}
+              {% if can_historial %}
+                  <a class="action-link" href="{% url 'historial' %}">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </a>
+              {% else %}
+                  <span class="action-link disabled">
+                      <span class="action-badge">H</span>
+                      Mi historial
+                  </span>
+              {% endif %}
+          {% endif %}
+          <!-- {% if can_depositos %}
+          <a class="action-link" href="{% url 'depositos' %}">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </a>
+          {% else %}
+          <span class="action-link disabled">
+            <span class="action-badge">D</span>
+            Gestion de Clientes
+          </span>
+          {% endif %} -->
+          {% if can_correcciones %}
+          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
+            <span class="action-badge">C</span>
+            Correcciones (clientes)
+          </a>
+          {% endif %}
+          {% if can_usuarios %}
+          <a class="action-link" href="{% url 'usuarios' %}">
+            <span class="action-badge">U</span>
+            Gestion de usuarios
+          </a>
+          {% endif %}
+        </div>
+      </nav>
+    </section>
+
+    
+    <section class="row g-3 mb-4">
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Clientes ingresados</p>
+          <p class="kpi-value text-primary-custom" id="Clientes">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
+        </article>
+      </div>
+      
+      {% if rol != 'promotor' %}
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Clientes prospectos</p>
+          <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
+        </article>
+      </div>
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Clientes Directos</p>
+          <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
+        </article>
+      </div>
+      <div class="col-md-3">
+        <article class="kpi-card p-3 h-100">
+          <p class="kpi-label">Tasa de Clientes</p>
+          <p class="kpi-value" id="tasaLiberacion" style="color: var(--brand-1)">0%</p>
+          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
+        </article>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="row g-3 mb-4">
+      <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-8{% endif %}">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Ingresos mensuales (ultimos 6 meses)</h2>
+          <div class="chart-wrap">
+            <canvas id="ingresosChart"></canvas>
+          </div>
+        </article>
+      </div>
+
+      {% if rol != 'promotor' %}
+      <div class="col-lg-4">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Tipos de Precios</h2>
+          <div class="chart-wrap chart-wrap--donut">
+            <canvas id="estadoChart"></canvas>
+          </div>
+        </article>
+      </div>
+      {% endif %}
+    </section>
+    
+    <section class="row g-3 mb-4">
+      {% if rol != 'promotor' %}
+      <div class="col-lg-6">
+        <article class="panel-card p-3 h-100">
+          <h2 class="h6 mb-3">Distribucion por tipo de Cliente</h2>
+          <div class="chart-wrap">
+            <canvas id="tipoChart"></canvas>
+          </div>
+        </article>
+      </div>
+      {% endif %}
+
+      <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-6{% endif %}">
+        <article class="panel-card p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Actividad reciente</h2>
+            <a href="{% url 'clientes_list' %}" class="small link-primary">Ver inventario completo</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Numero de Cliente</th>
+                  <th>Nombre</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="actividadBody">
+                {% for c in actividad %}
+                <tr>
+                  <td class="fw-semibold">{{ c.sap }}</td>
+                  <td>{{ c.nombre }}</td>
+                  <td>{{ c.estado|default:"-" }}</td>
+                  <td>{{ c.fecha_registro|date:'d/m/Y' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-secondary py-3">Sin actividad registrada.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+
+    <div class="card mt-4 shadow-sm border-0">
+  <div class="card-body">
+    <h5 class="card-title h6"><i class="bi bi-book"></i> Centro de Ayuda</h5>
+    <p class="small text-muted">Descarga tu guía de usuario según tu nivel de acceso:</p>
+    
+    {% if rol == 'promotor' %}
+      <a href="{% static 'manuales/guia_promotor.pdf' %}" class="btn btn-sm btn-outline-info w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual del Promotor
+      </a>
+    {% elif rol == 'administrador' or rol == 'admin_master' %}
+      <a href="{% static 'manuales/guia_administrador.pdf' %}" class="btn btn-sm btn-outline-primary w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual de Administración
+      </a>
+      {% elif rol == 'operador'%}
+      <a href="{% static 'manuales/guia_operador.pdf' %}" class="btn btn-sm btn-outline-secondary w-100 mb-2" download>
+        <i class="bi bi-download"></i> Manual del Operador
+      </a>
+    {% else %}
+      <a href="{% static 'manuales/guia_general.pdf' %}" class="btn btn-sm btn-outline-secondary w-100" download>
+        <i class="bi bi-download"></i> Guía Rápida
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+  </main>
+
+  <footer class="text-center py-3 text-secondary small">
+    Sistema de Gestion de Clientes de Gonac
+  </footer>
+
+  {{ resumen_data|json_script:"resumen-data" }}
+  {{ detalle_data|json_script:"detalle-data" }}
+  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+  <script>
+    const summaryFromServer = JSON.parse(document.getElementById("resumen-data").textContent);
+    const detailFromServer = JSON.parse(document.getElementById("detalle-data").textContent);
+
+    const chartColors = {
+      primary: "#c62828",
+      secondary: "#fbc02d",
+      warning: "#ef6c00",
+      success: "#fbc02d",
+      neutral: "#b08968"
+    };
+
+    function safeNumber(value, defaultValue = 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : defaultValue;
+    }
+
+    function animateValue(element, finalValue, suffix = "") {
+      const duration = 700;
+      const start = 0;
+      const startTime = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const current = Math.round(start + (finalValue - start) * progress);
+        element.textContent = current + suffix;
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function formatNow() {
+      return new Date().toLocaleString("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+      function buildDoughnut(labels, values) {
+        const ctx = document.getElementById("estadoChart").getContext("2d");
+
+        const palette = [
+          "#c62828",
+          "#ef6c00",
+          "#fbc02d",
+          "#ff9800",
+          "#b71c1c",
+          "#8e0000",
+          "#ffb300",
+          "#bf360c",
+          "#7f1d1d",
+          "#ffcc80",
+          "#d84315",
+          "#ffd54f",
+        ];
+
+        const normalized = new Map();
+        (labels || []).forEach((raw, idx) => {
+          const key = (raw || "").trim() || "SIN LISTA";
+          const count = safeNumber((values || [])[idx], 0);
+          normalized.set(key, (normalized.get(key) || 0) + count);
+        });
+
+        const finalLabels = Array.from(normalized.keys());
+        const finalValues = finalLabels.map((k) => normalized.get(k));
+        const finalColors = finalLabels.map((_, idx) => palette[idx % palette.length]);
+
+        const legendPosition = window.matchMedia("(min-width: 992px)").matches ? "right" : "bottom";
+
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: finalLabels,
+            datasets: [{
+              data: finalValues,
+              backgroundColor: finalColors,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: legendPosition,
+                labels: {
+                  boxWidth: 10,
+                  boxHeight: 10,
+                  padding: 10,
+                  font: { size: 11 },
+                }
+              }
+            }
+          }
+        });
+      }
+
+    function buildLineChart(labels, values) {
+      const ctx = document.getElementById("ingresosChart").getContext("2d");
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Ingresos",
+            data: values,
+            borderColor: chartColors.primary,
+            backgroundColor: "rgba(198, 40, 40, 0.12)",
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildBarChart(labels, values) {
+      const ctx = document.getElementById("tipoChart").getContext("2d");
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Clientes",
+            data: values,
+            backgroundColor: [
+              "#c62828",
+              "#ef6c00",
+              "#fbc02d",
+              "#ff9800",
+              "#ffd8a8"
+            ],
+            borderRadius: 8,
+            maxBarThickness: 38
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadData() {
+      const total = safeNumber(summaryFromServer && summaryFromServer.total, 0);
+      const pendientes = safeNumber(summaryFromServer && summaryFromServer.pendientes, 0);
+      const liberados = safeNumber(summaryFromServer && summaryFromServer.liberados, 0);
+      const tasaLiberacion = total > 0 ? Math.round((liberados / total) * 100) : 0;
+
+      animateValue(document.getElementById("Clientes"), total);
+      animateValue(document.getElementById("pendientes"), pendientes);
+      animateValue(document.getElementById("liberados"), liberados);
+      animateValue(document.getElementById("tasaLiberacion"), tasaLiberacion, "%");
+
+      document.getElementById("lastUpdate").textContent = formatNow();
+
+      const monthlyLabels = (detailFromServer && Array.isArray(detailFromServer.monthlyLabels) && detailFromServer.monthlyLabels.length)
+        ? detailFromServer.monthlyLabels
+        : [];
+      const monthlyIngress = (detailFromServer && Array.isArray(detailFromServer.monthlyIngress) && detailFromServer.monthlyIngress.length)
+        ? detailFromServer.monthlyIngress
+        : [];
+      const typeLabels = (detailFromServer && Array.isArray(detailFromServer.typeLabels) && detailFromServer.typeLabels.length)
+        ? detailFromServer.typeLabels
+        : [];
+      const typeValues = (detailFromServer && Array.isArray(detailFromServer.typeValues) && detailFromServer.typeValues.length)
+        ? detailFromServer.typeValues
+        : [];
+      const listaLabels = (detailFromServer && Array.isArray(detailFromServer.labels) && detailFromServer.labels.length)
+        ? detailFromServer.labels
+        : [];
+      const listaValues = (detailFromServer && Array.isArray(detailFromServer.values) && detailFromServer.values.length)
+        ? detailFromServer.values
+        : [];
+
+      buildDoughnut(listaLabels, listaValues);
+      buildLineChart(monthlyLabels, monthlyIngress);
+      buildBarChart(typeLabels, typeValues);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

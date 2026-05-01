@@ -1,172 +1,9 @@
+{% extends "base.html" %}
 {% load static %}
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso | Sistema de Clientes</title>
-    <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="./static/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
-
-    <style>
-        :root {
-            --primary: #c62828;
-            --secondary: #ffe0b2;
-            --accent-1: #ef6c00;
-            --accent-2: #fbc02d;
-            --surface: #ffffff;
-            --text-main: #2e3238;
-            --text-muted: #7a7f87;
-            --line: #ffe8cc;
-            --bg: #e5e7eb;
-            --bg-soft: #e5e7eb;
-            --shadow: 0 24px 60px rgba(198, 40, 40, 0.2);
-            --font-sans: "Sora", "Segoe UI", sans-serif;
-            --font-display: "Space Grotesk", "Sora", sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            display: grid;
-            place-items: center;
-            font-family: var(--font-sans);
-            color: var(--text-main);
-            background:
-                radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 42%),
-                radial-gradient(circle at 88% 0%, rgba(198, 40, 40, 0.12), transparent 36%),
-                radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.10), transparent 45%),
-                var(--bg);
-        }
-
-        .login-page {
-            width: min(100%, 460px);
-            padding: 1rem;
-        }
-
-        .login-card {
-            background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-            border: 1px solid var(--line);
-            border-radius: 22px;
-            padding: 2.3rem;
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-            animation: floatIn 520ms ease;
-        }
-
-        .login-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(120deg, var(--accent-1), var(--accent-2), var(--primary));
-        }
-
-        .brand-logo {
-            width: 120px;
-            display: block;
-            margin: 0 auto 0.75rem;
-            filter: drop-shadow(0 10px 18px rgba(198, 40, 40, 0.12));
-        }
-
-        .login-title {
-            color: var(--text-main);
-            margin-bottom: 0.25rem;
-            font-size: 1.65rem;
-            text-align: center;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            font-family: var(--font-display);
-        }
-
-        .login-subtitle {
-            color: var(--text-muted);
-            text-align: center;
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .field-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #555b63;
-            margin-bottom: 0.4rem;
-            letter-spacing: 0.015em;
-        }
-
-        .form-control,
-        .form-select {
-            height: 44px;
-            border-radius: 10px;
-            border: 1px solid #ffd8a8;
-            font-size: 0.92rem;
-            background-color: #fffdf8;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(198, 40, 40, 0.10);
-            background-color: #fff;
-        }
-
-        .form-check-label {
-            color: #5d6269;
-            font-size: 0.86rem;
-        }
-
-        .btn-primary {
-            height: 46px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #d32f2f, var(--primary));
-            border: 0;
-            font-weight: 600;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-            box-shadow: 0 12px 26px rgba(198, 40, 40, 0.3);
-        }
-
-        .btn-primary:hover,
-        .btn-primary:focus {
-            transform: translateY(-1px);
-            box-shadow: 0 16px 30px rgba(198, 40, 40, 0.36);
-            background: linear-gradient(135deg, #b71c1c, #8e0000);
-        }
-
-        a {
-            color: var(--accent-1);
-            text-decoration: none;
-            font-size: 0.86rem;
-            font-weight: 600;
-        }
-
-        a:hover {
-            color: #bf360c;
-            text-decoration: underline;
-        }
-
-        .login-footer {
-            border-top: 1px solid var(--line);
-            margin-top: 1.25rem;
-            padding-top: 0.9rem;
-            text-align: center;
-            color: #8a95a3;
-            font-size: 0.75rem;
-        }
-
-        @keyframes floatIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-</head>
-<body>
-
-    <main class="login-page">
+{% block title %}Acceso | Sistema de Clientes{% endblock %}
+{% block topbar %}{% endblock %}
+{% block content %}
+<div class="login-page">
         <section class="login-card">
             <div class="text-center mb-3">
                 <img class="brand-logo" src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC">
@@ -184,8 +21,8 @@
                 {% endif %}
 
                 <div class="mb-3">
-                    <label for="usuario" class="field-label">Correo Institucional</label>
-                    <input type="text" class="form-control" id="usuario" name="usuario" placeholder="usuario@usuario.com" required autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="email">
+                    <label for="usuario" class="field-label">Nombre de usuario</label>
+                    <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Ingresa tu nombre" required autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="text">
                 </div>
 
                 <div class="mb-3">
@@ -207,13 +44,9 @@
 
             <div class="login-footer">2026 Comercializadora Gonac SA de C V</div>
         </section>
-    </main>
-
-    <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
-    <script src="{% static 'js/no-autocomplete.js' %}"></script>
-</body>
-</html>
-
-
-
-
+    </div>
+{% endblock %}
+{% block footer %}{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/no-autocomplete.js' %}"></script>
+{% endblock %}

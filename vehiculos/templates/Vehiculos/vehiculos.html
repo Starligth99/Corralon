@@ -1,188 +1,8 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Inventario Vehicular | Sistema de Clientes</title>
-  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
-  <style>
-    :root {
-      --primary: #c62828;
-      --secondary: #ffe0b2;
-      --accent-1: #ef6c00;
-      --accent-2: #fbc02d;
-      --brand-900: #7f1d1d;
-      --brand-700: #c62828;
-      --brand-500: #ef6c00;
-      --bg-soft: #e5e7eb;
-      --line: #ffe0b2;
-      --text-main: #1f2937;
-      --text-muted: #6b7280;
-      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
-      --font-sans: "Sora", "Segoe UI", sans-serif;
-      --font-display: "Space Grotesk", "Sora", sans-serif;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
-        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
-        var(--bg-soft);
-      color: var(--text-main);
-      min-height: 100vh;
-      font-family: var(--font-sans);
-    }
-
-    .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
-      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .brand-mark {
-      height: 48px;
-      width: auto;
-      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
-    }
-
-    .surface {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-      box-shadow: var(--shadow-soft);
-      animation: riseIn 520ms ease;
-    }
-
-    .kpi {
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, #ffffff 0%, #fff3cd 100%);
-      padding: 0.9rem;
-    }
-
-    .kpi-label {
-      color: #64748b;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 0.2rem;
-    }
-
-    .kpi-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-      line-height: 1.1;
-      font-family: var(--font-display);
-    }
-
-    .badge-soft {
-      border-radius: 999px;
-      padding: 0.35rem 0.65rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: 1px solid transparent;
-    }
-
-    .status-decomisado { color: #bf360c; background: #ffe0b2; border-color: #ffcc80; }
-    .status-custodia { color: #c62828; background: #fff0cc; border-color: #ffcc80; }
-    .status-liberado { color: #a84300; background: #fff9c4; border-color: #ffe082; }
-    .status-abandonado { color: #a45a00; background: #fff8e1; border-color: #ffe0b2; }
-
-    .clickable-head {
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #d32f2f, var(--primary));
-      border: none;
-      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
-    }
-
-    .btn-primary:hover,
-    .btn-primary:focus {
-      background: linear-gradient(135deg, #b71c1c, #8e0000);
-      border-color: transparent;
-      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
-    }
-
-    .btn-outline-primary {
-      color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .btn-outline-primary:hover {
-      background-color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .btn-danger {
-      background-color: var(--accent-1);
-      border-color: var(--accent-1);
-    }
-
-    .btn-danger:hover,
-    .btn-danger:focus {
-      background-color: #bf360c;
-      border-color: #bf360c;
-    }
-
-    .text-primary {
-      color: var(--primary) !important;
-    }
-
-    .text-warning {
-      color: var(--accent-1) !important;
-    }
-
-    .text-success {
-      color: #a84300 !important;
-    }
-
-    h1, h2, h3, .navbar-brand {
-      font-family: var(--font-display);
-      letter-spacing: 0.01em;
-    }
-
-    .detail-panel {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.75rem 1.25rem;
-    }
-
-    .detail-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin-bottom: 0.15rem;
-    }
-
-    .detail-value {
-      font-weight: 600;
-      color: var(--text-main);
-      word-break: break-word;
-    }
-
-    @keyframes riseIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
-<body>
-  <nav class="navbar navbar-dark topbar py-3">
+{% block title %}Inventario Vehicular | Sistema de Clientes{% endblock %}
+{% block topbar %}
+<nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
         <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
@@ -190,9 +10,13 @@
       </a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">Volver al dashboard</a>
     </div>
-  </nav>
-
-  <main class="container my-4 my-lg-5">
+        <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
+</nav>
+{% endblock %}
+{% block content %}
+<main class="container my-4 my-lg-5">
     {% if messages %}
     <section class="mb-3">
       {% for message in messages %}
@@ -354,8 +178,9 @@
   </main>
 
   {{ vehiculos_data|json_script:"vehiculos-data" }}
-  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     (function () {
       const data = JSON.parse(document.getElementById("vehiculos-data").textContent);
@@ -513,9 +338,4 @@
       applyFilters();
     })();
   </script>
-</body>
-</html>
-
-
-
-
+{% endblock %}

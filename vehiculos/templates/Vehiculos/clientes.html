@@ -1,202 +1,7 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mis clientes</title>
-  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
-  <style>
-    :root {
-      --primary: #c62828;
-      --brand-900: #7f1d1d;
-      --brand-700: #c62828;
-      --accent-1: #ef6c00;
-      --accent-2: #fbc02d;
-      --bg-soft: #e5e7eb;
-      --line: #ffe0b2;
-      --text-main: #1f2937;
-      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
-      --font-sans: "Sora", "Segoe UI", sans-serif;
-      --font-display: "Space Grotesk", "Sora", sans-serif;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
-        var(--bg-soft);
-      color: var(--text-main);
-      min-height: 100vh;
-      font-family: var(--font-sans);
-    }
-
-    .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
-      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
-    }
-
-    .brand-mark {
-      height: 48px;
-      width: auto;
-      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
-    }
-
-    h1, h2, h3, .navbar-brand {
-      font-family: var(--font-display);
-    }
-
-    .surface {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .cliente-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      overflow: hidden;
-      margin-bottom: 0.75rem;
-      background: #ffffff;
-      transition: box-shadow 150ms ease;
-    }
-
-    .cliente-card:hover {
-      box-shadow: 0 6px 18px rgba(198, 40, 40, 0.15);
-    }
-
-    .cliente-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.9rem 1.1rem;
-      background: linear-gradient(90deg, #fff0cc 0%, #fff8e1 100%);
-      border: none;
-      width: 100%;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .cliente-header:hover {
-      background: linear-gradient(90deg, #ffe082 0%, #fff0cc 100%);
-    }
-
-    .cliente-sap {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--brand-900);
-      letter-spacing: 0.02em;
-    }
-
-    .cliente-sap-badge {
-      display: inline-block;
-      background: var(--brand-700);
-      color: #fff;
-      padding: 0.15rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-right: 0.5rem;
-    }
-
-    .cliente-caret {
-      transition: transform 200ms ease;
-    }
-
-    .cliente-header[aria-expanded="true"] .cliente-caret {
-      transform: rotate(180deg);
-    }
-
-    .cliente-body {
-      padding: 1rem 1.2rem 1.2rem;
-      border-top: 1px dashed var(--line);
-      background: #fffdf5;
-    }
-
-    .cliente-field {
-      margin-bottom: 0.65rem;
-    }
-
-    .cliente-field:last-child {
-      margin-bottom: 0;
-    }
-
-    .cliente-field-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6b7280;
-    }
-
-    .cliente-field-value {
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .credito-panel {
-      margin-top: 1.25rem;
-      padding: 1rem 1.1rem 1.1rem;
-      border: 1px solid #fbc02d;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #fffdf5 0%, #fff3c4 100%);
-    }
-
-    .credito-panel h3 {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--brand-900);
-      margin-bottom: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .credito-panel .form-check {
-      padding: 0.4rem 0 0.4rem 1.75rem;
-      border-bottom: 1px dashed #fde68a;
-    }
-
-    .credito-panel .form-check:last-child {
-      border-bottom: none;
-    }
-
-    .credito-panel label {
-      font-size: 0.82rem;
-      color: #374151;
-    }
-
-    .credito-panel .form-control {
-      max-width: 160px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: #6b7280;
-    }
-
-    .search-input {
-      border-radius: 999px;
-      padding-left: 1.1rem;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #d32f2f, var(--primary));
-      border: none;
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #b71c1c, #8e0000);
-    }
-  </style>
-</head>
-<body>
+{% block title %}Mis clientes{% endblock %}
+{% block topbar %}
 <nav class="navbar navbar-dark topbar py-3 mb-4">
   <div class="container-fluid px-4">
     <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
@@ -238,9 +43,13 @@
     </div>
 </div>  
 
+      <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
 </nav>
-
-  <main class="container my-4 my-lg-5">
+{% endblock %}
+{% block content %}
+<main class="container my-4 my-lg-5">
     {% if messages %}
     <section class="mb-3">
       {% for message in messages %}
@@ -299,13 +108,6 @@
         </select>
     </div>
 {% endif %}
-
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Código 6 dígitos</label>
-                                    <input type="text" name="numero_empleado_filtro" value="{{ numero_empleado_actual }}" 
-                                          class="form-control form-control-sm border-2" 
-                                          placeholder="Ej: 123456" pattern="\d{6}" maxlength="6" style="border-radius: 10px;">
-                                </div>
 
 
                                 <div class="d-grid gap-2">
@@ -426,6 +228,16 @@
                 <div class="col-md-4 cliente-field">
                   <div class="cliente-field-label">Poblacion</div>
                   <div class="cliente-field-value">{{ c.poblacion|default:"-" }}</div>
+                </div>
+                
+                <div class="col-md-4 cliente-field">
+                  <div class="cliente-field-label">Cuando visitas</div>
+                  <div class="cliente-field-value">{{ c.get_frecuencia_visita_display|default:"-" }}</div>
+                </div>
+                
+                <div class="col-md-4 cliente-field">
+                  <div class="cliente-field-label">Días de visita</div>
+                  <div class="cliente-field-value">{{ c.dias_visita|default:"-" }}</div>
                 </div>
                 
                 <div class="col-md-4 cliente-field">
@@ -638,9 +450,9 @@
 
     </section>
   </main>
-
-  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/no-autocomplete.js' %}"></script>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/no-autocomplete.js' %}"></script>
   <script>
     // Evitar que el formulario de búsqueda se envíe al presionar Enter en el campo de búsqueda
     document.querySelector('.search-input').addEventListener('keydown', function(event) {
@@ -763,6 +575,4 @@ function confirmarBorradoMasivo() {
         .catch(error => console.error("Error en inventario:", error));
 }
   </script>
-
-</body>
-</html>
+{% endblock %}

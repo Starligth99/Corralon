@@ -16,7 +16,7 @@ try:
         
         # CABECERAS DESGLOSADAS
         writer.writerow([
-            'CODIGO SAP', 'NOMBRE', 'CODIGO 6 DIGITOS', 'TIPO DE CUENTA', 
+            'CODIGO SAP', 'NOMBRE', 'TIPO DE CUENTA', 
             'LATITUD', 'LONGITUD', 'LISTA DE PRECIOS',
             'CALLE / REFERENCIA', 'POBLACION / MUNICIPIO', 'ESTADO', 
             'CODIGO POSTAL', 'PAIS', 'ZONA', 
@@ -49,8 +49,7 @@ try:
             writer.writerow([
                 getattr(c, 'sap', '-'),
                 getattr(c, 'nombre', '-'),
-                getattr(c, 'numero_empleado', '-'),
-                getattr(c, 'tipo_cuenta', '-'),
+                getattr(c, 'tipo_filtro', '-'),
                 getattr(c, 'latitud', '-'),
                 getattr(c, 'longitud', '-'),
                 getattr(c, 'lista_precios', 'DEFAULT'),

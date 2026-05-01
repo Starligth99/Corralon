@@ -52,6 +52,13 @@ class Cliente(models.Model):
     orden_compra_automatico = models.BooleanField(default=False)
     edicion_operador_usada = models.BooleanField(default=False)
 
+    frecuencia_visita = models.CharField(max_length=20, blank=True, choices=[
+        ('mensual', 'Mensual'),
+        ('semanal', 'Semanal'),
+        ('diariamente', 'Diariamente'),
+    ])
+    dias_visita = models.CharField(max_length=200, blank=True)  # Comma separated days
+
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

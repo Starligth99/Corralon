@@ -161,12 +161,15 @@ def editar_cliente(request, cliente_id):
             # Admin / Admin Master pueden editar libremente solo campos de negocio permitidos aquí
             admin_editable_fields = [
                 'lista_precios', 'tipo_cuenta', 'poblacion', 'estado', 'zona',
-                'nombre', 'direccion', 'latitud', 'longitud'
+                'nombre', 'direccion', 'latitud', 'longitud', 'frecuencia_visita', 'dias_visita'
             ]
             touched = []
             for field in admin_editable_fields:
                 if field in request.POST:
-                    setattr(cliente, field, (request.POST.get(field) or "").strip())
+                    if field == 'dias_visita':
+                        setattr(cliente, field, ','.join(request.POST.getlist(field)))
+                    else:
+                        setattr(cliente, field, (request.POST.get(field) or "").strip())
                     touched.append(field)
 
             if touched:
@@ -199,9 +202,6 @@ def _canonicalize_import_header(normalized_header):
 
     if header in ("nombre",):
         return "nombre"
-
-    if header in ("numero_empleado", "codigo_6_digitos", "codigo_6", "codigo_seis_digitos"):
-        return "numero_empleado"
 
     if header in ("direccion",):
         return "direccion"
@@ -499,6 +499,8 @@ def login_view(request):
         password = request.POST.get('password') or ''
 
         if usuario and password:
+            if not usuario.endswith('@usuario.com'):
+                usuario += '@usuario.com'
             user = authenticate(request, username=usuario, password=password)
             if user:
                 auth_login(request, user)
@@ -636,7 +638,9 @@ def usuarios_view(request):
         action = (request.POST.get('action') or '').strip()
 
         if action == 'create':
-            email = _normalize_email(request.POST.get('email'))
+            nombre_usuario = (request.POST.get('nombre_usuario') or '').strip()
+            email = nombre_usuario + '@usuario.com'
+            email = _normalize_email(email)
             password = request.POST.get('password') or ''
             telefono = (request.POST.get('telefono') or '').strip()
             nombre_completo = (request.POST.get('nombre_completo') or '').strip()
@@ -1002,6 +1006,10 @@ def operadorregistrador_view(request):
         # 🚀 AQUÍ GENERAMOS EL SAP AUTOMÁTICAMENTE
         values['sap'] = _generar_codigo_sap()
 
+        # Agregar campos de visita
+        values['frecuencia_visita'] = post.get('frecuencia_visita', '').strip()
+        values['dias_visita'] = ','.join(post.getlist('dias_visita'))
+
         # 🔒 BLOQUEO BACKEND PARA PROMOTOR
         if rol == ROLE_PROMOTOR:
             values['tipo_cuenta'] = Cliente.TIPO_PROSPECTO
@@ -1080,6 +1088,8 @@ def operadorregistrador_view(request):
             poblacion=values['poblacion'].upper(),
             fecha_registro=fecha,
             operador=operador_destino,
+            frecuencia_visita=values['frecuencia_visita'],
+            dias_visita=values['dias_visita'],
         )
 
         messages.success(request, f'Cliente {cliente.sap} - {cliente.nombre} registrado correctamente.')
@@ -1132,7 +1142,6 @@ def clientes_list_view(request):
     search = (request.GET.get('q') or '').strip()
     operador_id = request.GET.get('operador_filtro')
     tipo_filtro = request.GET.get('tipo_filtro')
-    numero_empleado_filtro = request.GET.get('numero_empleado_filtro')
 
     if search:
         query = query.filter(Q(sap__icontains=search) | Q(nombre__icontains=search))
@@ -1140,8 +1149,6 @@ def clientes_list_view(request):
         query = query.filter(operador_id=operador_id)
     if tipo_filtro:
         query = query.filter(tipo_cuenta=tipo_filtro)
-    if numero_empleado_filtro:
-        query = query.filter(numero_empleado=numero_empleado_filtro)
 
     # --- 👤 LISTA DE USUARIOS PARA EL FILTRO (Solo para Jefes) ---
     operadores_lista = None
@@ -1161,7 +1168,6 @@ def clientes_list_view(request):
         'search': search,
         'operador_id_actual': operador_id,
         'tipo_actual': tipo_filtro,
-        'numero_empleado_actual': numero_empleado_filtro,
         'operadores_lista': operadores_lista,
         'rol': role,  # Enviará "administrador", "admin_master", etc.
         'rol_label': ROLE_LABELS.get(role, role),
@@ -1180,7 +1186,7 @@ def importar_clientes_excel(request):
 
     if request.method != "POST":
         return render(request, "Vehiculos/importar-clientes.html", {
-            "required_columns": ["Nombre", "Código 6 dígitos", "Tipo Cuenta", "Dirección", "Zona", "Estado", "Población", "Latitud", "Longitud", "Lista de Precios"],
+            "required_columns": ["Nombre", "Tipo Cuenta", "Dirección", "Zona", "Estado", "Población", "Latitud", "Longitud", "Lista de Precios"],
             "optional_columns": ["Fecha de registro"],
         })
 
@@ -1265,19 +1271,8 @@ def importar_clientes_excel(request):
             sap_final = f"SAP-{next_seq_num:05d}"
             
             nombre = str(cell_value("nombre") or "").strip()
-            numero_empleado = str(cell_value("numero_empleado") or "").strip()
-            
             if not nombre:
                 continue # Saltamos filas sin nombre
-            if not numero_empleado:
-                errores.append(f"Fila {row_num}: Falta el código de 6 dígitos")
-                continue
-            if not re.fullmatch(r"\d{6}", numero_empleado):
-                errores.append(f"Fila {row_num}: El código de 6 dígitos debe contener exactamente 6 números")
-                continue
-            if Cliente.objects.filter(numero_empleado=numero_empleado).exists():
-                errores.append(f"Fila {row_num}: El código de 6 dígitos '{numero_empleado}' ya existe")
-                continue
 
             tipo_raw = str(cell_value("tipo_cuenta") or "").strip().upper()
             tipo = Cliente.TIPO_DIRECTO if tipo_raw.startswith("DIR") else Cliente.TIPO_PROSPECTO
@@ -1286,7 +1281,6 @@ def importar_clientes_excel(request):
                 Cliente.objects.create(
                     sap=sap_final,
                     nombre=nombre,
-                    numero_empleado=numero_empleado,
                     tipo_cuenta=tipo,
                     lista_precios=str(cell_value("lista_precios") or "DEFAULT").strip().upper(),
                     latitud=to_float(cell_value("latitud")),
@@ -1885,7 +1879,8 @@ def exportar_clientes_csv(request):
     writer.writerow([
         'SAP ID', 'NOMBRE', 'TIPO CUENTA', 'LATITUD', 'LONGITUD', 
         'LISTA PRECIOS', 'CALLE', 'COLONIA', 'POBLACIÓN', 'MUNICIPIO', 
-        'ESTADO', 'CP', 'ZONA', 'FECHA REGISTRO', 'REGISTRADO POR'
+        'ESTADO', 'CP', 'ZONA', 'FECHA REGISTRO', 'REGISTRADO POR',
+        'FRECUENCIA VISITA', 'DIAS VISITA'
     ])
 
     for c in queryset:
@@ -1910,7 +1905,9 @@ def exportar_clientes_csv(request):
             getattr(c, 'codigo_postal', '-'),
             getattr(c, 'zona', '-'),
             c.fecha_registro.strftime('%d/%m/%Y') if c.fecha_registro else '-',
-            responsable
+            responsable,
+            c.frecuencia_visita,
+            c.dias_visita
         ])
 
     return response

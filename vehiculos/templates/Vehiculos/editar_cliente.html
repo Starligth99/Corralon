@@ -1,60 +1,8 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Editar cliente | Sistema de Clientes</title>
-  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
-  <style>
-    :root {
-      --primary: #c62828;
-      --brand-900: #7f1d1d;
-      --brand-700: #c62828;
-      --bg-soft: #e5e7eb;
-      --line: #ffe0b2;
-      --text-main: #1f2937;
-      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
-      --font-sans: "Sora", "Segoe UI", sans-serif;
-      --font-display: "Space Grotesk", "Sora", sans-serif;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 36%),
-        var(--bg-soft);
-      color: var(--text-main);
-      min-height: 100vh;
-      font-family: var(--font-sans);
-    }
-
-    .topbar {
-      background: linear-gradient(110deg, var(--brand-900), var(--brand-700), #ff9800);
-      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.3);
-    }
-
-    .brand-mark {
-      height: 48px;
-      width: auto;
-      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
-    }
-
-    .surface {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-      box-shadow: var(--shadow-soft);
-    }
-
-    h1, h2, h3, .navbar-brand {
-      font-family: var(--font-display);
-    }
-  </style>
-</head>
-<body>
-  <nav class="navbar navbar-dark topbar py-3">
+{% block title %}Editar cliente | Sistema de Clientes{% endblock %}
+{% block topbar %}
+<nav class="navbar navbar-dark topbar py-3">
     <div class="container-fluid px-4">
       <a href="{% url 'dashboard' %}" class="navbar-brand fw-bold d-flex align-items-center gap-2">
         <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="Logo GONAC" class="brand-mark">
@@ -62,9 +10,13 @@
       </a>
       <a href="{% url 'clientes_list' %}" class="btn btn-outline-light btn-sm">Volver a clientes</a>
     </div>
-  </nav>
-
-  <main class="container my-4 my-lg-5">
+        <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
+</nav>
+{% endblock %}
+{% block content %}
+<main class="container my-4 my-lg-5">
     {% if messages %}
     <section class="mb-3">
       {% for message in messages %}
@@ -164,6 +116,38 @@
             <label class="form-label">Zona</label>
             <input type="text" class="form-control" name="zona" value="{{ cliente.zona|default:'' }}">
           </div>
+          <div class="col-md-4">
+            <label class="form-label">Cuando visitas</label>
+            <select class="form-select" name="frecuencia_visita">
+              <option value="">Selecciona</option>
+              <option value="mensual" {% if cliente.frecuencia_visita == 'mensual' %}selected{% endif %}>Mensual</option>
+              <option value="semanal" {% if cliente.frecuencia_visita == 'semanal' %}selected{% endif %}>Semanal</option>
+              <option value="diariamente" {% if cliente.frecuencia_visita == 'diariamente' %}selected{% endif %}>Diariamente</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Días de la semana</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="dias_visita" value="lunes" {% if "lunes" in cliente.dias_visita %}checked{% endif %}>
+              <label class="form-check-label">Lunes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="dias_visita" value="martes" {% if "martes" in cliente.dias_visita %}checked{% endif %}>
+              <label class="form-check-label">Martes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="dias_visita" value="miercoles" {% if "miercoles" in cliente.dias_visita %}checked{% endif %}>
+              <label class="form-check-label">Miércoles</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="dias_visita" value="jueves" {% if "jueves" in cliente.dias_visita %}checked{% endif %}>
+              <label class="form-check-label">Jueves</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="dias_visita" value="viernes" {% if "viernes" in cliente.dias_visita %}checked{% endif %}>
+              <label class="form-check-label">Viernes</label>
+            </div>
+          </div>
           <div class="col-md-2">
             <label class="form-label">Latitud</label>
             <input type="text" class="form-control" name="latitud" value="{{ cliente.latitud|default:'' }}">
@@ -183,8 +167,7 @@
       </form>
     </section>
   </main>
-
-  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/no-autocomplete.js' %}"></script>
-</body>
-</html>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/no-autocomplete.js' %}"></script>
+{% endblock %}

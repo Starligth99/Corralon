@@ -1,411 +1,129 @@
-﻿{% load static %}
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | Sistema de Clientes</title>
-
-  <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap">
-
-  <style>
-    :root {
-      --primary: #d32f2f;
-      --secondary: #fbc02d;
-      --accent-1: #ff0000;
-      --accent-2: #fbc02d;
-      --bg-soft: #e5e7eb;
-      --card-border: #ffe0b2;
-      --text-main: #1f2937;
-      --text-muted: #6b7280;
-      --brand-1: #d32f2f;
-      --brand-2: #fbc02d;
-      --ok: #ffb300;
-      --warn: #ff0000;
-      --danger: #b71c1c;
-      --shadow-soft: 0 18px 45px rgba(198, 40, 40, 0.12);
-      --font-sans: "Sora", "Segoe UI", sans-serif;
-      --font-display: "Space Grotesk", "Sora", sans-serif;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 12% 10%, rgba(239, 108, 0, 0.10), transparent 44%),
-        radial-gradient(circle at 85% 0%, rgba(198, 40, 40, 0.10), transparent 38%),
-        radial-gradient(circle at 50% 95%, rgba(251, 192, 45, 0.08), transparent 48%),
-        var(--bg-soft);
-      color: var(--text-main);
-      min-height: 100vh;
-      font-family: var(--font-sans);
-    }
-
-          .stat-card {
-          transition: all 0.3s ease-in-out;
-      }
-      .stat-card:hover {
-          transform: scale(1.02);
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-      }
-
-    .topbar {
-      background: linear-gradient(110deg, #ff9100 0%, #fbc02d 55%, #ff0000 100%);
-      box-shadow: 0 12px 32px rgba(198, 40, 40, 0.32);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .brand-mark {
-      height: 48px;
-      width: auto;
-      filter: drop-shadow(0 10px 16px rgba(198, 40, 40, 0.3));
-    }
-
-    .dashboard-shell {
-      margin-top: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .kpi-card,
-    .panel-card {
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      box-shadow: var(--shadow-soft);
-      background: linear-gradient(180deg, #ffffff 0%, #fff8e1 100%);
-      animation: riseIn 520ms ease;
-    }
-
-    .kpi-label {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--text-muted);
-      margin-bottom: 0.35rem;
-    }
-
-    .kpi-value {
-      font-size: 2rem;
-      font-weight: 700;
-      line-height: 1;
-      margin: 0;
-      font-family: var(--font-display);
-    }
-
-    .kpi-sub {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 0.45rem;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 0.45rem;
-    }
-
-    .chart-wrap {
-      position: relative;
-      min-height: 280px;
-    }
-
-    .chart-wrap--donut {
-      min-height: 360px;
-    }
-
-    .table thead th {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--text-muted);
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .badge-soft {
-      border-radius: 999px;
-      padding: 0.35rem 0.6rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .badge-pending {
-      background: #ffe0b2;
-      color: #bf360c;
-    }
-
-    .badge-active {
-      background: #fff0cc;
-      color: #ff0000;
-    }
-
-    .badge-done {
-      background: #fff9c4;
-      color: #ff8c00;
-    }
-
-    .text-primary-custom {
-      color: var(--primary);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #d32f2f, var(--primary));
-      border: none;
-      box-shadow: 0 12px 26px rgba(198, 40, 40, 0.28);
-    }
-
-    .btn-primary:hover,
-    .btn-primary:focus {
-      background: linear-gradient(135deg, #b71c1c, #8e0000);
-      border-color: transparent;
-      box-shadow: 0 16px 30px rgba(198, 40, 40, 0.32);
-    }
-
-    .link-primary,
-    .text-primary {
-      color: var(--primary) !important;
-    }
-
-    .action-nav {
-      border: 1px solid rgba(198, 40, 40, 0.10);
-      border-radius: 16px;
-      padding: 0.35rem 0.6rem;
-      background: rgba(255, 255, 255, 0.88);
-      box-shadow: 0 18px 40px rgba(198, 40, 40, 0.12);
-      backdrop-filter: blur(8px);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    .action-title {
-      font-family: var(--font-display);
-      font-weight: 600;
-      color: var(--primary);
-      margin: 0 0.4rem 0 0.4rem;
-      white-space: nowrap;
-    }
-
-    .action-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-      flex: 1 1 auto;
-    }
-
-    .action-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.55rem 0.95rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      color: var(--text-main);
-      text-decoration: none;
-      font-weight: 600;
-      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-    }
-
-    .action-link:hover {
-      background: rgba(198, 40, 40, 0.12);
-      border-color: rgba(198, 40, 40, 0.25);
-      transform: translateY(-1px);
-      color: var(--primary);
-    }
-
-    .action-link.disabled {
-      color: #9aa2ad;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    .action-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #fff;
-      background: linear-gradient(135deg, #ff0000, #ff9d00);
-      box-shadow: 0 8px 16px rgba(198, 40, 40, 0.2);
-      flex: 0 0 auto;
-    }
-
-    @media (max-width: 991px) {
-      .action-nav {
-        border-radius: 18px;
-      }
-    }
-
-    h1, h2, h3, .navbar-brand {
-      font-family: var(--font-display);
-      letter-spacing: 0.01em;
-    }
-
-    @media (max-width: 767px) {
-      .kpi-value {
-        font-size: 1.65rem;
-      }
-
-      .chart-wrap {
-        min-height: 240px;
-      }
-    }
-
-    @keyframes riseIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark topbar py-3">
-    <div class="container-fluid px-4">
-      <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
-        <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="GONAC" class="brand-mark">
-        <span>Sistema de Clientes</span>
-      </span>
-      <div class="d-flex align-items-center gap-3">
-        <span class="text-white-50 small">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
-        <a href="{% url 'logout' %}" class="btn btn-light btn-sm">Cerrar sesion</a>
-      </div>
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard | Sistema de Clientes{% endblock %}
+{% block topbar %}
+<nav class="topbar d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'Img/LOGO DE GONAC.jpeg' %}" alt="GONAC" class="brand-mark bg-white p-1">
+      <h2 class="m-0 fw-bold text-white fs-4 font-display">Sistema de Clientes</h2>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3 gap-md-4">
+      <span class="text-white text-opacity-75 small d-none d-md-inline">Rol: <strong class="text-white">{{ rol_label }}</strong></span>
+      <a href="{% url 'logout' %}" class="btn btn-light btn-sm fw-bold px-3 rounded-pill" style="color: var(--primary);">Cerrar sesion</a>
+      
+      <!-- Botón Theme Toggle -->
+      <button id="themeToggle" class="theme-toggle-btn" title="Alternar Modo">
+        <i class="fas fa-moon"></i>
+      </button>
     </div>
   </nav>
-
-  <main class="container dashboard-shell">
+{% endblock %}
+{% block content %}
+  <main class="container-fluid px-4 dashboard-shell">
+    
     {% if messages %}
     <section class="mb-3">
       {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-2 rounded-3 border-0 shadow-sm">{{ message }}</div>
       {% endfor %}
     </section>
     {% endif %}
+
+    <!-- Panel de control operativo (Header) -->
     <section class="mb-4">
-      <div class="panel-card p-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <div>
-            <h1 class="h4 mb-1">Panel de control operativo</h1>
-            <p class="mb-0 text-secondary">Vision en tiempo real del inventario, flujo y estado de liberaciones.</p>
-          </div>
-          <div class="text-end">
-            <div class="small text-secondary">Ultima actualizacion</div>
-            <div id="lastUpdate" class="fw-semibold">-</div>
-          </div>
+      <div class="panel-card p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1 class="fw-bold text-main mb-1 fs-4 font-display">Panel de control operativo</h1>
+          <p class="text-muted mb-0 small">Vision en tiempo real del inventario, flujo y estado de liberaciones.</p>
+        </div>
+        <div class="text-end">
+          <p class="text-muted small mb-0">Ultima actualizacion</p>
+          <p id="lastUpdate" class="fw-bold text-main mb-0 small font-display">-</p>
         </div>
       </div>
     </section>
 
-        <section>
-      <nav class="action-nav row-gl-3 mb-4">
-        <span class="action-title">Acciones Permitidos</span>
-        <div class="action-links">
-           {% if can_operador %}
-          <a class="action-link" href="{% url 'operador' %}">
-            <span class="action-badge">R</span>
-            Registrar cliente
-          </a>
+    <!-- Barra de Acciones -->
+    <section class="mb-4">
+      <nav class="action-nav">
+        <span class="action-title">Acciones Permitidas</span>
+        <div class="d-flex gap-2 flex-wrap ms-md-2">
+          
+          {% if can_operador %}
+            <a class="action-link" href="{% url 'operador' %}"><span class="action-badge bg-badge-red">R</span> Registrar cliente</a>
           {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">R2</span>
-            Registrar cliente
-          </span>
+            <span class="action-link disabled"><span class="action-badge bg-badge-red">R</span> Registrar cliente</span>
           {% endif %}
+          
           {% if can_clientes %}
-          <a class="action-link" href="{% url 'clientes_list' %}">
-            <span class="action-badge">C</span>
-            Mis clientes
-          </a>
+            <a class="action-link" href="{% url 'clientes_list' %}"><span class="action-badge bg-badge-orange">C</span> Mis clientes</a>
           {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">C</span>
-            Mis clientes
-          </span>
+            <span class="action-link disabled"><span class="action-badge bg-badge-orange">C</span> Mis clientes</span>
           {% endif %}
+          
           {% if rol == 'administrador' or rol == 'admin_master' or rol == 'operador' %}
-              {# Este bloque ahora es visible para Admin, Master y Operador #}
-              {% if can_historial %}
-                  <a class="action-link" href="{% url 'historial' %}">
-                      <span class="action-badge">H</span>
-                      Mi historial
-                  </a>
-              {% else %}
-                  <span class="action-link disabled">
-                      <span class="action-badge">H</span>
-                      Mi historial
-                  </span>
-              {% endif %}
+            {% if can_historial %}
+              <a class="action-link" href="{% url 'historial' %}"><span class="action-badge bg-badge-orange">H</span> Mi historial</a>
+            {% else %}
+              <span class="action-link disabled"><span class="action-badge bg-badge-orange">H</span> Mi historial</span>
+            {% endif %}
           {% endif %}
-          <!-- {% if can_depositos %}
-          <a class="action-link" href="{% url 'depositos' %}">
-            <span class="action-badge">D</span>
-            Gestion de Clientes
-          </a>
-          {% else %}
-          <span class="action-link disabled">
-            <span class="action-badge">D</span>
-            Gestion de Clientes
-          </span>
-          {% endif %} -->
+          
           {% if can_correcciones %}
-          <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}">
-            <span class="action-badge">C</span>
-            Correcciones (clientes)
-          </a>
+            <a class="action-link" href="{% url 'solicitudes_correccion_clientes' %}"><span class="action-badge bg-badge-red">C</span> Correcciones (clientes)</a>
           {% endif %}
+          
           {% if can_usuarios %}
-          <a class="action-link" href="{% url 'usuarios' %}">
-            <span class="action-badge">U</span>
-            Gestion de usuarios
-          </a>
+            <a class="action-link" href="{% url 'usuarios' %}"><span class="action-badge bg-badge-orange">U</span> Gestion de usuarios</a>
           {% endif %}
+          
         </div>
       </nav>
     </section>
 
-    
-    <section class="row g-3 mb-4">
+    <!-- KPIs -->
+    <section class="row g-4 mb-4">
       <div class="col-md-3">
-        <article class="kpi-card p-3 h-100">
+        <article class="kpi-card">
           <p class="kpi-label">Clientes ingresados</p>
-          <p class="kpi-value text-primary-custom" id="Clientes">0</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-1)"></span>Inventario total registrado</p>
+          <p class="kpi-value" id="Clientes" style="color: var(--text-kpi-1);">0</p>
+          <p class="kpi-sub"><span class="status-dot" style="background: var(--brand-1)"></span> Inventario total registrado</p>
         </article>
       </div>
       
       {% if rol != 'promotor' %}
       <div class="col-md-3">
-        <article class="kpi-card p-3 h-100">
+        <article class="kpi-card">
           <p class="kpi-label">Clientes prospectos</p>
-          <p class="kpi-value" id="pendientes" style="color: var(--warn)">0</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--warn)"></span>Esperan gestion administrativa</p>
+          <p class="kpi-value" id="pendientes" style="color: var(--text-kpi-1);">0</p>
+          <p class="kpi-sub"><span class="status-dot" style="background: var(--warn)"></span> Esperan gestion administrativa</p>
         </article>
       </div>
+      
       <div class="col-md-3">
-        <article class="kpi-card p-3 h-100">
+        <article class="kpi-card">
           <p class="kpi-label">Clientes Directos</p>
-          <p class="kpi-value" id="liberados" style="color: var(--ok)">0</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--ok)"></span>Casos cerrados correctamente</p>
+          <p class="kpi-value" id="liberados" style="color: var(--text-kpi-2);">0</p>
+          <p class="kpi-sub"><span class="status-dot" style="background: var(--ok)"></span> Casos cerrados correctamente</p>
         </article>
       </div>
+      
       <div class="col-md-3">
-        <article class="kpi-card p-3 h-100">
+        <article class="kpi-card">
           <p class="kpi-label">Tasa de Clientes</p>
-          <p class="kpi-value" id="tasaLiberacion" style="color: var(--brand-1)">0%</p>
-          <p class="kpi-sub mb-0"><span class="status-dot" style="background: var(--brand-2)"></span>Eficiencia sobre total ingresado</p>
+          <p class="kpi-value" id="tasaLiberacion" style="color: var(--text-kpi-2);">0%</p>
+          <p class="kpi-sub"><span class="status-dot" style="background: var(--brand-2)"></span> Eficiencia sobre total ingresado</p>
         </article>
       </div>
       {% endif %}
     </section>
 
-    <section class="row g-3 mb-4">
+    <!-- Gráficos Fila 1 -->
+    <section class="row g-4 mb-4">
       <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-8{% endif %}">
-        <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Ingresos mensuales (ultimos 6 meses)</h2>
+        <article class="panel-card p-4 h-100">
+          <h2 class="fs-6 fw-bold text-main mb-4 font-display">Ingresos mensuales (ultimos 6 meses)</h2>
           <div class="chart-wrap">
             <canvas id="ingresosChart"></canvas>
           </div>
@@ -414,8 +132,8 @@
 
       {% if rol != 'promotor' %}
       <div class="col-lg-4">
-        <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Tipos de Precios</h2>
+        <article class="panel-card p-4 h-100">
+          <h2 class="fs-6 fw-bold text-main mb-4 font-display">Tipos de Precios</h2>
           <div class="chart-wrap chart-wrap--donut">
             <canvas id="estadoChart"></canvas>
           </div>
@@ -424,11 +142,12 @@
       {% endif %}
     </section>
     
-    <section class="row g-3 mb-4">
+    <!-- Gráficos Fila 2 y Tabla -->
+    <section class="row g-4 mb-4">
       {% if rol != 'promotor' %}
       <div class="col-lg-6">
-        <article class="panel-card p-3 h-100">
-          <h2 class="h6 mb-3">Distribucion por tipo de Cliente</h2>
+        <article class="panel-card p-4 h-100">
+          <h2 class="fs-6 fw-bold text-main mb-4 font-display">Distribucion por tipo de Cliente</h2>
           <div class="chart-wrap">
             <canvas id="tipoChart"></canvas>
           </div>
@@ -437,19 +156,19 @@
       {% endif %}
 
       <div class="{% if rol == 'promotor' %}col-12{% else %}col-lg-6{% endif %}">
-        <article class="panel-card p-3 h-100">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h6 mb-0">Actividad reciente</h2>
-            <a href="{% url 'clientes_list' %}" class="small link-primary">Ver inventario completo</a>
+        <article class="panel-card p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="fs-6 fw-bold text-main mb-0 font-display">Actividad reciente</h2>
+            <a href="{% url 'clientes_list' %}" class="small" style="color: var(--primary); font-weight:600; text-decoration:none;">Ver inventario completo</a>
           </div>
           <div class="table-responsive">
             <table class="table align-middle mb-0">
               <thead>
                 <tr>
-                  <th>Numero de Cliente</th>
-                  <th>Nombre</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
+                  <th class="text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Numero de Cliente</th>
+                  <th class="text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Nombre</th>
+                  <th class="text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Estado</th>
+                  <th class="text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Fecha</th>
                 </tr>
               </thead>
               <tbody id="actividadBody">
@@ -457,12 +176,18 @@
                 <tr>
                   <td class="fw-semibold">{{ c.sap }}</td>
                   <td>{{ c.nombre }}</td>
-                  <td>{{ c.estado|default:"-" }}</td>
-                  <td>{{ c.fecha_registro|date:'d/m/Y' }}</td>
+                  <td>
+                    {% if c.estado %}
+                      <span class="badge rounded-pill" style="background: rgba(239, 108, 0, 0.15); color: #ef6c00;">{{ c.estado }}</span>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary small">{{ c.fecha_registro|date:'d/m/Y' }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="4" class="text-center text-secondary py-3">Sin actividad registrada.</td>
+                  <td colspan="4" class="text-center text-secondary py-4">Sin actividad registrada.</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -472,49 +197,52 @@
       </div>
     </section>
 
-
-    <div class="card mt-4 shadow-sm border-0">
-  <div class="card-body">
-    <h5 class="card-title h6"><i class="bi bi-book"></i> Centro de Ayuda</h5>
-    <p class="small text-muted">Descarga tu guía de usuario según tu nivel de acceso:</p>
-    
-    {% if rol == 'promotor' %}
-      <a href="{% static 'manuales/guia_promotor.pdf' %}" class="btn btn-sm btn-outline-info w-100 mb-2" download>
-        <i class="bi bi-download"></i> Manual del Promotor
-      </a>
-    {% elif rol == 'administrador' or rol == 'admin_master' %}
-      <a href="{% static 'manuales/guia_administrador.pdf' %}" class="btn btn-sm btn-outline-primary w-100 mb-2" download>
-        <i class="bi bi-download"></i> Manual de Administración
-      </a>
-      {% elif rol == 'operador'%}
-      <a href="{% static 'manuales/guia_operador.pdf' %}" class="btn btn-sm btn-outline-secondary w-100 mb-2" download>
-        <i class="bi bi-download"></i> Manual del Operador
-      </a>
-    {% else %}
-      <a href="{% static 'manuales/guia_general.pdf' %}" class="btn btn-sm btn-outline-secondary w-100" download>
-        <i class="bi bi-download"></i> Guía Rápida
-      </a>
-    {% endif %}
-  </div>
-</div>
+    <!-- Centro de Ayuda -->
+    <div class="panel-card p-4 mt-4 mb-5 border-0" style="background: var(--glass-bg);">
+      <h5 class="fs-6 fw-bold text-main mb-1 font-display"><i class="fas fa-book me-2" style="color: var(--primary);"></i> Centro de Ayuda</h5>
+      <p class="small text-muted mb-3">Descarga tu guía de usuario según tu nivel de acceso:</p>
+      
+      <div class="row">
+        <div class="col-md-4">
+          {% if rol == 'promotor' %}
+            <a href="{% static 'manuales/guia_promotor.pdf' %}" class="btn btn-outline-secondary w-100 fw-bold" style="border-radius: 12px;" download>
+              <i class="fas fa-download me-2"></i> Manual del Promotor
+            </a>
+          {% elif rol == 'administrador' or rol == 'admin_master' %}
+            <a href="{% static 'manuales/guia_administrador.pdf' %}" class="btn w-100 fw-bold text-white" style="border-radius: 12px; background: var(--primary);" download>
+              <i class="fas fa-download me-2"></i> Manual de Administración
+            </a>
+          {% elif rol == 'operador'%}
+            <a href="{% static 'manuales/guia_operador.pdf' %}" class="btn btn-outline-warning w-100 fw-bold" style="border-radius: 12px;" download>
+              <i class="fas fa-download me-2"></i> Manual del Operador
+            </a>
+          {% else %}
+            <a href="{% static 'manuales/guia_general.pdf' %}" class="btn btn-outline-secondary w-100 fw-bold" style="border-radius: 12px;" download>
+              <i class="fas fa-download me-2"></i> Guía Rápida
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
 
   </main>
-
-  <footer class="text-center py-3 text-secondary small">
-    Sistema de Gestion de Clientes de Gonac
-  </footer>
-
+  <!-- DATOS DE DJANGO -->
   {{ resumen_data|json_script:"resumen-data" }}
   {{ detalle_data|json_script:"detalle-data" }}
-  <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+  <!-- SCRIPTS -->
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="{% static 'js/no-autocomplete.js' %}"></script>
+
+  <!-- Lógica de Gráficos e Inicialización -->
   <script>
     const summaryFromServer = JSON.parse(document.getElementById("resumen-data").textContent);
     const detailFromServer = JSON.parse(document.getElementById("detalle-data").textContent);
 
     const chartColors = {
-      primary: "#c62828",
+      primary: "#d32f2f",
       secondary: "#fbc02d",
       warning: "#ef6c00",
       success: "#fbc02d",
@@ -527,6 +255,7 @@
     }
 
     function animateValue(element, finalValue, suffix = "") {
+      if(!element) return;
       const duration = 700;
       const start = 0;
       const startTime = performance.now();
@@ -539,7 +268,6 @@
           requestAnimationFrame(tick);
         }
       }
-
       requestAnimationFrame(tick);
     }
 
@@ -553,67 +281,60 @@
       });
     }
 
-      function buildDoughnut(labels, values) {
-        const ctx = document.getElementById("estadoChart").getContext("2d");
+    function buildDoughnut(labels, values) {
+      const canvas = document.getElementById("estadoChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
 
-        const palette = [
-          "#c62828",
-          "#ef6c00",
-          "#fbc02d",
-          "#ff9800",
-          "#b71c1c",
-          "#8e0000",
-          "#ffb300",
-          "#bf360c",
-          "#7f1d1d",
-          "#ffcc80",
-          "#d84315",
-          "#ffd54f",
-        ];
+      const palette = [ "#d32f2f", "#ef6c00", "#fbc02d", "#ff9800", "#b71c1c", "#8e0000", "#ffb300", "#bf360c", "#7f1d1d", "#ffcc80", "#d84315", "#ffd54f" ];
 
-        const normalized = new Map();
-        (labels || []).forEach((raw, idx) => {
-          const key = (raw || "").trim() || "SIN LISTA";
-          const count = safeNumber((values || [])[idx], 0);
-          normalized.set(key, (normalized.get(key) || 0) + count);
-        });
+      const normalized = new Map();
+      (labels || []).forEach((raw, idx) => {
+        const key = (raw || "").trim() || "SIN LISTA";
+        const count = safeNumber((values || [])[idx], 0);
+        normalized.set(key, (normalized.get(key) || 0) + count);
+      });
 
-        const finalLabels = Array.from(normalized.keys());
-        const finalValues = finalLabels.map((k) => normalized.get(k));
-        const finalColors = finalLabels.map((_, idx) => palette[idx % palette.length]);
+      const finalLabels = Array.from(normalized.keys());
+      const finalValues = finalLabels.map((k) => normalized.get(k));
+      const finalColors = finalLabels.map((_, idx) => palette[idx % palette.length]);
+      const legendPosition = window.matchMedia("(min-width: 992px)").matches ? "right" : "bottom";
 
-        const legendPosition = window.matchMedia("(min-width: 992px)").matches ? "right" : "bottom";
-
-        new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            labels: finalLabels,
-            datasets: [{
-              data: finalValues,
-              backgroundColor: finalColors,
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: legendPosition,
-                labels: {
-                  boxWidth: 10,
-                  boxHeight: 10,
-                  padding: 10,
-                  font: { size: 11 },
-                }
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: finalLabels,
+          datasets: [{
+            data: finalValues,
+            backgroundColor: finalColors,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: legendPosition,
+              labels: {
+                color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim(),
+                boxWidth: 10,
+                boxHeight: 10,
+                padding: 10,
+                font: { size: 11 },
               }
             }
           }
-        });
-      }
+        }
+      });
+    }
 
     function buildLineChart(labels, values) {
-      const ctx = document.getElementById("ingresosChart").getContext("2d");
+      const canvas = document.getElementById("ingresosChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+      const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--card-border').trim();
 
       new Chart(ctx, {
         type: "line",
@@ -623,27 +344,27 @@
             label: "Ingresos",
             data: values,
             borderColor: chartColors.primary,
-            backgroundColor: "rgba(198, 40, 40, 0.12)",
+            backgroundColor: "rgba(211, 47, 47, 0.15)",
             fill: true,
             tension: 0.3,
             pointRadius: 4,
-            pointHoverRadius: 5
+            pointHoverRadius: 6,
+            pointBackgroundColor: chartColors.primary
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
+          plugins: { legend: { display: false } },
           scales: {
+            x: {
+              ticks: { color: textColor },
+              grid: { color: gridColor, drawBorder: false }
+            },
             y: {
               beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
+              ticks: { color: textColor, precision: 0 },
+              grid: { color: gridColor, drawBorder: false }
             }
           }
         }
@@ -651,7 +372,11 @@
     }
 
     function buildBarChart(labels, values) {
-      const ctx = document.getElementById("tipoChart").getContext("2d");
+      const canvas = document.getElementById("tipoChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+      const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--card-border').trim();
 
       new Chart(ctx, {
         type: "bar",
@@ -660,31 +385,24 @@
           datasets: [{
             label: "Clientes",
             data: values,
-            backgroundColor: [
-              "#c62828",
-              "#ef6c00",
-              "#fbc02d",
-              "#ff9800",
-              "#ffd8a8"
-            ],
-            borderRadius: 8,
-            maxBarThickness: 38
+            backgroundColor: [ "#d32f2f", "#ef6c00", "#fbc02d", "#ff9800", "#ffd8a8" ],
+            borderRadius: 6,
+            maxBarThickness: 45
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
+          plugins: { legend: { display: false } },
           scales: {
+            x: {
+              ticks: { color: textColor },
+              grid: { display: false }
+            },
             y: {
               beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
+              ticks: { color: textColor, precision: 0 },
+              grid: { color: gridColor, drawBorder: false }
             }
           }
         }
@@ -702,33 +420,57 @@
       animateValue(document.getElementById("liberados"), liberados);
       animateValue(document.getElementById("tasaLiberacion"), tasaLiberacion, "%");
 
-      document.getElementById("lastUpdate").textContent = formatNow();
+      const updateEl = document.getElementById("lastUpdate");
+      if(updateEl) updateEl.textContent = formatNow();
 
-      const monthlyLabels = (detailFromServer && Array.isArray(detailFromServer.monthlyLabels) && detailFromServer.monthlyLabels.length)
-        ? detailFromServer.monthlyLabels
-        : [];
-      const monthlyIngress = (detailFromServer && Array.isArray(detailFromServer.monthlyIngress) && detailFromServer.monthlyIngress.length)
-        ? detailFromServer.monthlyIngress
-        : [];
-      const typeLabels = (detailFromServer && Array.isArray(detailFromServer.typeLabels) && detailFromServer.typeLabels.length)
-        ? detailFromServer.typeLabels
-        : [];
-      const typeValues = (detailFromServer && Array.isArray(detailFromServer.typeValues) && detailFromServer.typeValues.length)
-        ? detailFromServer.typeValues
-        : [];
-      const listaLabels = (detailFromServer && Array.isArray(detailFromServer.labels) && detailFromServer.labels.length)
-        ? detailFromServer.labels
-        : [];
-      const listaValues = (detailFromServer && Array.isArray(detailFromServer.values) && detailFromServer.values.length)
-        ? detailFromServer.values
-        : [];
+      const monthlyLabels = (detailFromServer && Array.isArray(detailFromServer.monthlyLabels)) ? detailFromServer.monthlyLabels : [];
+      const monthlyIngress = (detailFromServer && Array.isArray(detailFromServer.monthlyIngress)) ? detailFromServer.monthlyIngress : [];
+      const typeLabels = (detailFromServer && Array.isArray(detailFromServer.typeLabels)) ? detailFromServer.typeLabels : [];
+      const typeValues = (detailFromServer && Array.isArray(detailFromServer.typeValues)) ? detailFromServer.typeValues : [];
+      const listaLabels = (detailFromServer && Array.isArray(detailFromServer.labels)) ? detailFromServer.labels : [];
+      const listaValues = (detailFromServer && Array.isArray(detailFromServer.values)) ? detailFromServer.values : [];
 
       buildDoughnut(listaLabels, listaValues);
       buildLineChart(monthlyLabels, monthlyIngress);
       buildBarChart(typeLabels, typeValues);
     }
 
+    // Inicializar Datos
     loadData();
+
+    // =========================================
+    // LÓGICA DEL BOTÓN TEMA CLARO / OSCURO
+    // =========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggleBtn = document.getElementById('themeToggle');
+      const icon = themeToggleBtn.querySelector('i');
+      const htmlElement = document.documentElement;
+
+      // Recuperar el tema guardado
+      const currentTheme = localStorage.getItem('gonac-theme') || 'light';
+      htmlElement.setAttribute('data-theme', currentTheme);
+      updateIcon(currentTheme);
+
+      // Evento de clic
+      themeToggleBtn.addEventListener('click', () => {
+        let theme = htmlElement.getAttribute('data-theme');
+        let newTheme = theme === 'light' ? 'dark' : 'light';
+        
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('gonac-theme', newTheme); 
+        updateIcon(newTheme);
+        
+        // Opcional: Recargar la página levemente para que los gráficos tomen el nuevo color de texto
+        // location.reload();
+      });
+
+      function updateIcon(theme) {
+        if (theme === 'dark') {
+          icon.className = 'fas fa-sun'; 
+        } else {
+          icon.className = 'fas fa-moon'; 
+        }
+      }
+    });
   </script>
-</body>
-</html>
+{% endblock %}
