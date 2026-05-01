@@ -980,6 +980,8 @@ CLIENTE_FIELD_LABELS = {
     'zona': 'Zona',
     'estado': 'Estado',
     'poblacion': 'Poblacion',
+    'frecuencia_visita': 'Cuando visitas',
+    'dias_visita': 'Días de la semana',
 }
 
 from decimal import Decimal # 👈 Agregamos esto para manejar bien los números en base de datos

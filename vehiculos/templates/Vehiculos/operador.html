@@ -84,13 +84,9 @@
                   <label class="form-label">Nombre del lugar</label>
                   <input type="text" class="form-control" name="nombre" maxlength="120" value="{{ form_values.nombre|default:'' }}" required>
                 </div>
-                {% if rol != 'promotor'%}
                 <div class="col-md-4">
-                  <label class="form-label">Lista de precios</label>
-                  <input type="text" class="form-control text-uppercase" name="lista_precios" maxlength="40" value="{{ form_values.lista_precios|default:'' }}" placeholder="BAJIO" list="listaPreciosOpts">
-                  <datalist id="listaPreciosOpts">
-                    <option value="BAJIO"></option>
-                  </datalist>
+                  <label class="form-label">Código 6 dígitos</label>
+                  <input type="text" class="form-control" name="numero_empleado" maxlength="6" pattern="\d{6}" value="{{ form_values.numero_empleado|default:'' }}" placeholder="000000" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Cuando visitas</label>
@@ -123,6 +119,14 @@
                     <input class="form-check-input" type="checkbox" name="dias_visita" value="viernes" {% if "viernes" in form_values.dias_visita %}checked{% endif %}>
                     <label class="form-check-label">Viernes</label>
                   </div>
+                </div>
+                {% if rol != 'promotor'%}
+                <div class="col-md-4">
+                  <label class="form-label">Lista de precios</label>
+                  <input type="text" class="form-control text-uppercase" name="lista_precios" maxlength="40" value="{{ form_values.lista_precios|default:'' }}" placeholder="BAJIO" list="listaPreciosOpts">
+                  <datalist id="listaPreciosOpts">
+                    <option value="BAJIO"></option>
+                  </datalist>
                 </div>
                 {% endif %}
                 
