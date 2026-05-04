@@ -1843,27 +1843,28 @@ def borrar_masivo_clientes(request):
 
 def exportar_clientes_csv(request):
     # 1. DETECCIÓN AGRESIVA DE ROL
-    # Si eres superusuario (el que creaste en la terminal) o staff, ERES ADMIN.
-    es_admin_maestro = request.user.is_superuser or request.user.is_staff
-    
+    current_user = _get_current_user(request)
+    if not current_user:
+        return redirect('login')
+
+    es_admin_maestro = current_user.is_superuser or current_user.is_staff
+
     # También revisamos la sesión por si acaso
     rol_sesion = request.session.get('rol', '').lower()
     if 'admin' in rol_sesion:
         es_admin_maestro = True
 
     print(f"--- DEBUG EXPORTACIÓN ---")
-    print(f"Usuario: {request.user.username}")
+    print(f"Usuario: {current_user.username}")
     print(f"¿Es Admin detectado?: {es_admin_maestro}")
 
     # 2. FILTRADO DE DATOS
     if es_admin_maestro:
-        # Si eres admin, no importa quién lo registró, te trae los 3, 100 o 1000 que existan
         queryset = Cliente.objects.all()
         print(f"Acción: Exportando TODO el inventario")
     else:
-        # Si no eres admin, solo lo que tú picaste
-        queryset = Cliente.objects.filter(operador=request.user)
-        print(f"Acción: Exportando solo registros de {request.user.username}")
+        queryset = Cliente.objects.filter(operador=current_user)
+        print(f"Acción: Exportando solo registros de {current_user.username}")
 
     print(f"Registros encontrados: {queryset.count()}")
     print(f"--------------------------")
