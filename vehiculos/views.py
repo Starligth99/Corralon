@@ -1869,9 +1869,9 @@ def exportar_clientes_csv(request):
     print(f"--------------------------")
 
     # 3. GENERACIÓN DEL ARCHIVO
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="Respaldo_Clientes_Total.csv"'
-    response.write(u'\ufeff'.encode('utf8'))
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="Respaldo_Clientes_Total.csv"'
+    response.write('\ufeff')
 
     writer = csv.writer(response)
     writer.writerow([
