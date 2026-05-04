@@ -1875,7 +1875,7 @@ def exportar_clientes_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        'SAP ID', 'NOMBRE', 'TIPO CUENTA', 'LATITUD', 'LONGITUD', 
+        'SAP ID', 'CODIGO 6 DIGITOS', 'NOMBRE', 'TIPO CUENTA', 'LATITUD', 'LONGITUD', 
         'LISTA PRECIOS', 'CALLE', 'COLONIA', 'POBLACIÓN', 'MUNICIPIO', 
         'ESTADO', 'CP', 'ZONA', 'FECHA REGISTRO', 'REGISTRADO POR',
         'FRECUENCIA VISITA', 'DIAS VISITA'
@@ -1890,6 +1890,7 @@ def exportar_clientes_csv(request):
 
         writer.writerow([
             c.sap,
+            c.numero_empleado or '-',
             c.nombre,
             c.tipo_cuenta,
             c.latitud,
