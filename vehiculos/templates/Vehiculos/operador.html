@@ -119,6 +119,14 @@
                     <input class="form-check-input" type="checkbox" name="dias_visita" value="viernes" {% if "viernes" in form_values.dias_visita %}checked{% endif %}>
                     <label class="form-check-label">Viernes</label>
                   </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dias_visita" value="sabado" {% if "sabado" in form_values.dias_visita %}checked{% endif %}>
+                    <label class="form-check-label">Sábado</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dias_visita" value="domingo" {% if "domingo" in form_values.dias_visita %}checked{% endif %}>
+                    <label class="form-check-label">Domingo</label>
+                  </div>
                 </div>
                 {% if rol != 'promotor'%}
                 <div class="col-md-4">
