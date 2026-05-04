@@ -1857,14 +1857,22 @@ def exportar_clientes_csv(request):
     print(f"--- DEBUG EXPORTACIÓN ---")
     print(f"Usuario: {current_user.username}")
     print(f"¿Es Admin detectado?: {es_admin_maestro}")
+    print(f"Rol sesión: {rol_sesion}")
 
     # 2. FILTRADO DE DATOS
     if es_admin_maestro:
         queryset = Cliente.objects.all()
-        print(f"Acción: Exportando TODO el inventario")
+        print(f"Acción: Exportando TODO el inventario (ADMIN)")
     else:
+        # Intentar filtrar por operador actual
         queryset = Cliente.objects.filter(operador=current_user)
-        print(f"Acción: Exportando solo registros de {current_user.username}")
+        count_operador = queryset.count()
+        print(f"Registros del operador {current_user.username}: {count_operador}")
+        
+        # Si el operador no tiene registros asignados, mostrar todos
+        if count_operador == 0:
+            queryset = Cliente.objects.all()
+            print(f"Operador sin registros asignados, mostrando todos")
 
     print(f"Registros encontrados: {queryset.count()}")
     print(f"--------------------------")
