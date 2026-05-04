@@ -12,7 +12,7 @@ class Cliente(models.Model):
     ]
 
     sap = models.CharField(max_length=30, unique=True, db_index=True)
-    numero_empleado = models.CharField(max_length=6, unique=True, null=True, blank=True, db_index=True)
+    numero_empleado = models.CharField(max_length=6, null=True, blank=True, db_index=True)
     nombre = models.CharField(max_length=120)
     tipo_cuenta = models.CharField(max_length=20, choices=TIPO_CHOICES)
     lista_precios = models.CharField(max_length=40, blank=True)

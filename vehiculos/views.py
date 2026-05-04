@@ -1037,10 +1037,6 @@ def operadorregistrador_view(request):
             messages.error(request, 'El código de 6 dígitos debe contener exactamente 6 números.')
             return render(request, 'Vehiculos/operador.html', build_context(values))
 
-        if Cliente.objects.filter(numero_empleado=values['numero_empleado']).exists():
-            messages.error(request, 'El código de 6 dígitos ya está en uso. Elige uno diferente.')
-            return render(request, 'Vehiculos/operador.html', build_context(values))
-
         # 🔒 VALIDACIÓN SOLO PARA NO PROMOTOR
         if rol != ROLE_PROMOTOR:
             if values['tipo_cuenta'] not in (Cliente.TIPO_DIRECTO, Cliente.TIPO_PROSPECTO):
