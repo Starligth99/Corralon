@@ -1068,6 +1068,10 @@ def operadorregistrador_view(request):
             # Guardamos el cliente como creado por el promotor, no por el operador.
             operador_destino = usuario_actual
 
+        print(f"[DEBUG REGISTRO] Usuario actual: {usuario_actual.username if usuario_actual else 'None'}")
+        print(f"[DEBUG REGISTRO] Operador destino: {operador_destino.username if operador_destino else 'None'}")
+        print(f"[DEBUG REGISTRO] Rol: {rol}")
+
         cliente = Cliente.objects.create(
             sap=sap,
             numero_empleado=values['numero_empleado'],
@@ -1089,6 +1093,8 @@ def operadorregistrador_view(request):
             frecuencia_visita=values['frecuencia_visita'],
             dias_visita=values['dias_visita'],
         )
+        
+        print(f"[DEBUG REGISTRO] Cliente creado: {cliente.sap} con operador={cliente.operador.username if cliente.operador else 'None'}")
 
         messages.success(request, f'Cliente {cliente.sap} - {cliente.nombre} registrado correctamente.')
         return redirect('clientes_list')
@@ -1856,6 +1862,7 @@ def exportar_clientes_csv(request):
 
     print(f"--- DEBUG EXPORTACIÓN ---")
     print(f"Usuario: {current_user.username}")
+    print(f"Usuario ID: {current_user.id}")
     print(f"¿Es Admin detectado?: {es_admin_maestro}")
     print(f"Rol sesión: {rol_sesion}")
 
@@ -1864,15 +1871,15 @@ def exportar_clientes_csv(request):
         queryset = Cliente.objects.all()
         print(f"Acción: Exportando TODO el inventario (ADMIN)")
     else:
-        # Intentar filtrar por operador actual
+        # Operador: solo sus registros
         queryset = Cliente.objects.filter(operador=current_user)
-        count_operador = queryset.count()
-        print(f"Registros del operador {current_user.username}: {count_operador}")
+        print(f"Acción: Buscando registros donde operador.id = {current_user.id}")
+        print(f"Total clientes en BD: {Cliente.objects.all().count()}")
+        print(f"Clientes con operador {current_user.username}: {queryset.count()}")
         
-        # Si el operador no tiene registros asignados, mostrar todos
-        if count_operador == 0:
-            queryset = Cliente.objects.all()
-            print(f"Operador sin registros asignados, mostrando todos")
+        # Debug: mostrar qué operadores hay en los clientes
+        operadores_unicos = Cliente.objects.values_list('operador', flat=True).distinct()
+        print(f"Operadores únicos en BD: {operadores_unicos}")
 
     print(f"Registros encontrados: {queryset.count()}")
     print(f"--------------------------")
