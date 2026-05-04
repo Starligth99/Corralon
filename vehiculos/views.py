@@ -1885,8 +1885,8 @@ def exportar_clientes_csv(request):
         # Buscamos el nombre del operador que lo registró originalmente
         responsable = "Sistema"
         if c.operador:
-            # Intentamos traer su nombre real, si no, su email o username
-            responsable = f"{c.operador.first_name} {c.operador.last_name}".strip() or c.operador.email or c.operador.username
+            nombre = f"{c.operador.first_name or ''} {c.operador.last_name or ''}".strip()
+            responsable = nombre or c.operador.username or c.operador.email or '-'
 
         writer.writerow([
             c.sap,
