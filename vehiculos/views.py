@@ -456,15 +456,18 @@ def _scoped_clientes_queryset(request):
         # Operadores ven:
         # 1. Sus propios clientes (operador=user)
         # 2. Clientes registrados por sus promotores asignados (registrado_por)
+        # 3. Compatibilidad: clientes donde por error se guardó operador=promotor
         return Cliente.objects.filter(
             Q(operador=user) |
-            Q(registrado_por__perfil__operador_asignado=user)
+            Q(registrado_por__perfil__operador_asignado=user) |
+            Q(operador__perfil__operador_asignado=user)
         )
 
     if role == ROLE_PROMOTOR:
         if user is None:
             return Cliente.objects.none()
-        return Cliente.objects.filter(operador=user)
+        # Promotores ven los clientes que registraron (aunque el operador sea su jefe).
+        return Cliente.objects.filter(Q(registrado_por=user) | Q(operador=user))
 
     return Cliente.objects.all()
 
@@ -1102,10 +1105,9 @@ def operadorregistrador_view(request):
             dias_visita=values['dias_visita'],
         )
         
-        # Si fue registrado por promotor, guardamos el promotor como el registrador real
-        if rol == ROLE_PROMOTOR:
-            cliente.registrado_por = usuario_actual
-            cliente.save()
+        # Guardamos quién registró realmente (promotor u operador)
+        cliente.registrado_por = usuario_actual
+        cliente.save(update_fields=["registrado_por"])
         
         print(f"[DEBUG REGISTRO] Cliente creado: {cliente.sap} con operador={cliente.operador.username if cliente.operador else 'None'}")
 
