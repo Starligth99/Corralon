@@ -35,7 +35,12 @@
           <h1 class="h4 mb-1">Historial de actividad</h1>
           <p class="text-secondary mb-0">Toda tu actividad agrupada por mes.</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          <form method="get" action="{% url 'exportar_historial_csv' %}" class="d-flex gap-2 align-items-center">
+            <label class="mb-0 text-white opacity-75" for="fecha_export">Fecha:</label>
+            <input id="fecha_export" type="date" name="fecha" class="form-control form-control-sm" value="{{ today|date:'Y-m-d' }}">
+            <button type="submit" class="btn btn-success btn-sm">Exportar CSV del día</button>
+          </form>
           <span class="summary-pill">Meses con actividad: <strong>{{ total_meses }}</strong></span>
           <span class="summary-pill">Clientes registrados: <strong>{{ total_clientes }}</strong></span>
         </div>

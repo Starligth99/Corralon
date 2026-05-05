@@ -14,6 +14,7 @@ urlpatterns = [
     path('clientes/importar/', views.importar_clientes_excel, name='importar_clientes_excel'),
     path('clientes/<int:cliente_id>/credito/', views.editar_credito_view, name='editar_credito'),
     path('historial/', views.historial_view, name='historial'),
+    path('historial/exportar/', views.exportar_historial_csv, name='exportar_historial_csv'),
     path('vehiculos/inventario/', views.vehiculos_list, name='vehiculos'),
     path('inventario/', views.vehiculos_list, name='inventario'),
     path('vehiculos/', views.vehiculos_list),

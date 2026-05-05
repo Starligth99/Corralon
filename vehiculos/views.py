@@ -11,8 +11,8 @@ from django.contrib.auth import authenticate, get_user_model, login as auth_logi
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.db.utils import ProgrammingError
-from django.db.models import Count, ProtectedError
-from django.db.models.functions import TruncMonth
+from django.db.models import Count, ProtectedError, Q
+from django.db.models.functions import TruncMonth, TruncDate
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -453,9 +453,12 @@ def _scoped_clientes_queryset(request):
     if role == ROLE_OPERADOR:
         if user is None:
             return Cliente.objects.none()
+        # Operadores ven:
+        # 1. Sus propios clientes (operador=user)
+        # 2. Clientes registrados por sus promotores asignados (registrado_por)
         return Cliente.objects.filter(
             Q(operador=user) |
-            Q(operador__perfil__operador_asignado=user)
+            Q(registrado_por__perfil__operador_asignado=user)
         )
 
     if role == ROLE_PROMOTOR:
@@ -1404,8 +1407,12 @@ def historial_view(request):
     if user is None:
         return redirect('login')
 
+    # Ver clientes propios y de los promotores asignados
     clientes = (
-        Cliente.objects.filter(operador=user)
+        Cliente.objects.filter(
+            Q(operador=user) |
+            Q(registrado_por__perfil__operador_asignado=user)
+        )
         .order_by('-fecha_registro', '-id')
     )
 
@@ -1432,8 +1439,74 @@ def historial_view(request):
         'total_meses': len(meses),
         'rol': _get_role(request),
         'rol_label': ROLE_LABELS[_get_role(request)],
+        'today': date.today(),
+        'today': date.today(),
     }
     return render(request, 'Vehiculos/historial.html', context)
+
+
+def exportar_historial_csv(request):
+    if not _is_logged_in(request):
+        return redirect('login')
+    if not _has_permission(request, 'operadorregistrador'):
+        return _reject_unauthorized(request)
+
+    current_user = _get_current_user(request)
+    if not current_user:
+        return redirect('login')
+
+    fecha_param = request.GET.get('fecha')
+    fecha = parse_date(fecha_param) if fecha_param else None
+
+    # Incluir clientes propios y de promotores asignados
+    queryset = Cliente.objects.filter(
+        Q(operador=current_user) |
+        Q(registrado_por__perfil__operador_asignado=current_user)
+    )
+    if fecha:
+        queryset = queryset.filter(fecha_registro=fecha)
+
+    filename_date = fecha.strftime('%Y%m%d') if fecha else 'todos'
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="historial_clientes_{filename_date}.csv"'
+    response.write('\ufeff')
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'SAP ID', 'CODIGO 6 DIGITOS', 'NOMBRE', 'TIPO CUENTA', 'LATITUD', 'LONGITUD',
+        'LISTA PRECIOS', 'CALLE', 'COLONIA', 'POBLACIÓN', 'MUNICIPIO',
+        'ESTADO', 'CP', 'ZONA', 'FECHA REGISTRO', 'REGISTRADO POR',
+        'FRECUENCIA VISITA', 'DIAS VISITA'
+    ])
+
+    for c in queryset.order_by('-fecha_registro', '-id'):
+        responsable = 'Sistema'
+        if c.operador:
+            nombre = f"{c.operador.first_name or ''} {c.operador.last_name or ''}".strip()
+            responsable = nombre or c.operador.username or c.operador.email or '-'
+
+        writer.writerow([
+            c.sap,
+            c.numero_empleado or '-',
+            c.nombre,
+            c.tipo_cuenta,
+            c.latitud,
+            c.longitud,
+            c.lista_precios,
+            getattr(c, 'calle', '-'),
+            getattr(c, 'colonia', '-'),
+            getattr(c, 'poblacion', '-'),
+            getattr(c, 'municipio', '-'),
+            getattr(c, 'estado', '-'),
+            getattr(c, 'codigo_postal', '-'),
+            getattr(c, 'zona', '-'),
+            c.fecha_registro.strftime('%d/%m/%Y') if c.fecha_registro else '-',
+            responsable,
+            c.frecuencia_visita,
+            c.dias_visita,
+        ])
+
+    return response
 
 
 def vehiculos_list(request):
