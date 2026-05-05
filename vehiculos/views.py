@@ -1065,8 +1065,8 @@ def operadorregistrador_view(request):
             if not perfil or not perfil.operador_asignado:
                 messages.error(request, 'Tu cuenta de promotor no tiene operador asignado.')
                 return render(request, 'Vehiculos/operador.html', build_context(values))
-            # Guardamos el cliente como creado por el promotor, no por el operador.
-            operador_destino = usuario_actual
+            # Para promotores: el operador_destino es el operador asignado, pero guardamos quién registró realmente
+            operador_destino = perfil.operador_asignado
 
         print(f"[DEBUG REGISTRO] Usuario actual: {usuario_actual.username if usuario_actual else 'None'}")
         print(f"[DEBUG REGISTRO] Operador destino: {operador_destino.username if operador_destino else 'None'}")
@@ -1093,6 +1093,11 @@ def operadorregistrador_view(request):
             frecuencia_visita=values['frecuencia_visita'],
             dias_visita=values['dias_visita'],
         )
+        
+        # Si fue registrado por promotor, guardamos el promotor como el registrador real
+        if rol == ROLE_PROMOTOR:
+            cliente.registrado_por = usuario_actual
+            cliente.save()
         
         print(f"[DEBUG REGISTRO] Cliente creado: {cliente.sap} con operador={cliente.operador.username if cliente.operador else 'None'}")
 

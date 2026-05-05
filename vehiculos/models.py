@@ -36,6 +36,14 @@ class Cliente(models.Model):
         null=True,
         blank=True,
     )
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="clientes_registrados_real",
+        null=True,
+        blank=True,
+        help_text="Usuario que realmente registró el cliente (útil para promotores)"
+    )
 
     dias_maximos_entrega = models.PositiveIntegerField(default=0)
     pedido_excede_limite_credito = models.BooleanField(default=False)
