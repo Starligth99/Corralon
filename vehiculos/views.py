@@ -499,9 +499,14 @@ def login_view(request):
         password = request.POST.get('password') or ''
 
         if usuario and password:
+            usernames = [usuario]
             if not usuario.endswith('@usuario.com'):
-                usuario += '@usuario.com'
-            user = authenticate(request, username=usuario, password=password)
+                usernames.append(usuario + '@usuario.com')
+            user = None
+            for username in usernames:
+                user = authenticate(request, username=username, password=password)
+                if user:
+                    break
             if user:
                 auth_login(request, user)
                 request.session['usuario'] = user.get_username()
