@@ -1152,6 +1152,7 @@ def clientes_list_view(request):
     query = (
         _scoped_clientes_queryset(request)
         .select_related('operador', 'registrado_por')
+        .prefetch_related('operador__groups', 'registrado_por__groups')
         .order_by('-fecha_registro', '-id')
     )
 
@@ -1204,6 +1205,20 @@ def clientes_list_view(request):
     paginator = Paginator(query, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # 4. Campos de display (evita confusiones con datos antiguos sin registrado_por)
+    for cliente in page_obj:
+        # Para operadores queremos ver el promotor que registró (si existe).
+        promotor = cliente.registrado_por
+        if promotor is None and cliente.operador and cliente.operador.groups.filter(name=ROLE_PROMOTOR).exists():
+            # Compatibilidad: registros viejos donde por error se guardó operador=promotor
+            promotor = cliente.operador
+        cliente.promotor_registro_display = promotor.get_username() if promotor else "Desconocido"
+
+        # Para admins, sigue siendo válido mostrar registrado_por con fallback a operador.
+        registro_usuario = cliente.registrado_por or cliente.operador
+        cliente.registro_usuario_display = registro_usuario.get_username() if registro_usuario else "-"
+        cliente.operador_asignado_display = cliente.operador.get_username() if cliente.operador else "-"
 
     context = {
         'page_obj': page_obj,
@@ -1997,13 +2012,19 @@ def exportar_clientes_csv(request):
         'FRECUENCIA VISITA', 'DIAS VISITA'
     ])
 
+    queryset = queryset.select_related("operador", "registrado_por").prefetch_related("operador__groups", "registrado_por__groups")
+
     for c in queryset:
-        # Preferimos el usuario que realmente registró (promotor u operador)
-        responsable = "Sistema"
-        usuario_responsable = c.registrado_por or c.operador
+        # Preferimos el usuario que realmente registró (promotor u operador).
+        # Si el dato es antiguo y registrado_por viene vacío, NO atribuimos al operador
+        # a menos que el operador sea un promotor (compatibilidad).
+        responsable = "Desconocido"
+        usuario_responsable = c.registrado_por
+        if usuario_responsable is None and c.operador and c.operador.groups.filter(name=ROLE_PROMOTOR).exists():
+            usuario_responsable = c.operador
         if usuario_responsable:
             nombre = f"{usuario_responsable.first_name or ''} {usuario_responsable.last_name or ''}".strip()
-            responsable = nombre or usuario_responsable.username or usuario_responsable.email or '-'
+            responsable = nombre or usuario_responsable.username or usuario_responsable.email or 'Desconocido'
 
         writer.writerow([
             c.sap,

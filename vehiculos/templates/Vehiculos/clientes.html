@@ -262,19 +262,17 @@
                 <div class="col-md-8 cliente-field">
                   <div class="cliente-field-label">{% if rol == 'operador' %}Promotor (registró){% else %}Registrado por{% endif %}</div>
                   <div class="cliente-field-value">
-                    {% if c.registrado_por %}
-                      {{ c.registrado_por.get_username }}
-                    {% elif c.operador %}
-                      {{ c.operador.get_username }}
+                    {% if rol == 'operador' %}
+                      {{ c.promotor_registro_display|default:"Desconocido" }}
                     {% else %}
-                      -
+                      {{ c.registro_usuario_display|default:"-" }}
                     {% endif %}
                   </div>
                 </div>
 
                 <div class="col-md-8 cliente-field">
                   <div class="cliente-field-label">Operador asignado</div>
-                  <div class="cliente-field-value">{% if c.operador %}{{ c.operador.get_username }}{% else %}-{% endif %}</div>
+                  <div class="cliente-field-value">{{ c.operador_asignado_display|default:"-" }}</div>
                 </div>
                 
                 <div class="col-12 mt-3 d-flex gap-2 flex-wrap">
