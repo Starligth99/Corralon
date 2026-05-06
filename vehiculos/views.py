@@ -1164,22 +1164,41 @@ def clientes_list_view(request):
     # --- 🚀 FILTROS DE BÚSQUEDA ---
     search = (request.GET.get('q') or '').strip()
     operador_id = request.GET.get('operador_filtro')
+    registrado_por_id = request.GET.get('registrado_por_filtro')
     tipo_filtro = request.GET.get('tipo_filtro')
 
     if search:
         query = query.filter(Q(sap__icontains=search) | Q(nombre__icontains=search))
     if operador_id:
         query = query.filter(operador_id=operador_id)
+    if registrado_por_id:
+        # Para operadores: algunos registros viejos pudieron quedar con operador=promotor y registrado_por vacío.
+        query = query.filter(Q(registrado_por_id=registrado_por_id) | Q(operador_id=registrado_por_id))
     if tipo_filtro:
         query = query.filter(tipo_cuenta=tipo_filtro)
 
     # --- 👤 LISTA DE USUARIOS PARA EL FILTRO (Solo para Jefes) ---
     operadores_lista = None
+    promotores_lista = None
     if role in [ROLE_ADMIN, ROLE_ADMIN_MASTER]:
         User = get_user_model()
         operadores_lista = User.objects.filter(
             groups__name__in=[ROLE_OPERADOR, ROLE_ADMIN, ROLE_ADMIN_MASTER]
         ).distinct()
+
+    # --- 👥 LISTA DE PROMOTORES (Para operadores) ---
+    if role == ROLE_OPERADOR:
+        User = get_user_model()
+        promotor_ids = set(
+            query.filter(registrado_por__isnull=False).values_list("registrado_por_id", flat=True).distinct()
+        )
+        promotor_ids.update(
+            query.filter(operador__isnull=False, operador__groups__name=ROLE_PROMOTOR)
+            .values_list("operador_id", flat=True)
+            .distinct()
+        )
+        if promotor_ids:
+            promotores_lista = User.objects.filter(id__in=promotor_ids).order_by("username")
 
     # 3. Paginación
     paginator = Paginator(query, 10)
@@ -1190,8 +1209,10 @@ def clientes_list_view(request):
         'page_obj': page_obj,
         'search': search,
         'operador_id_actual': operador_id,
+        'registrado_por_id_actual': registrado_por_id,
         'tipo_actual': tipo_filtro,
         'operadores_lista': operadores_lista,
+        'promotores_lista': promotores_lista,
         'rol': role,  # Enviará "administrador", "admin_master", etc.
         'rol_label': ROLE_LABELS.get(role, role),
         'can_borrar_clientes': can_borrar_clientes,

@@ -98,6 +98,20 @@
                           </div>
                       {% endif %}
 
+                      {% if rol == 'operador' and promotores_lista %}
+                          <div class="mb-3">
+                              <label class="form-label small fw-bold text-muted">Promotor (registró)</label>
+                              <select name="registrado_por_filtro" class="form-select form-select-sm border-2" style="border-radius: 10px;">
+                                  <option value="">Todos los promotores</option>
+                                  {% for pro in promotores_lista %}
+                                      <option value="{{ pro.id }}" {% if registrado_por_id_actual == pro.id|stringformat:"s" %}selected{% endif %}>
+                                          {{ pro.username }}
+                                      </option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                      {% endif %}
+
                                 {% if rol != 'promotor' %} 
     <div class="mb-4">
         <label class="form-label small fw-bold text-muted">Estado de Cuenta</label>
@@ -246,7 +260,7 @@
                 </div>
 
                 <div class="col-md-8 cliente-field">
-                  <div class="cliente-field-label">Registrado por</div>
+                  <div class="cliente-field-label">{% if rol == 'operador' %}Promotor (registró){% else %}Registrado por{% endif %}</div>
                   <div class="cliente-field-value">
                     {% if c.registrado_por %}
                       {{ c.registrado_por.get_username }}
