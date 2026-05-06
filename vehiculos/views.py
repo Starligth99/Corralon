@@ -1409,14 +1409,8 @@ def historial_view(request):
     if user is None:
         return redirect('login')
 
-    # Ver clientes propios y de los promotores asignados
-    clientes = (
-        Cliente.objects.filter(
-            Q(operador=user) |
-            Q(registrado_por__perfil__operador_asignado=user)
-        )
-        .order_by('-fecha_registro', '-id')
-    )
+    # Usar el mismo alcance que dashboard / clientes_list (incluye promotores asignados).
+    clientes = _scoped_clientes_queryset(request).order_by('-fecha_registro', '-id')
 
     grupos = {}
     for cliente in clientes:
@@ -1442,7 +1436,6 @@ def historial_view(request):
         'rol': _get_role(request),
         'rol_label': ROLE_LABELS[_get_role(request)],
         'today': date.today(),
-        'today': date.today(),
     }
     return render(request, 'Vehiculos/historial.html', context)
 
@@ -1460,11 +1453,8 @@ def exportar_historial_csv(request):
     fecha_param = request.GET.get('fecha')
     fecha = parse_date(fecha_param) if fecha_param else None
 
-    # Incluir clientes propios y de promotores asignados
-    queryset = Cliente.objects.filter(
-        Q(operador=current_user) |
-        Q(registrado_por__perfil__operador_asignado=current_user)
-    )
+    # Incluir clientes segÃºn el mismo alcance que el resto del sistema.
+    queryset = _scoped_clientes_queryset(request)
     if fecha:
         queryset = queryset.filter(fecha_registro=fecha)
 
