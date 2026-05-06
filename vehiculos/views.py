@@ -1149,7 +1149,11 @@ def clientes_list_view(request):
     
     # 1. Usamos la función de seguridad que YA TIENES para filtrar por rol
     # Esto soluciona que el PROMOTOR vea todo.
-    query = _scoped_clientes_queryset(request).select_related('operador').order_by('-fecha_registro', '-id')
+    query = (
+        _scoped_clientes_queryset(request)
+        .select_related('operador', 'registrado_por')
+        .order_by('-fecha_registro', '-id')
+    )
 
     role = _get_role(request)
     user = _get_current_user(request)
@@ -1973,11 +1977,12 @@ def exportar_clientes_csv(request):
     ])
 
     for c in queryset:
-        # Buscamos el nombre del operador que lo registró originalmente
+        # Preferimos el usuario que realmente registró (promotor u operador)
         responsable = "Sistema"
-        if c.operador:
-            nombre = f"{c.operador.first_name or ''} {c.operador.last_name or ''}".strip()
-            responsable = nombre or c.operador.username or c.operador.email or '-'
+        usuario_responsable = c.registrado_por or c.operador
+        if usuario_responsable:
+            nombre = f"{usuario_responsable.first_name or ''} {usuario_responsable.last_name or ''}".strip()
+            responsable = nombre or usuario_responsable.username or usuario_responsable.email or '-'
 
         writer.writerow([
             c.sap,
